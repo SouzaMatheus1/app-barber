@@ -5,11 +5,81 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "mysql",
-  url      = env("DATABASE_URL")
+  provider = "mysql"
+}
+
+model Profissional {
+  id        String   @id @default(uuid())
+  nome      String
+  email     String   @unique
+  senha     String
+  perfil    Perfil   @default(BARBEIRO)
+  criadoEm  DateTime @default(now())
+  
+  transacoes Transacao[]
+}
+
+enum Perfil {
+  ADMIN
+  BARBEIRO
+}
+
+model Cliente {
+  id        String   @id @default(uuid())
+  nome      String
+  telefone  String?
+  criadoEm  DateTime @default(now())
+  
+  transacoes Transacao[]
+}
+
+model ItemCatalogo {
+  id        String   @id @default(uuid())
+  nome      String
+  tipo      TipoItem // SERVICO ou PRODUTO
+  preco     Decimal  @db.Decimal(10, 2)
+  comissao  Decimal? @db.Decimal(5, 2) // % de comissão
+  
+  itensTransacao ItemTransacao[]
+}
+
+enum TipoItem {
+  SERVICO
+  PRODUTO
+}
+
+model Transacao {
+  id             String   @id @default(uuid())
+  tipo           TipoTransacao // ENTRADA ou SAIDA
+  descricao      String?
+  valorTotal     Decimal  @db.Decimal(10, 2)
+  data           DateTime @default(now())
+  
+  profissionalId String?
+  profissional   Profissional? @relation(fields: [profissionalId], references: [id])
+  
+  clienteId      String?
+  cliente        Cliente? @relation(fields: [clienteId], references: [id])
+
+  itens          ItemTransacao[]
+}
+
+enum TipoTransacao {
+  ENTRADA
+  SAIDA
+}
+
+model ItemTransacao {
+  id            String @id @default(uuid())
+  transacaoId   String
+  itemId        String
+  quantidade    Int    @default(1)
+  precoUnitario Decimal @db.Decimal(10, 2) // Preço no momento da venda
+
+  transacao     Transacao    @relation(fields: [transacaoId], references: [id])
+  item          ItemCatalogo @relation(fields: [itemId], references: [id])
 }

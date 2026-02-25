@@ -1,6 +1,6 @@
 -- CreateTable
 CREATE TABLE `Profissional` (
-    `id` VARCHAR(191) NOT NULL,
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
     `nome` VARCHAR(191) NOT NULL,
     `email` VARCHAR(191) NOT NULL,
     `senha` VARCHAR(191) NOT NULL,
@@ -13,7 +13,7 @@ CREATE TABLE `Profissional` (
 
 -- CreateTable
 CREATE TABLE `Cliente` (
-    `id` VARCHAR(191) NOT NULL,
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
     `nome` VARCHAR(191) NOT NULL,
     `telefone` VARCHAR(191) NULL,
     `criadoEm` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -23,7 +23,7 @@ CREATE TABLE `Cliente` (
 
 -- CreateTable
 CREATE TABLE `ItemCatalogo` (
-    `id` VARCHAR(191) NOT NULL,
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
     `nome` VARCHAR(191) NOT NULL,
     `tipo` ENUM('SERVICO', 'PRODUTO') NOT NULL,
     `preco` DECIMAL(10, 2) NOT NULL,
@@ -34,22 +34,22 @@ CREATE TABLE `ItemCatalogo` (
 
 -- CreateTable
 CREATE TABLE `Transacao` (
-    `id` VARCHAR(191) NOT NULL,
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
     `tipo` ENUM('ENTRADA', 'SAIDA') NOT NULL,
     `descricao` VARCHAR(191) NULL,
     `valorTotal` DECIMAL(10, 2) NOT NULL,
     `data` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `profissionalId` VARCHAR(191) NULL,
-    `clienteId` VARCHAR(191) NULL,
+    `profissionalId` INTEGER NULL,
+    `clienteId` INTEGER NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `ItemTransacao` (
-    `id` VARCHAR(191) NOT NULL,
-    `transacaoId` VARCHAR(191) NOT NULL,
-    `itemId` VARCHAR(191) NOT NULL,
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `transacaoId` INTEGER NOT NULL,
+    `itemId` INTEGER NOT NULL,
     `quantidade` INTEGER NOT NULL DEFAULT 1,
     `precoUnitario` DECIMAL(10, 2) NOT NULL,
 

@@ -2,20 +2,6 @@ import { Request, Response } from 'express';
 import { ProfissionalService } from '../services/ProfissionalService';
 
 export class ProfissionalController {
-    // async create(req: Request, res: Response){
-    //     const { nome, email, senha, perfil } = req.body;
-    //     const profissionalService = new ProfissionalService();
-
-    //     const result = await profissionalService.create({
-    //         nome,
-    //         email,
-    //         senha,
-    //         perfil
-    //     });
-
-    //     return res.status(201).json(result);
-    // }
-
     async listar(req: Request, res: Response){
         const profissionalService = new ProfissionalService();
 
@@ -24,12 +10,44 @@ export class ProfissionalController {
         return res.status(200).json(result);
     }
 
-    // async deletar(req: Request, res: Response){
-    //     const { profissionalID } = req.params;
-    //     const profissionalService = new ProfissionalService();
+    async criar(req: Request, res: Response){
+        const { nome, email, senha, perfil } = req.body;
+        const profissionalService = new ProfissionalService();
 
-    //     const result = await profissionalService.delete(profissionalID as string);
+        const result = await profissionalService.create({
+            nome,
+            email,
+            senha,
+            perfil
+        });
 
-    //     return res.status(400).json(result);
-    // }
+        return res.status(201).json(result);
+    }
+
+    async editar(req: Request, res: Response){
+        const id = Number(req.params.id);
+        const { nome, email, senha, perfil } = req.body;
+        const profissionalService = new ProfissionalService();
+
+        const result = await profissionalService.edit(
+            id,
+            {
+                nome,
+                email,
+                senha,
+                perfil
+            }
+        );
+
+        return res.status(201).json(result);
+    }
+
+    async deletar(req: Request, res: Response){
+        const id = Number(req.params.id); 
+        const profissionalService = new ProfissionalService();
+
+        const result = await profissionalService.delete(id);
+
+        return res.status(400).json(result);
+    }
 }

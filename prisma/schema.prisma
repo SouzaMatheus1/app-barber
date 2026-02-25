@@ -13,12 +13,12 @@ datasource db {
 }
 
 model Profissional {
-  id        String   @id @default(uuid())
-  nome      String
-  email     String   @unique
-  senha     String
-  perfil    Perfil   @default(BARBEIRO)
-  criadoEm  DateTime @default(now())
+  id         Int      @id @default(autoincrement())
+  nome       String
+  email      String   @unique
+  senha      String
+  perfil     Perfil   @default(BARBEIRO)
+  criadoEm   DateTime @default(now())
   
   transacoes Transacao[]
 }
@@ -29,20 +29,20 @@ enum Perfil {
 }
 
 model Cliente {
-  id        String   @id @default(uuid())
-  nome      String
-  telefone  String?
-  criadoEm  DateTime @default(now())
+  id         Int      @id @default(autoincrement())
+  nome       String
+  telefone   String?
+  criadoEm   DateTime @default(now())
   
   transacoes Transacao[]
 }
 
 model ItemCatalogo {
-  id        String   @id @default(uuid())
-  nome      String
-  tipo      TipoItem // SERVICO ou PRODUTO
-  preco     Decimal  @db.Decimal(10, 2)
-  comissao  Decimal? @db.Decimal(5, 2) // % de comissão
+  id         Int             @id @default(autoincrement())
+  nome       String
+  tipo       TipoItem        // SERVICO ou PRODUTO
+  preco      Decimal         @db.Decimal(10, 2)
+  comissao   Decimal?        @db.Decimal(5, 2) // % de comissão
   
   itensTransacao ItemTransacao[]
 }
@@ -53,17 +53,17 @@ enum TipoItem {
 }
 
 model Transacao {
-  id             String   @id @default(uuid())
+  id             Int           @id @default(autoincrement())
   tipo           TipoTransacao // ENTRADA ou SAIDA
   descricao      String?
-  valorTotal     Decimal  @db.Decimal(10, 2)
-  data           DateTime @default(now())
+  valorTotal     Decimal       @db.Decimal(10, 2)
+  data           DateTime      @default(now())
   
-  profissionalId String?
+  profissionalId Int?
   profissional   Profissional? @relation(fields: [profissionalId], references: [id])
   
-  clienteId      String?
-  cliente        Cliente? @relation(fields: [clienteId], references: [id])
+  clienteId      Int?
+  cliente        Cliente?      @relation(fields: [clienteId], references: [id])
 
   itens          ItemTransacao[]
 }
@@ -74,11 +74,11 @@ enum TipoTransacao {
 }
 
 model ItemTransacao {
-  id            String @id @default(uuid())
-  transacaoId   String
-  itemId        String
-  quantidade    Int    @default(1)
-  precoUnitario Decimal @db.Decimal(10, 2) // Preço no momento da venda
+  id            Int          @id @default(autoincrement())
+  transacaoId   Int
+  itemId        Int
+  quantidade    Int          @default(1)
+  precoUnitario Decimal      @db.Decimal(10, 2) // Preço no momento da venda
 
   transacao     Transacao    @relation(fields: [transacaoId], references: [id])
   item          ItemCatalogo @relation(fields: [itemId], references: [id])

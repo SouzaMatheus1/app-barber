@@ -28,6 +28,8 @@ export class ProfissionalController {
     //     const { profissionalID } = req.params;
     //     const profissionalService = new ProfissionalService();
 
-    //     const result = await profissionalService.delete(profissionalID)
+    //     const result = await profissionalService.delete(profissionalID as string);
+
+    //     return res.status(400).json(result);
     // }
 }

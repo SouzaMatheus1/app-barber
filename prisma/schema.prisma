@@ -17,15 +17,19 @@ model Profissional {
   nome       String
   email      String   @unique
   senha      String
-  perfil     Perfil   @default(BARBEIRO)
   criadoEm   DateTime @default(now())
+  
+  perfilId   Int      @default(1)
+  perfil     Perfil   @relation(fields: [perfilId], references: [id])
   
   transacoes Transacao[]
 }
 
-enum Perfil {
-  ADMIN
-  BARBEIRO
+model Perfil {
+  id            Int            @id @default(autoincrement())
+  descricao     String         @unique // Ex: "ADMIN", "BARBEIRO"
+  
+  profissionais Profissional[]
 }
 
 model Cliente {
@@ -40,37 +44,45 @@ model Cliente {
 model ItemCatalogo {
   id         Int             @id @default(autoincrement())
   nome       String
-  tipo       TipoItem        // SERVICO ou PRODUTO
   preco      Decimal         @db.Decimal(10, 2)
   comissao   Decimal?        @db.Decimal(5, 2) // % de comissão
+  
+  tipoItemId Int
+  tipo       TipoItem        @relation(fields: [tipoItemId], references: [id])
   
   itensTransacao ItemTransacao[]
 }
 
-enum TipoItem {
-  SERVICO
-  PRODUTO
+model TipoItem {
+  id            Int            @id @default(autoincrement())
+  descricao     String         @unique // Ex: "SERVICO", "PRODUTO"
+  
+  itens         ItemCatalogo[]
 }
 
 model Transacao {
   id             Int           @id @default(autoincrement())
-  tipo           TipoTransacao // ENTRADA ou SAIDA
   descricao      String?
   valorTotal     Decimal       @db.Decimal(10, 2)
   data           DateTime      @default(now())
   
-  profissionalId Int?
-  profissional   Profissional? @relation(fields: [profissionalId], references: [id])
+  tipoTransacaoId Int
+  tipo            TipoTransacao @relation(fields: [tipoTransacaoId], references: [id])
   
-  clienteId      Int?
-  cliente        Cliente?      @relation(fields: [clienteId], references: [id])
+  profissionalId  Int?
+  profissional    Profissional? @relation(fields: [profissionalId], references: [id])
+  
+  clienteId       Int?
+  cliente         Cliente?      @relation(fields: [clienteId], references: [id])
 
   itens          ItemTransacao[]
 }
 
-enum TipoTransacao {
-  ENTRADA
-  SAIDA
+model TipoTransacao {
+  id            Int            @id @default(autoincrement())
+  descricao     String         @unique // Ex: "ENTRADA", "SAIDA"
+  
+  transacoes    Transacao[]
 }
 
 model ItemTransacao {

@@ -11,14 +11,14 @@ export class ProfissionalController {
     }
 
     async criar(req: Request, res: Response){
-        const { nome, email, senha, perfil } = req.body;
+        const { nome, email, senha, perfilId } = req.body;
         const profissionalService = new ProfissionalService();
 
         const result = await profissionalService.create({
             nome,
             email,
             senha,
-            perfil
+            perfilId
         });
 
         return res.status(201).json(result);
@@ -26,7 +26,7 @@ export class ProfissionalController {
 
     async editar(req: Request, res: Response){
         const id = Number(req.params.id);
-        const { nome, email, senha, perfil } = req.body;
+        const { nome, email, senha, perfilId } = req.body;
         const profissionalService = new ProfissionalService();
 
         const result = await profissionalService.edit(
@@ -35,7 +35,7 @@ export class ProfissionalController {
                 nome,
                 email,
                 senha,
-                perfil
+                perfilId
             }
         );
 

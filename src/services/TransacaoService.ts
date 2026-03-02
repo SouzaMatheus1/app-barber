@@ -22,7 +22,10 @@ export class TransacaoService {
     async create(data: {
         descricao: string,
         valorTotal: number,
-        tipoTransacaoId
+        tipoTransacaoId: number,
+        profissionalId: number,
+        clienteId: number,
+        itens: { itemId: number, quantidade: number, precoUnitario:number } []
     }){
 
     }

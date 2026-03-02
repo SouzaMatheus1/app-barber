@@ -16,12 +16,7 @@ export class ProfissionalService {
         return profissionais;
     }
 
-    async create(data: {
-        nome: string,
-        email: string,
-        senha:string, 
-        perfilId: number
-    }) {
+    async create(data: any) {
         const { nome, email, senha, perfilId } = data;
 
         const profissionalCadastrado = await prisma.profissional.findUnique({

@@ -52,7 +52,7 @@ export class ItemCatalogoService {
                 preco: data.preco,
                 comissao: data.comissao,
                 tipoItemId: data.tipoItemId
-            } as any,
+            },
             select: {
                 id: true,
                 nome: true,

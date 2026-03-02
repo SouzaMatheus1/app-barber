@@ -2,52 +2,69 @@ import { Request, Response } from 'express';
 import { ProfissionalService } from '../services/ProfissionalService';
 
 export class ProfissionalController {
-    async listar(req: Request, res: Response){
+    async listar(req: Request, res: Response) {
         const profissionalService = new ProfissionalService();
 
-        const result = await profissionalService.listAll();
-        
-        return res.status(200).json(result);
+        try {
+            const result = await profissionalService.listAll();
+
+            return res.status(200).json(result);
+        } catch (error: any) {
+            return res.status(500).json({ error: 'Erro ao buscar profissionais' });
+        }
     }
 
-    async criar(req: Request, res: Response){
+    async criar(req: Request, res: Response) {
         const { nome, email, senha, perfilId } = req.body;
         const profissionalService = new ProfissionalService();
 
-        const result = await profissionalService.create({
-            nome,
-            email,
-            senha,
-            perfilId
-        });
-
-        return res.status(201).json(result);
-    }
-
-    async editar(req: Request, res: Response){
-        const id = Number(req.params.id);
-        const { nome, email, senha, perfilId } = req.body;
-        const profissionalService = new ProfissionalService();
-
-        const result = await profissionalService.edit(
-            id,
-            {
+        try{
+            const result = await profissionalService.create({
                 nome,
                 email,
                 senha,
                 perfilId
-            }
-        );
+            });
+    
+            return res.status(201).json(result);
 
-        return res.status(201).json(result);
+        } catch (error: any) {
+            return res.status(500).json({ error: 'Erro ao cadastrar profissional' });
+        }
     }
 
-    async deletar(req: Request, res: Response){
-        const id = Number(req.params.id); 
+    async editar(req: Request, res: Response) {
+        const id = Number(req.params.id);
+        const { nome, email, senha, perfilId } = req.body;
         const profissionalService = new ProfissionalService();
 
-        const result = await profissionalService.delete(id);
+        try{
+            const result = await profissionalService.edit(
+                id,
+                {
+                    nome,
+                    email,
+                    senha,
+                    perfilId
+                }
+            );
+    
+            return res.status(201).json(result);
+        } catch (error: any) {
+            return res.status(500).json({ error: 'Erro ao editar registro' });
+        }
+    }
 
-        return res.status(400).json(result);
+    async deletar(req: Request, res: Response) {
+        const id = Number(req.params.id);
+        const profissionalService = new ProfissionalService();
+
+        try {
+            const result = await profissionalService.delete(id);
+    
+            return res.status(400).json(result);
+        } catch (error: any) {
+            return res.status(400).json({ error: error.message });
+        }
     }
 }

@@ -5,9 +5,13 @@ export class ClienteController {
     async listar(req: Request, res: Response){
         const clienteService = new ClienteService();
 
-        const result = await clienteService.listAll();
-        
-        return res.status(200).json(result);
+        try{ 
+            const result = await clienteService.listAll();
+            
+            return res.status(200).json(result);
+        } catch (error: any) {
+            return res.status(400).json({ error: error.message });
+        }
     }
 
     async criar(req: Request, res: Response){

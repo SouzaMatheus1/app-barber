@@ -3,12 +3,14 @@ import { ProfissionalController } from '../controllers/ProfissionalController'
 import { ItemCatalogoController } from '../controllers/ItemCatalogoController';
 import { ClienteController } from '../controllers/ClienteController'
 import { TransacaoController } from '../controllers/TransacaoController';
+import { ComissaoController } from '../controllers/ComissaoController';
 
 const routes = Router();
 const profissionalController = new ProfissionalController();
 const itemCatalogoController = new ItemCatalogoController();
 const clienteController = new ClienteController();
 const transacaoController = new TransacaoController();
+const comissaoController = new ComissaoController();
 
 // profissional
 routes.get('/profissionais', profissionalController.listar);
@@ -29,9 +31,12 @@ routes.put('/itens/:id', itemCatalogoController.editar);
 routes.delete('/itens/:id', itemCatalogoController.deletar);
 
 // transacao
-routes.get('/transacao', transacaoController.listar);
-routes.post('/transacao', transacaoController.criar);
-routes.put('/transacao/:id', transacaoController.editar);
-routes.delete('/transacao/:id', transacaoController.deletar);
+routes.get('/transacoes', transacaoController.listar);
+routes.post('/transacoes', transacaoController.criar);
+// routes.put('/transacoes/:id', transacaoController.editar);
+routes.delete('/transacoes/:id', transacaoController.deletar);
+
+// comissao funcionarios
+routes.get('/comissoes/profissional/:id', comissaoController.relatorio);
 
 export { routes };

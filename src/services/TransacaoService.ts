@@ -21,31 +21,45 @@ export class TransacaoService {
 
     async create(data: {
         descricao?: string,
-        valorTotal: number,
         tipoTransacaoId: number,
         profissionalId: number,
         clienteId?: number,
-        itens: { itemId: number, quantidade: number, precoUnitario: number } []
+        itens: { itemId: number, quantidade: number } []
     }){
-        const { descricao, valorTotal, tipoTransacaoId, profissionalId, clienteId, itens } = data;
+        const { descricao, tipoTransacaoId, profissionalId, clienteId, itens } = data;
+
+        const itensId = itens.map(item => item.itemId);
+
+        const itensBd = await prisma.itemTransacao.findMany({
+            where: { id: { in: itensId } }
+        });
+
+        if (itens.length !== itensBd.length)
+            throw new Error("Um ou mais itens não estão cadastrados.");
+
+        let totalVenda = 0;
+        const itensSelecionados = itens.map(itemRegistrado => { // itemRegistrado é o item vindo do parametro
+            const itemSalvo = itensBd.find(i => i.id == itemRegistrado.itemId);
+            const valorItem = Number(itemSalvo?.precoUnitario);
+            totalVenda += valorItem * itemRegistrado.quantidade;
+
+            return {
+                quantidade: itemRegistrado.quantidade,
+                precoUnitario: valorItem,
+                item: { connect: { id: itemRegistrado.itemId }}
+            }
+        });
 
         const transacao = await prisma.transacao.create({
             data: {
-                valorTotal,
+                valorTotal: totalVenda,
                 descricao,
                 tipo: { connect: { id: tipoTransacaoId } },
                 profissional: { connect: { id: profissionalId } },
                 ...(clienteId && { cliente: { connect: { id: clienteId } } }),
                 itens: {
-                    create: itens.map(item => ({
-                        quantidade: item.quantidade,
-                        precoUnitario: item.precoUnitario,
-                        item: { connect: { id: item.itemId } }
-                    }))
+                    create: itensSelecionados
                 }
-            },
-            include: {
-                itens: true
             }
         });
 
@@ -75,8 +89,17 @@ export class TransacaoService {
                 tipoTransacaoId: data.tipoTransacaoId,
                 profissionalId: data.profissionalId,
                 clienteId: data.clienteId
+            },
+            select: {
+                descricao: true,
+                valorTotal: true,
+                tipoTransacaoId: true,
+                profissionalId: true,
+                clienteId: true
             }
-        })
+        });
+
+        return result;
     }
 
     async delete(id: number) {

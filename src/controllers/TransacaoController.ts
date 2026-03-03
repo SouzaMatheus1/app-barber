@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { TransacaoService, TransacaoService } from '../services/TransacaoService';
+import { TransacaoService } from '../services/TransacaoService';
 
 export class TransacaoController {
     async listar(req: Request, res: Response) {
@@ -15,14 +15,13 @@ export class TransacaoController {
     }
 
     async criar(req: Request, res: Response) {
-        const { tipoTransacaoId, descricao, valorTotal, profissionalId, clienteId, itens } = req.body;
+        const { tipoTransacaoId, descricao, profissionalId, clienteId, itens } = req.body;
         const transacaoService = new TransacaoService();
 
         try {
             const result = await transacaoService.create({
                 tipoTransacaoId,
                 descricao,
-                valorTotal,
                 profissionalId,
                 clienteId,
                 itens
@@ -34,22 +33,22 @@ export class TransacaoController {
         }
     }
 
-    async editar(req: Request, res: Response) {
-        const id = Number(req.params.id);
-        const { tipoTransacaoId, descricao, valorTotal, profissionalId, clienteId, itens } = req.body;
-        const transacaoService = new TransacaoService();
+    // async editar(req: Request, res: Response) {
+    //     const id = Number(req.params.id);
+    //     const { tipoTransacaoId, descricao, valorTotal, profissionalId, clienteId, itens } = req.body;
+    //     const transacaoService = new TransacaoService();
 
-        try {
-            const result = await transacaoService.edit(
-                id,
-                {
+    //     try {
+    //         const result = await transacaoService.edit(
+    //             id,
+    //             {
                     
-                }
-            )
-        } catch (error: any) {
-            return res.status(400).json({ error: error.message });
-        }
-    }
+    //             }
+    //         )
+    //     } catch (error: any) {
+    //         return res.status(400).json({ error: error.message });
+    //     }
+    // }
 
     async deletar(req: Request, res: Response) {
         const id = Number(req.params.id);

@@ -69,7 +69,7 @@ model Transacao {
   tipoTransacaoId Int
   tipo            TipoTransacao @relation(fields: [tipoTransacaoId], references: [id])
   
-  profissionalId  Int?
+  profissionalId  Int
   profissional    Profissional? @relation(fields: [profissionalId], references: [id])
   
   clienteId       Int?

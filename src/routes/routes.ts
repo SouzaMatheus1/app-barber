@@ -4,6 +4,7 @@ import { ItemCatalogoController } from '../controllers/ItemCatalogoController';
 import { ClienteController } from '../controllers/ClienteController'
 import { TransacaoController } from '../controllers/TransacaoController';
 import { ComissaoController } from '../controllers/ComissaoController';
+import { CaixaController } from '../controllers/CaixaController';
 
 const routes = Router();
 const profissionalController = new ProfissionalController();
@@ -11,6 +12,7 @@ const itemCatalogoController = new ItemCatalogoController();
 const clienteController = new ClienteController();
 const transacaoController = new TransacaoController();
 const comissaoController = new ComissaoController();
+const caixaController = new CaixaController();
 
 // profissional
 routes.get('/profissionais', profissionalController.listar);
@@ -38,5 +40,8 @@ routes.delete('/transacoes/:id', transacaoController.deletar);
 
 // comissao funcionarios
 routes.get('/comissoes/profissional/:id', comissaoController.relatorio);
+
+// resumo caixa diario
+routes.get('/caixa/diario', caixaController.resumo);
 
 export { routes };

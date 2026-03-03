@@ -5,6 +5,8 @@ import { ClienteController } from '../controllers/ClienteController'
 import { TransacaoController } from '../controllers/TransacaoController';
 import { ComissaoController } from '../controllers/ComissaoController';
 import { CaixaController } from '../controllers/CaixaController';
+import { isAuth, isAdmin } from '../middleware/auth';
+import { AuthController } from '../controllers/authController';
 
 const routes = Router();
 const profissionalController = new ProfissionalController();
@@ -13,7 +15,9 @@ const clienteController = new ClienteController();
 const transacaoController = new TransacaoController();
 const comissaoController = new ComissaoController();
 const caixaController = new CaixaController();
+const authController = new AuthController();
 
+// pub
 // profissional
 routes.get('/profissionais', profissionalController.listar);
 routes.post('/profissionais', profissionalController.criar);
@@ -41,7 +45,10 @@ routes.delete('/transacoes/:id', transacaoController.deletar);
 // comissao funcionarios
 routes.get('/comissoes/profissional/:id', comissaoController.relatorio);
 
+// rotas protegidas
 // resumo caixa diario
-routes.get('/caixa/diario', caixaController.resumo);
+routes.get('/caixa/diario', isAuth, isAdmin, caixaController.resumo);
+
+routes.post('/login', authController.login)
 
 export { routes };

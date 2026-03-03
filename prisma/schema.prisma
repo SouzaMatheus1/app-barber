@@ -65,6 +65,7 @@ model Transacao {
   descricao      String?
   valorTotal     Decimal       @db.Decimal(10, 2)
   data           DateTime      @default(now())
+  usouAssinatura Boolean       @default(false) // verificar
   
   tipoTransacaoId Int
   tipo            TipoTransacao @relation(fields: [tipoTransacaoId], references: [id])
@@ -95,3 +96,26 @@ model ItemTransacao {
   transacao     Transacao    @relation(fields: [transacaoId], references: [id])
   item          ItemCatalogo @relation(fields: [itemId], references: [id])
 }
+// verificar
+// model Plano {
+//   id            Int          @id @defaul(autoincrement())
+//   valorMensal   Decimal      @db.Decimal(10, 2)
+//   qntCortes     Int
+//   qntBarbas     Int
+//   ativo       Boolean  @default(true)
+//   
+//   assinaturas Assinatura[]
+// }
+// 
+// model Assinatura {
+//   id            Int          @id @defaul(autoincrement())
+//   status          Int
+//   diaVencimento   DateTime
+//   criadoEm        DateTime   @default(now())
+// 
+//   clienteId       Int
+//   cliente         Cliente      @relation(fields: [clienteId], references: [id])
+// 
+//   planoId         Int
+//   plano           Plano @relation(fiels: [planoId], references: [id])
+// }

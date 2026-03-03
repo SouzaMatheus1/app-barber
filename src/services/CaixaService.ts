@@ -1,10 +1,15 @@
 import { prisma } from '../database/prisma';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
 
 export class CaixaService {
     async resumoDiario(dataString?: string) {
-        const dataAlvo = dataString ? new Date(dataString) : new Date();
-        const inicioDia = new Date(dataAlvo.setHours(0, 0, 0, 0));
-        const fimDia = new Date(dataAlvo.setHours(23, 59, 59, 999));
+        dayjs.extend(utc);
+        dayjs.extend(timezone);
+
+        const inicioDia = dayjs.tz("2026-03-02", "America/Sao_Paulo").startOf('day').toDate();
+        const fimDia = dayjs.tz("2026-03-02", "America/Sao_Paulo").endOf('day').toDate();
 
         const transacoesPassadas = await prisma.transacao.findMany({
             where: { data: { lt: inicioDia } },

@@ -1,4 +1,5 @@
 import { prisma } from '../database/prisma';
+import { Transacao, ItemTransacao } from '@prisma/client';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -59,9 +60,9 @@ export class CaixaService {
             },
             saldoFinal: saldoInicial + parteBarbeariaDia,
             quantidadeTransacoes: transacoesHoje.length,
-            detalhesTransacoes: transacoesHoje.map(transacao => ({
+            detalhesTransacoes: transacoesHoje.map((transacao : Transacao) => ({
                 id: transacao.id,
-                profissional: transacao.profissional,
+                profissional: transacao.profissionalId,
                 valorTotal: Number(transacao.valorTotal),
                 data: transacao.data
             }))

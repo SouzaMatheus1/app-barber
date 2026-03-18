@@ -2,11 +2,10 @@ import { Request, Response } from 'express';
 import { ItemCatalogoService } from '../services/ItemCatalogoService';
 
 export class ItemCatalogoController {
+    private itemCatalogoService = new ItemCatalogoService();
     async listar(req: Request, res: Response) {
-        const itemCatalogoService = new ItemCatalogoService();
-
         try {
-            const result = await itemCatalogoService.listAll();
+            const result = await this.itemCatalogoService.listAll();
 
             return res.status(200).json(result);
         } catch (error: any) {
@@ -16,10 +15,9 @@ export class ItemCatalogoController {
 
     async criar(req: Request, res: Response) {
         const { nome, preco, comissao, tipoItemId } = req.body;
-        const itemCatalogoService = new ItemCatalogoService();
 
         try {
-            const result = await itemCatalogoService.create({
+            const result = await this.itemCatalogoService.create({
                 nome,
                 preco,
                 comissao,
@@ -35,10 +33,9 @@ export class ItemCatalogoController {
     async editar(req: Request, res: Response) {
         const id = Number(req.params.id);
         const { nome, preco, comissao, tipoItemId } = req.body;
-        const itemCatalogoService = new ItemCatalogoService();
 
         try {
-            const result = await itemCatalogoService.edit(
+            const result = await this.itemCatalogoService.edit(
                 id,
                 {
                     nome,
@@ -56,10 +53,9 @@ export class ItemCatalogoController {
 
     async deletar(req: Request, res: Response) {
         const id = Number(req.params.id);
-        const itemCatalogoService = new ItemCatalogoService();
 
         try {
-            const result = await itemCatalogoService.delete(id);
+            const result = await this.itemCatalogoService.delete(id);
 
             return res.status(200).json(result);
         } catch (error: any) {

@@ -19,31 +19,31 @@ const authController = new AuthController();
 
 // pub
 // profissional
-routes.get('/profissionais', profissionalController.listar);
-routes.post('/profissionais', profissionalController.criar);
-routes.put('/profissionais/:id', profissionalController.editar);
-routes.delete('/profissionais/:id', profissionalController.deletar);
+routes.get('/profissionais', isAuth, profissionalController.listar);
+routes.post('/profissionais', isAuth, profissionalController.criar);
+routes.put('/profissionais/:id', isAuth, profissionalController.editar);
+routes.delete('/profissionais/:id', isAuth, profissionalController.deletar);
 
 // cliente
-routes.get('/clientes', clienteController.listar);
-routes.post('/clientes', clienteController.criar);
-routes.put('/clientes/:id', clienteController.editar);
-routes.delete('/clientes/:id', clienteController.deletar);
+routes.get('/clientes', isAuth, clienteController.listar);
+routes.post('/clientes', isAuth, clienteController.criar);
+routes.put('/clientes/:id', isAuth, clienteController.editar);
+routes.delete('/clientes/:id', isAuth, clienteController.deletar);
 
 // item catalogo
-routes.get('/itens', itemCatalogoController.listar);
-routes.post('/itens', itemCatalogoController.criar);
-routes.put('/itens/:id', itemCatalogoController.editar);
-routes.delete('/itens/:id', itemCatalogoController.deletar);
+routes.get('/itens', isAuth, itemCatalogoController.listar);
+routes.post('/itens', isAuth, itemCatalogoController.criar);
+routes.put('/itens/:id', isAuth, itemCatalogoController.editar);
+routes.delete('/itens/:id', isAuth, itemCatalogoController.deletar);
 
 // transacao
-routes.get('/transacoes', transacaoController.listar);
-routes.post('/transacoes', transacaoController.criar);
-// routes.put('/transacoes/:id', transacaoController.editar);
-routes.delete('/transacoes/:id', transacaoController.deletar);
+routes.get('/transacoes', isAuth, transacaoController.listar);
+routes.post('/transacoes', isAuth, transacaoController.criar);
+// routes.put('/transacoes/:id', isAuth, transacaoController.editar);
+routes.delete('/transacoes/:id', isAuth, transacaoController.deletar);
 
 // comissao funcionarios
-routes.get('/comissoes/profissional/:id', comissaoController.relatorio);
+routes.get('/comissoes/profissional/:id', isAuth, comissaoController.relatorio);
 
 // rotas protegidas
 // resumo caixa diario

@@ -2,11 +2,11 @@ import { Request, Response } from 'express';
 import { TransacaoService } from '../services/TransacaoService';
 
 export class TransacaoController {
+    private transacaoService = new TransacaoService();
+    
     async listar(req: Request, res: Response) {
-        const transacaoService = new TransacaoService();
-
         try {
-            const result = await transacaoService.listAll();
+            const result = await this.transacaoService.listAll();
 
             return res.status(200).json(result);
         } catch (error: any) {
@@ -16,10 +16,9 @@ export class TransacaoController {
 
     async criar(req: Request, res: Response) {
         const { tipoTransacaoId, descricao, profissionalId, clienteId, itens } = req.body;
-        const transacaoService = new TransacaoService();
 
         try {
-            const result = await transacaoService.create({
+            const result = await this.transacaoService.create({
                 tipoTransacaoId,
                 descricao,
                 profissionalId,
@@ -36,10 +35,9 @@ export class TransacaoController {
     // async editar(req: Request, res: Response) {
     //     const id = Number(req.params.id);
     //     const { tipoTransacaoId, descricao, valorTotal, profissionalId, clienteId, itens } = req.body;
-    //     const transacaoService = new TransacaoService();
 
     //     try {
-    //         const result = await transacaoService.edit(
+    //         const result = await this.transacaoService.edit(
     //             id,
     //             {
                     
@@ -52,10 +50,9 @@ export class TransacaoController {
 
     async deletar(req: Request, res: Response) {
         const id = Number(req.params.id);
-        const transacaoService = new TransacaoService();
 
         try {
-            const result = await transacaoService.delete(id);
+            const result = await this.transacaoService.delete(id);
 
             return res.status(200).json(result);
         } catch (error: any) {

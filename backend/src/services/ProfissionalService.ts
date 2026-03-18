@@ -1,5 +1,5 @@
 import { prisma } from '../database/prisma';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 export class ProfissionalService {
     async listAll() {

@@ -18,10 +18,10 @@ export class CaixaService {
         });
 
         let saldoInicial = 0;
-        transacoesPassadas.forEach(t => {
-            t.itens.forEach(i => {
-                const totalItem = i.quantidade * Number(i.precoUnitario);
-                const percentualComissao = i.item.comissao ? Number(i.item.comissao) : 0;
+        transacoesPassadas.forEach((transacao: Transacao) => {
+            transacao.itens.forEach((itemTransacao: ItemTransacao) => {
+                const totalItem = itemTransacao.quantidade * Number(itemTransacao.precoUnitario);
+                const percentualComissao = itemTransacao.item.comissao ? Number(itemTransacao.item.comissao) : 0;
                 saldoInicial += totalItem - ((totalItem * percentualComissao) / 100);
             });
         });
@@ -38,10 +38,10 @@ export class CaixaService {
         let parteBarbeariaDia = 0;
         let comissoesDia = 0;
 
-        transacoesHoje.forEach(transacao => {
-            transacao.itens.forEach(item => {
-                const totalItem = item.quantidade * Number(item.precoUnitario);
-                const percentualComissao = item.item.comissao ? Number(item.item.comissao) : 0;
+        transacoesHoje.forEach((transacao: Transacao) => {
+            transacao.itens.forEach((itemTransacao: ItemTransacao) => {
+                const totalItem = itemTransacao.quantidade * Number(itemTransacao.precoUnitario);
+                const percentualComissao = itemTransacao.itemTransacao.comissao ? Number(itemTransacao.item.comissao) : 0;
                 const valorComissao = (totalItem * percentualComissao) / 100;
 
                 faturamentoDia += totalItem;

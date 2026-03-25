@@ -21,8 +21,9 @@ export function isAuth(req: Request, res: Response, next: NextFunction) {
         const payload = verify(token, process.env.JWT_SECRET as string) as Payload;
         res.locals.user = payload;
         return next();
-    } catch (err) {
-        return res.status(401).json({ error: 'Token inválido' });
+    } catch (err: any) {
+        console.error("Erro JWT Verify:", err);
+        return res.status(401).json({ error: 'Token inválido', detalhes: err?.message || 'Erro desconhecido' });
     }
 }
 

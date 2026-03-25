@@ -4,7 +4,7 @@ import { CaixaService } from '../services/CaixaService';
 export class CaixaController {
     private caixaService = new CaixaService();
     
-    async resumo(req: Request, res: Response) {
+    resumo = async (req: Request, res: Response) => {
         const data = req.query.data as string;
 
         try {

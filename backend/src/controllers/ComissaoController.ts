@@ -3,7 +3,7 @@ import { ComissaoService } from '../services/ComissaoService';
 
 export class ComissaoController {
     private comissaoService = new ComissaoService();
-    async relatorio(req: Request, res: Response) {
+    relatorio = async (req: Request, res: Response) => {
         const profissionalId = Number(req.params.id);
         
         // Pega as datas da URL, garantindo que sejam strings

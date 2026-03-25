@@ -4,7 +4,7 @@ import { TransacaoService } from '../services/TransacaoService';
 export class TransacaoController {
     private transacaoService = new TransacaoService();
     
-    async listar(req: Request, res: Response) {
+    listar = async (req: Request, res: Response) => {
         try {
             const result = await this.transacaoService.listAll();
 
@@ -14,7 +14,7 @@ export class TransacaoController {
         }
     }
 
-    async criar(req: Request, res: Response) {
+    criar = async (req: Request, res: Response) => {
         const { tipoTransacaoId, descricao, profissionalId, clienteId, itens } = req.body;
 
         try {
@@ -48,7 +48,7 @@ export class TransacaoController {
     //     }
     // }
 
-    async deletar(req: Request, res: Response) {
+    deletar = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
 
         try {

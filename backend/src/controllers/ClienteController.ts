@@ -4,7 +4,7 @@ import { ClienteService } from '../services/ClienteService';
 export class ClienteController {
     private clienteService = new ClienteService();
 
-    async listar(req: Request, res: Response){
+    listar = async (req: Request, res: Response) => {
         try{ 
             const result = await this.clienteService.listAll();
             
@@ -14,7 +14,7 @@ export class ClienteController {
         }
     }
 
-    async criar(req: Request, res: Response){
+    criar = async (req: Request, res: Response) => {
         const { nome, telefone } = req.body;
 
         try {
@@ -28,7 +28,7 @@ export class ClienteController {
         }
     }
 
-    async editar(req: Request, res: Response){
+    editar = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
         const { nome, telefone } = req.body;
 
@@ -46,7 +46,7 @@ export class ClienteController {
         }
     }
 
-    async deletar(req: Request, res: Response){
+    deletar = async (req: Request, res: Response) => {
         const id = Number(req.params.id); 
 
         try {

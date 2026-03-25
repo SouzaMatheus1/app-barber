@@ -3,7 +3,7 @@ import { ItemCatalogoService } from '../services/ItemCatalogoService';
 
 export class ItemCatalogoController {
     private itemCatalogoService = new ItemCatalogoService();
-    async listar(req: Request, res: Response) {
+    listar = async (req: Request, res: Response) => {
         try {
             const result = await this.itemCatalogoService.listAll();
 
@@ -13,7 +13,7 @@ export class ItemCatalogoController {
         }
     }
 
-    async criar(req: Request, res: Response) {
+    criar = async (req: Request, res: Response) => {
         const { nome, preco, comissao, tipoItemId } = req.body;
 
         try {
@@ -30,7 +30,7 @@ export class ItemCatalogoController {
         }
     }
 
-    async editar(req: Request, res: Response) {
+    editar = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
         const { nome, preco, comissao, tipoItemId } = req.body;
 
@@ -51,7 +51,7 @@ export class ItemCatalogoController {
         }
     }
 
-    async deletar(req: Request, res: Response) {
+    deletar = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
 
         try {

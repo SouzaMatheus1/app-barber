@@ -13,6 +13,9 @@
   "author": "",
   "license": "ISC",
   "type": "commonjs",
+  "prisma": {
+    "seed": "ts-node-dev --transpile-only prisma/seed.ts"
+  },
   "dependencies": {
     "@prisma/adapter-mariadb": "^7.4.1",
     "@prisma/client": "^7.4.1",

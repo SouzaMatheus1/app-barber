@@ -64,8 +64,8 @@ const Dashboard: React.FC = () => {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <header>
-        <h1 className="text-3xl font-serif font-bold text-[#D4AF37]">Dashboard</h1>
-        <p className="text-[#E5E5E5]/60 mt-1">Resumo das atividades métricas de hoje.</p>
+        <h1 className="text-3xl font-serif font-bold text-[#D4AF37]">WS Barber Shop</h1>
+        <p className="text-[#000000]/60 mt-1">Resumo das atividades métricas de hoje.</p>
       </header>
 
       {/* Metrics Grid */}

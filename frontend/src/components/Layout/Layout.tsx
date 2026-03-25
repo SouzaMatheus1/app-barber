@@ -6,7 +6,7 @@ const Layout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen bg-[#121212] text-[#E5E5E5] font-sans">
+    <div className="flex h-screen bg-[#A1A1A1] text-[#000000] font-sans">
       <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
       
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -18,7 +18,7 @@ const Layout = () => {
           </button>
         </header>
 
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-[#121212] p-6 lg:p-8">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-[#A1A1A1] p-6 lg:p-8">
           <Outlet />
         </main>
       </div>

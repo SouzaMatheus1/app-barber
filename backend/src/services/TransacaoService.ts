@@ -31,17 +31,17 @@ export class TransacaoService {
 
         const itensId = itens.map(item => item.itemId);
 
-        const itensBd = await prisma.itemTransacao.findMany({
+        const itensBd = await prisma.itemCatalogo.findMany({
             where: { id: { in: itensId } }
         });
 
         if (itens.length !== itensBd.length)
-            throw new Error("Um ou mais itens não estão cadastrados.");
+            throw new Error("Um ou mais itens não estão cadastrados no catálogo.");
 
         let totalVenda = 0;
         const itensSelecionados = itens.map(itemRegistrado => { // itemRegistrado é o item vindo do parametro
-            const itemSalvo = itensBd.find((itemBd: ItemTransacao) => itemBd.id == itemRegistrado.itemId);
-            const valorItem = Number(itemSalvo?.precoUnitario);
+            const itemSalvo = itensBd.find((itemBd: any) => itemBd.id == itemRegistrado.itemId);
+            const valorItem = Number(itemSalvo?.preco);
             totalVenda += valorItem * itemRegistrado.quantidade;
 
             return {

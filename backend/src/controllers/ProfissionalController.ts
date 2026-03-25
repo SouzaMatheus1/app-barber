@@ -4,7 +4,7 @@ import { ProfissionalService } from '../services/ProfissionalService';
 export class ProfissionalController {
     private profissionalService = new ProfissionalService();
     
-    async listar(req: Request, res: Response) {
+    listar = async (req: Request, res: Response) => {
         try {
             const result = await this.profissionalService.listAll();
 
@@ -14,7 +14,7 @@ export class ProfissionalController {
         }
     }
 
-    async criar(req: Request, res: Response) {
+    criar = async (req: Request, res: Response) => {
         const { nome, email, senha, perfilId } = req.body;
 
         try{
@@ -32,7 +32,7 @@ export class ProfissionalController {
         }
     }
 
-    async editar(req: Request, res: Response) {
+    editar = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
         const { nome, email, senha, perfilId } = req.body;
 
@@ -53,7 +53,7 @@ export class ProfissionalController {
         }
     }
 
-    async deletar(req: Request, res: Response) {
+    deletar = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
 
         try {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-// import { authService } from '../../services/authService';
+import { authService } from '../../services/authService';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -18,14 +18,10 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      // Exemplo de como chamaria o serviço
-      // const response = await authService.login(email, password);
+      // Usa o serviço real do backend
+      const response = await authService.login(email, password);
       
-      console.log('Login attempt:', { email });
-      await new Promise(resolve => setTimeout(resolve, 800)); // Delay simulado
-      
-      // Login fake para testar o sistema
-      login('fake-jwt-token', { id: 1, nome: 'Admin', perfil: 'ADMIN' });
+      login(response.token, response.profissional);
       navigate('/dashboard');
     } catch (err) {
       setError('Credenciais inválidas. Tente novamente.');

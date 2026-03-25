@@ -1,21 +1,65 @@
-import React from 'react';
-import { TrendingUp, Users, Scissors, DollarSign } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { TrendingUp, Users, Scissors, DollarSign, Loader2 } from 'lucide-react';
+import { dashboardService } from '../../services/dashboardService';
 
 const Dashboard: React.FC = () => {
-  // Dados simulados para o visual
-  const metrics = [
-    { id: 1, title: 'Faturamento do Dia', value: 'R$ 1.250,00', icon: <TrendingUp size={24} />, trend: '+15%' },
-    { id: 2, title: 'Cortes Realizados', value: '28', icon: <Scissors size={24} />, trend: '+5' },
-    { id: 3, title: 'Ticket Médio', value: 'R$ 44,60', icon: <DollarSign size={24} />, trend: '+R$ 2,00' },
-    { id: 4, title: 'Novos Clientes', value: '4', icon: <Users size={24} />, trend: '+2' },
-  ];
+  const [loading, setLoading] = useState(true);
+  const [metrics, setMetrics] = useState<any[]>([]);
+  const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
 
-  const recentTransactions = [
-    { id: 101, client: 'João Silva', service: 'Corte + Barba', value: 'R$ 80,00', professional: 'Marcos', time: '14:30' },
-    { id: 102, client: 'Pedro Santos', service: 'Corte Degradê', value: 'R$ 45,00', professional: 'Lucas', time: '15:00' },
-    { id: 103, client: 'Carlos Oliveira', service: 'Barba Terapia', value: 'R$ 35,00', professional: 'Marcos', time: '15:45' },
-    { id: 104, client: 'Cliente Avulso', service: 'Pomada Modeladora', value: 'R$ 60,00', professional: 'Recepção', time: '16:10' },
-  ];
+  useEffect(() => {
+    async function loadData() {
+      try {
+        setLoading(true);
+        // Chama resumo diario usando a data de hoje para o parametro
+        const today = new Date().toISOString().split('T')[0];
+        const [resumo, transacoes, clientes] = await Promise.all([
+          dashboardService.getResumoDiario(today),
+          dashboardService.getTransacoes(),
+          dashboardService.getClientes()
+        ]);
+
+        const totalFaturamento = resumo.movimentoDia.faturamentoTotal || 0;
+        const totalTx = resumo.quantidadeTransacoes || 0;
+        const ticketMedio = totalTx > 0 ? totalFaturamento / totalTx : 0;
+        const clientesCount = clientes.length || 0;
+
+        setMetrics([
+          { id: 1, title: 'Faturamento do Dia', value: `R$ ${totalFaturamento.toFixed(2).replace('.', ',')}`, icon: <TrendingUp size={24} />, trend: '' },
+          { id: 2, title: 'Cortes Realizados', value: totalTx.toString(), icon: <Scissors size={24} />, trend: '' },
+          { id: 3, title: 'Ticket Médio', value: `R$ ${ticketMedio.toFixed(2).replace('.', ',')}`, icon: <DollarSign size={24} />, trend: '' },
+          { id: 4, title: 'Total de Clientes', value: clientesCount.toString(), icon: <Users size={24} />, trend: '' },
+        ]);
+
+        // Mapeia e pega apenas as 10 ultimas transacoes
+        const ultimas = transacoes.slice(0, 10).map((tx: any) => ({
+          id: tx.id,
+          client: tx.cliente?.nome || 'Cliente Avulso',
+          service: tx.itens && tx.itens.length > 0 ? tx.itens[0].item.nome + (tx.itens.length > 1 ? '...' : '') : 'Serviço',
+          value: `R$ ${Number(tx.valorTotal).toFixed(2).replace('.', ',')}`,
+          professional: tx.profissional?.nome || '-',
+          time: new Date(tx.data).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+        }));
+
+        setRecentTransactions(ultimas);
+
+      } catch (error) {
+        console.error("Erro ao carregar os dados do dashboard", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-full min-h-[50vh]">
+        <Loader2 className="w-8 h-8 animate-spin text-[#D4AF37]" />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">

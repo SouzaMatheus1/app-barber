@@ -9,8 +9,9 @@ export class CaixaService {
         dayjs.extend(utc);
         dayjs.extend(timezone);
 
-        const inicioDia = dayjs.tz("2026-03-02", "America/Sao_Paulo").startOf('day').toDate();
-        const fimDia = dayjs.tz("2026-03-02", "America/Sao_Paulo").endOf('day').toDate();
+        const dataAlvo = dataString ? dayjs.tz(dataString, "America/Sao_Paulo") : dayjs().tz("America/Sao_Paulo");
+        const inicioDia = dataAlvo.startOf('day').toDate();
+        const fimDia = dataAlvo.endOf('day').toDate();
 
         const transacoesPassadas = await prisma.transacao.findMany({
             where: { data: { lt: inicioDia } },
@@ -18,8 +19,8 @@ export class CaixaService {
         });
 
         let saldoInicial = 0;
-        transacoesPassadas.forEach((transacao: Transacao) => {
-            transacao.itens.forEach((itemTransacao: ItemTransacao) => {
+        transacoesPassadas.forEach((transacao: any) => {
+            transacao.itens.forEach((itemTransacao: any) => {
                 const totalItem = itemTransacao.quantidade * Number(itemTransacao.precoUnitario);
                 const percentualComissao = itemTransacao.item.comissao ? Number(itemTransacao.item.comissao) : 0;
                 saldoInicial += totalItem - ((totalItem * percentualComissao) / 100);
@@ -38,10 +39,10 @@ export class CaixaService {
         let parteBarbeariaDia = 0;
         let comissoesDia = 0;
 
-        transacoesHoje.forEach((transacao: Transacao) => {
-            transacao.itens.forEach((itemTransacao: ItemTransacao) => {
+        transacoesHoje.forEach((transacao: any) => {
+            transacao.itens.forEach((itemTransacao: any) => {
                 const totalItem = itemTransacao.quantidade * Number(itemTransacao.precoUnitario);
-                const percentualComissao = itemTransacao.itemTransacao.comissao ? Number(itemTransacao.item.comissao) : 0;
+                const percentualComissao = itemTransacao.item.comissao ? Number(itemTransacao.item.comissao) : 0;
                 const valorComissao = (totalItem * percentualComissao) / 100;
 
                 faturamentoDia += totalItem;
@@ -60,7 +61,7 @@ export class CaixaService {
             },
             saldoFinal: saldoInicial + parteBarbeariaDia,
             quantidadeTransacoes: transacoesHoje.length,
-            detalhesTransacoes: transacoesHoje.map((transacao : Transacao) => ({
+            detalhesTransacoes: transacoesHoje.map((transacao : any) => ({
                 id: transacao.id,
                 profissional: transacao.profissionalId,
                 valorTotal: Number(transacao.valorTotal),

@@ -9,8 +9,10 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
-  // const { logout } = useAuth();
-  const logout = () => console.log('Logout executado'); // Fallback para não quebrar a UI
+  const logout = () => {
+    localStorage.removeItem('token');
+    window.location.href = '/login';
+  } 
 
   const navLinks = [
     { to: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },

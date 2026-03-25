@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, CheckCircle2 } from 'lucide-react';
-// import { TransacaoService } from '../../services/TransacaoService';
+import { transacaoService } from '../../services/TransacaoService';
 
 interface TransactionItem {
   id: string;
@@ -18,14 +18,27 @@ const Transacoes: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // Catálogo mock de serviços
-  const catalog = [
-    { name: 'Corte Degradê', price: 45 },
-    { name: 'Barba Simples', price: 30 },
-    { name: 'Barba Terapia', price: 40 },
-    { name: 'Corte + Barba', price: 80 },
-    { name: 'Pomada Modeladora', price: 60 },
-  ];
+  const [catalog, setCatalog] = useState<{id: number, name: string, price: number}[]>([]);
+  const [profissionais, setProfissionais] = useState<{id: number, nome: string}[]>([]);
+  const [clientes, setClientes] = useState<{id: number, nome: string}[]>([]);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [catData, profData, cliData] = await Promise.all([
+          transacaoService.getCatalogo(),
+          transacaoService.getProfissionais(),
+          transacaoService.getClientes()
+        ]);
+        setCatalog(catData.map((c: any) => ({ id: c.id, name: c.nome, price: Number(c.preco) })));
+        setProfissionais(profData);
+        setClientes(cliData);
+      } catch (err) {
+        console.error("Erro ao carregar dados base:", err);
+      }
+    };
+    loadData();
+  }, []);
 
   const handleAddItem = () => {
     setItems([
@@ -49,6 +62,7 @@ const Transacoes: React.FC = () => {
           const found = catalog.find(c => c.name === value);
           if (found) {
             updatedItem.price = found.price;
+            (updatedItem as any).itemId = found.id;
           }
         }
         return updatedItem;
@@ -67,17 +81,27 @@ const Transacoes: React.FC = () => {
     setSuccess(false);
 
     try {
+      const foundClient = clientes.find(c => c.nome.toLowerCase() === clientName.toLowerCase());
+      
       const payload = {
-        clientName,
-        professional,
-        items,
-        total: calculateTotal(),
-        date: new Date().toISOString()
+        descricao: `Atendimento para: ${clientName}`,
+        tipoTransacaoId: 1, // 1 = ENTRADA na seed
+        profissionalId: Number(professional),
+        clienteId: foundClient ? foundClient.id : null,
+        itens: items.filter(i => (i as any).itemId).map(i => ({
+          itemId: (i as any).itemId,
+          quantidade: i.quantity
+        }))
       };
       
-      // Simulação da chamada da API
-      // await TransacaoService.create(payload);
-      console.log('Transação registrada:', payload);
+      if (payload.itens.length === 0) {
+        alert("Selecione itens válidos do catálogo.");
+        setLoading(false);
+        return;
+      }
+
+      await transacaoService.create(payload);
+      // console.log('Transação registrada:', payload);
       
       await new Promise(resolve => setTimeout(resolve, 1000)); // fake delay
       setSuccess(true);
@@ -124,7 +148,6 @@ const Transacoes: React.FC = () => {
               onChange={(e) => setClientName(e.target.value)}
               className="w-full px-4 py-3 bg-[#121212] text-[#E5E5E5] rounded-lg border border-[#D4AF37]/20 focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all duration-300 placeholder-[#E5E5E5]/30"
               placeholder="Ex: João Silva ou Avulso"
-              required
             />
           </div>
           <div className="space-y-2">
@@ -136,10 +159,10 @@ const Transacoes: React.FC = () => {
                 className="w-full px-4 py-3 bg-[#121212] text-[#E5E5E5] rounded-lg border border-[#D4AF37]/20 focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all duration-300 appearance-none"
                 required
               >
-                <option value="" disabled>Selecione o barbeiro ou atendente</option>
-                <option value="marcos">Marcos</option>
-                <option value="lucas">Lucas</option>
-                <option value="recepcao">Recepção (Apenas Produtos)</option>
+                <option value="" disabled>Selecione o barbeiro</option>
+                {profissionais.map(p => (
+                  <option key={p.id} value={p.id}>{p.nome}</option>
+                ))}
               </select>
               <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-[#D4AF37]">
                 <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
@@ -165,18 +188,19 @@ const Transacoes: React.FC = () => {
               <div key={item.id} className="flex flex-col md:flex-row gap-4 items-start md:items-center bg-[#121212] p-4 rounded-lg border border-[#D4AF37]/10">
                 <div className="flex-1 w-full space-y-1">
                   <label className="text-[10px] text-[#E5E5E5]/50 uppercase tracking-wider md:hidden">Item</label>
-                  <input
-                    type="text"
-                    list="catalog-list"
+                  <select
                     value={item.name}
                     onChange={(e) => handleItemChange(item.id, 'name', e.target.value)}
-                    placeholder="Serviço ou Produto"
-                    className="w-full bg-transparent text-[#E5E5E5] border-b border-[#D4AF37]/30 focus:outline-none focus:border-[#D4AF37] px-2 py-1 placeholder-[#E5E5E5]/30 leading-tight"
+                    className="w-full bg-transparent appearance-none text-[#E5E5E5] border-b border-[#D4AF37]/30 focus:outline-none focus:border-[#D4AF37] px-2 py-1 leading-tight"
                     required
-                  />
-                  <datalist id="catalog-list">
-                    {catalog.map(c => <option key={c.name} value={c.name} />)}
-                  </datalist>
+                  >
+                    <option value="" disabled className="bg-[#121212]">Selecione um serviço/produto</option>
+                    {catalog.map(c => (
+                      <option key={c.id} value={c.name} className="bg-[#121212]">
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 
                 <div className="w-full md:w-24 space-y-1">

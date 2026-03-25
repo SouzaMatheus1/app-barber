@@ -7,7 +7,7 @@ import Dashboard from './pages/Dashboard/Dashboard'
 import { Clientes } from './pages/Clientes/Clientes'
 import { Profissionais } from './pages/Profissionais/Profissionais'
 import { Catalogo } from './pages/Catalogo/Catalogo'
-import { Transacoes } from './pages/Transacoes/Transacoes'
+import Transacoes from './pages/Transacoes/Transacoes'
 import { Comissoes } from './pages/Comissoes/Comissoes'
 import Layout from './components/Layout/Layout'
 

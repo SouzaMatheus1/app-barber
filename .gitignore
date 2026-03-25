@@ -10,3 +10,6 @@ frontend/dist/
 .env
 /generated/prisma
 .vite
+
+
+README.md

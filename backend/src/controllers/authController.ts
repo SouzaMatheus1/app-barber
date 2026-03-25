@@ -3,7 +3,7 @@ import { AuthService } from '../services/authService';
 
 export class AuthController {
     private authService = new AuthService();
-    async login(req: Request, res: Response) {
+    login = async (req: Request, res: Response) => {
         const { email, senha } = req.body;
 
         try {

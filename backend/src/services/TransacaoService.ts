@@ -1,4 +1,5 @@
 import { prisma } from '../database/prisma';
+import { ItemTransacao } from '@prisma/client';
 
 export class TransacaoService {
     async listAll(){
@@ -39,7 +40,7 @@ export class TransacaoService {
 
         let totalVenda = 0;
         const itensSelecionados = itens.map(itemRegistrado => { // itemRegistrado é o item vindo do parametro
-            const itemSalvo = itensBd.find(i => i.id == itemRegistrado.itemId);
+            const itemSalvo = itensBd.find((itemBd: ItemTransacao) => itemBd.id == itemRegistrado.itemId);
             const valorItem = Number(itemSalvo?.precoUnitario);
             totalVenda += valorItem * itemRegistrado.quantidade;
 

@@ -7,7 +7,7 @@ export class AuthService {
         // Traz o profissional e o perfil dele junto
         const profissional = await prisma.profissional.findUnique({
             where: { email },
-            include: { perfil: true } 
+            include: { perfil: true }
         });
 
         if (!profissional)

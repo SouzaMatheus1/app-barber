@@ -14,13 +14,26 @@ export class ClienteController {
         }
     }
 
+    search = async (req: Request, res: Response) => {
+        try {
+            const q = req.query.q as string;
+            if (!q) return res.status(200).json([]);
+            
+            const result = await this.clienteService.searchByName(q);
+            return res.status(200).json(result);
+        } catch (error: any) {
+            return res.status(400).json({ error: error.message });
+        }
+    }
+
     criar = async (req: Request, res: Response) => {
-        const { nome, telefone } = req.body;
+        const { nome, telefone, planoId } = req.body;
 
         try {
             const result = await this.clienteService.create({
                 nome,
-                telefone
+                telefone,
+                planoId: planoId ? Number(planoId) : undefined
             });
             return res.status(201).json(result);
         } catch (error: any) {
@@ -30,14 +43,15 @@ export class ClienteController {
 
     editar = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
-        const { nome, telefone } = req.body;
+        const { nome, telefone, planoId } = req.body;
 
         try {
             const result = await this.clienteService.edit(
                 id,
                 {
                     nome,
-                    telefone
+                    telefone,
+                    planoId: planoId ? Number(planoId) : undefined
                 }
             );
             return res.status(200).json(result);

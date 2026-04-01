@@ -38,7 +38,7 @@ const Dashboard: React.FC = () => {
           service: tx.itens && tx.itens.length > 0 ? tx.itens[0].item.nome + (tx.itens.length > 1 ? '...' : '') : 'Serviço',
           value: `R$ ${Number(tx.valorTotal).toFixed(2).replace('.', ',')}`,
           professional: tx.profissional?.nome || '-',
-          time: new Date(tx.data).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+          time: new Date(tx.data).toLocaleTimeString('pt-BR', { day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })
         }));
 
         setRecentTransactions(ultimas);
@@ -107,7 +107,7 @@ const Dashboard: React.FC = () => {
                 <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Cliente</th>
                 <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Serviço/Produto</th>
                 <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Profissional</th>
-                <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Hora</th>
+                <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Data/Hora</th>
                 <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider text-right">Valor</th>
               </tr>
             </thead>

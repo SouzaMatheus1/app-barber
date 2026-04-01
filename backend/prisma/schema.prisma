@@ -38,7 +38,8 @@ model Cliente {
   telefone   String?
   criadoEm   DateTime @default(now())
   
-  transacoes Transacao[]
+  transacoes  Transacao[]
+  assinaturas Assinatura[]
 }
 
 model ItemCatalogo {
@@ -65,7 +66,6 @@ model Transacao {
   descricao      String?
   valorTotal     Decimal       @db.Decimal(10, 2)
   data           DateTime      @default(now())
-  usouAssinatura Boolean       @default(false) // verificar
   
   tipoTransacaoId Int
   tipo            TipoTransacao @relation(fields: [tipoTransacaoId], references: [id])
@@ -92,30 +92,42 @@ model ItemTransacao {
   itemId        Int
   quantidade    Int          @default(1)
   precoUnitario Decimal      @db.Decimal(10, 2) // Preço no momento da venda
+  usouCreditoAssinatura Boolean @default(false)
 
   transacao     Transacao    @relation(fields: [transacaoId], references: [id])
   item          ItemCatalogo @relation(fields: [itemId], references: [id])
 }
-// verificar
-// model Plano {
-//   id            Int          @id @defaul(autoincrement())
-//   valorMensal   Decimal      @db.Decimal(10, 2)
-//   qntCortes     Int
-//   qntBarbas     Int
-//   ativo       Boolean  @default(true)
-//   
-//   assinaturas Assinatura[]
-// }
-// 
-// model Assinatura {
-//   id            Int          @id @defaul(autoincrement())
-//   status          Int
-//   diaVencimento   DateTime
-//   criadoEm        DateTime   @default(now())
-// 
-//   clienteId       Int
-//   cliente         Cliente      @relation(fields: [clienteId], references: [id])
-// 
-//   planoId         Int
-//   plano           Plano @relation(fiels: [planoId], references: [id])
-// }
+
+model Plano {
+  id            Int          @id @default(autoincrement())
+  nome          String
+  valorMensal   Decimal      @db.Decimal(10, 2)
+  qtCortes      Int          @default(0)
+  qtBarbas      Int          @default(0)
+  qtCombos      Int          @default(0)
+  ativo         Boolean      @default(true)
+  
+  assinaturas   Assinatura[]
+}
+
+enum statusAssinatura {
+  ATIVA
+  INATIVA
+}
+
+model Assinatura {
+  id              Int          @id @default(autoincrement())
+  status          statusAssinatura       @default(ATIVA)
+  diaVencimento   Int?
+  criadoEm        DateTime     @default(now())
+  
+  creditosCorte   Int          @default(0)
+  creditosBarba   Int          @default(0)
+  creditosCombo   Int          @default(0)
+
+  clienteId       Int
+  cliente         Cliente      @relation(fields: [clienteId], references: [id])
+
+  planoId         Int
+  plano           Plano        @relation(fields: [planoId], references: [id])
+}

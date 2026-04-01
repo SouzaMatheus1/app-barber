@@ -9,6 +9,7 @@ import { Profissionais } from './pages/Profissionais/Profissionais'
 import { Catalogo } from './pages/Catalogo/Catalogo'
 import Transacoes from './pages/Transacoes/Transacoes'
 import { Comissoes } from './pages/Comissoes/Comissoes'
+import Assinaturas from './pages/Assinaturas/Assinaturas'
 import Layout from './components/Layout/Layout'
 
 export default function App() {
@@ -32,6 +33,7 @@ export default function App() {
               <Route path="/profissionais" element={<Profissionais />} />
               <Route path="/catalogo" element={<Catalogo />} />
               <Route path="/comissoes" element={<Comissoes />} />
+              <Route path="/assinaturas" element={<Assinaturas />} />
             </Route>
           </Route>
         </Routes>

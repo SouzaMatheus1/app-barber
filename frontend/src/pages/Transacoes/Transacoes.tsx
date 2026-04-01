@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, CheckCircle2 } from 'lucide-react';
+import { Plus, Trash2, CheckCircle2, Loader2 } from 'lucide-react';
 import { transacaoService } from '../../services/TransacaoService';
+import { assinaturaService } from '../../services/AssinaturaService';
+import { ClienteService } from '../../services/ClienteService';
+
+const clienteService = new ClienteService();
 
 interface TransactionItem {
   id: string;
   name: string;
   quantity: number;
   price: number;
+  usouCreditoAssinatura?: boolean;
 }
 
 const Transacoes: React.FC = () => {
@@ -21,24 +26,90 @@ const Transacoes: React.FC = () => {
   const [catalog, setCatalog] = useState<{id: number, name: string, price: number}[]>([]);
   const [profissionais, setProfissionais] = useState<{id: number, nome: string}[]>([]);
   const [clientes, setClientes] = useState<{id: number, nome: string}[]>([]);
+  const [assinaturaAtiva, setAssinaturaAtiva] = useState<any>(null);
+
+  const [clientSuggestions, setClientSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isSearchingClient, setIsSearchingClient] = useState(false);
+  const searchTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [catData, profData, cliData] = await Promise.all([
+        const [catData, profData] = await Promise.all([
           transacaoService.getCatalogo(),
-          transacaoService.getProfissionais(),
-          transacaoService.getClientes()
+          transacaoService.getProfissionais()
         ]);
         setCatalog(catData.map((c: any) => ({ id: c.id, name: c.nome, price: Number(c.preco) })));
         setProfissionais(profData);
-        setClientes(cliData);
       } catch (err) {
         console.error("Erro ao carregar dados base:", err);
       }
     };
     loadData();
   }, []);
+
+  useEffect(() => {
+    const checkAssinatura = async () => {
+      const foundClient = clientes.find(c => c.nome.toLowerCase() === clientName.toLowerCase()) || 
+                          clientSuggestions.find(c => c.nome.toLowerCase() === clientName.toLowerCase());
+      if (foundClient) {
+        try {
+           const ativa = await assinaturaService.getAssinaturaAtiva(foundClient.id);
+           setAssinaturaAtiva(ativa || null);
+        } catch(e) {
+           setAssinaturaAtiva(null);
+        }
+      } else {
+        setAssinaturaAtiva(null);
+      }
+    };
+    if (clientName) {
+      checkAssinatura();
+    } else {
+      setAssinaturaAtiva(null);
+    }
+  }, [clientName]);
+
+  const handleClientNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setClientName(value);
+    setShowSuggestions(true);
+    
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    if (value.length >= 2) {
+      setIsSearchingClient(true);
+      searchTimeoutRef.current = setTimeout(async () => {
+        try {
+          const results = await clienteService.search(value);
+          setClientSuggestions(results);
+          setClientes(prev => {
+             const newC = [...prev];
+             results.forEach((r:any) => {
+                if(!newC.find(c => c.id === r.id)) newC.push(r);
+             });
+             return newC;
+          });
+        } catch (error) {
+          console.error("Erro na busca", error);
+        } finally {
+          setIsSearchingClient(false);
+        }
+      }, 400);
+    } else {
+      setClientSuggestions([]);
+      setIsSearchingClient(false);
+    }
+  };
+
+  const selectClient = (cliente: any) => {
+    setClientName(cliente.nome);
+    setShowSuggestions(false);
+    setClientSuggestions([]);
+  };
 
   const handleAddItem = () => {
     setItems([
@@ -72,7 +143,10 @@ const Transacoes: React.FC = () => {
   };
 
   const calculateTotal = () => {
-    return items.reduce((acc, item) => acc + (item.quantity * item.price), 0);
+    return items.reduce((acc, item) => {
+        if (item.usouCreditoAssinatura) return acc;
+        return acc + (item.quantity * item.price);
+    }, 0);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -90,7 +164,8 @@ const Transacoes: React.FC = () => {
         clienteId: foundClient ? foundClient.id : null,
         itens: items.filter(i => (i as any).itemId).map(i => ({
           itemId: (i as any).itemId,
-          quantidade: i.quantity
+          quantidade: i.quantity,
+          usouCreditoAssinatura: i.usouCreditoAssinatura || false
         }))
       };
       
@@ -140,15 +215,44 @@ const Transacoes: React.FC = () => {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
+          <div className="space-y-2 z-10 relative">
             <label className="text-xs font-semibold text-[#E5E5E5]/80 uppercase tracking-wider">Nome do Cliente</label>
-            <input
-              type="text"
-              value={clientName}
-              onChange={(e) => setClientName(e.target.value)}
-              className="w-full px-4 py-3 bg-[#121212] text-[#E5E5E5] rounded-lg border border-[#D4AF37]/20 focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all duration-300 placeholder-[#E5E5E5]/30"
-              placeholder="Ex: João Silva ou Avulso"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                value={clientName}
+                onChange={handleClientNameChange}
+                onFocus={() => { if (clientSuggestions.length > 0) setShowSuggestions(true); }}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                className="w-full px-4 py-3 bg-[#121212] text-[#E5E5E5] rounded-lg border border-[#D4AF37]/20 focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all duration-300 placeholder-[#E5E5E5]/30"
+                placeholder="Ex: João Silva ou Avulso"
+                autoComplete="off"
+              />
+              {isSearchingClient && (
+                <div className="absolute right-3 top-3 text-[#D4AF37]">
+                   <Loader2 size={18} className="animate-spin" />
+                </div>
+              )}
+              {showSuggestions && clientSuggestions.length > 0 && (
+                <ul className="absolute z-50 w-full mt-1 bg-[#1a1a1a] border border-[#D4AF37]/30 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                  {clientSuggestions.map((cliente) => (
+                    <li 
+                      key={cliente.id}
+                      onClick={() => selectClient(cliente)}
+                      className="px-4 py-3 cursor-pointer hover:bg-[#D4AF37]/10 text-[#E5E5E5] border-b border-[#D4AF37]/10 last:border-0 transition-colors"
+                    >
+                      <div className="font-bold">{cliente.nome}</div>
+                      <div className="text-xs text-[#E5E5E5]/60">{cliente.telefone || 'Sem telefone'}</div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            {assinaturaAtiva && (
+               <div className="mt-2 text-xs font-bold text-[#121212] bg-[#D4AF37] inline-block px-3 py-1.5 rounded shadow-lg animate-in fade-in">
+                 💎 Assinante Premium Ativo | ✂️ Cortes: {assinaturaAtiva.creditosCorte} | 🧔 Barbas: {assinaturaAtiva.creditosBarba}
+               </div>
+            )}
           </div>
           <div className="space-y-2">
             <label className="text-xs font-semibold text-[#E5E5E5]/80 uppercase tracking-wider">Profissional</label>
@@ -223,13 +327,28 @@ const Transacoes: React.FC = () => {
                       type="number"
                       min="0"
                       step="0.01"
-                      value={item.price}
+                      value={item.usouCreditoAssinatura ? 0 : item.price}
+                      readOnly={item.usouCreditoAssinatura}
                       onChange={(e) => handleItemChange(item.id, 'price', Number(e.target.value))}
-                      className="w-full bg-transparent text-[#D4AF37] border-b border-[#D4AF37]/30 focus:outline-none focus:border-[#D4AF37] py-1 pl-8 pr-2 font-bold"
+                      className={`w-full bg-transparent text-[#D4AF37] border-b border-[#D4AF37]/30 focus:outline-none focus:border-[#D4AF37] py-1 pl-8 pr-2 font-bold ${item.usouCreditoAssinatura ? 'opacity-50' : ''}`}
                       required
                     />
                   </div>
                 </div>
+
+                {assinaturaAtiva && (
+                    <div className="w-full md:w-auto mt-2 md:mt-2 flex items-center justify-center">
+                       <label className="flex items-center gap-2 cursor-pointer text-[11px] font-bold tracking-wider uppercase text-[#D4AF37] bg-[#D4AF37]/10 px-2 py-1.5 rounded-lg border border-[#D4AF37]/20 hover:bg-[#D4AF37]/20 transition-colors">
+                         <input 
+                            type="checkbox" 
+                            checked={item.usouCreditoAssinatura || false}
+                            onChange={(e) => handleItemChange(item.id, 'usouCreditoAssinatura', e.target.checked)}
+                            className="w-3.5 h-3.5 accent-[#D4AF37] border-none rounded"
+                         />
+                         Usar Crédito
+                       </label>
+                    </div>
+                )}
 
                 <button
                   type="button"

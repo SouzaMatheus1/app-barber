@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit2, Loader2, User } from 'lucide-react';
 import { ClienteService } from '../../services/ClienteService';
+import { assinaturaService } from '../../services/AssinaturaService';
 import type { Cliente } from '../../services/ClienteService';
 
 const clienteService = new ClienteService();
@@ -16,10 +17,22 @@ export function Clientes() {
   // Form State
   const [nome, setNome] = useState('');
   const [telefone, setTelefone] = useState('');
+  const [planoId, setPlanoId] = useState<number | ''>('');
+  const [planos, setPlanos] = useState<any[]>([]);
 
   useEffect(() => {
     loadClientes();
+    loadPlanos();
   }, []);
+
+  const loadPlanos = async () => {
+    try {
+      const res = await assinaturaService.getPlanos();
+      setPlanos(res);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const loadClientes = async () => {
     try {
@@ -38,9 +51,9 @@ export function Clientes() {
     setLoadingAction(true);
     try {
       if (editingId) {
-        await clienteService.editar(editingId, { nome, telefone });
+        await clienteService.editar(editingId, { nome, telefone, planoId: planoId ? Number(planoId) : undefined });
       } else {
-        await clienteService.criar({ nome, telefone });
+        await clienteService.criar({ nome, telefone, planoId: planoId ? Number(planoId) : undefined });
       }
       resetForm();
       await loadClientes();
@@ -71,6 +84,11 @@ export function Clientes() {
     setEditingId(Number(cliente.id)); // o banco as vezes traz Number object
     setNome(cliente.nome);
     setTelefone(cliente.telefone || '');
+    if (cliente.assinaturas && cliente.assinaturas.length > 0) {
+      setPlanoId(cliente.assinaturas[0].planoId);
+    } else {
+      setPlanoId('');
+    }
   };
 
   const resetForm = () => {
@@ -78,6 +96,7 @@ export function Clientes() {
     setEditingId(null);
     setNome('');
     setTelefone('');
+    setPlanoId('');
   };
 
   if (loading && clientes.length === 0) {
@@ -135,6 +154,26 @@ export function Clientes() {
                 placeholder="Ex: 11999999999"
               />
             </div>
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-[#E5E5E5]/80 uppercase tracking-wider">
+                Vincular Plano VIP <span className="text-[#E5E5E5]/40 text-[10px] ml-1">(Opcional)</span>
+              </label>
+              <div className="relative">
+                <select
+                  value={planoId}
+                  onChange={e => setPlanoId(e.target.value ? Number(e.target.value) : '')}
+                  className="w-full px-4 py-3 bg-[#121212] text-[#E5E5E5] rounded-lg border border-[#D4AF37]/20 focus:outline-none focus:border-[#D4AF37] transition-colors appearance-none cursor-pointer"
+                >
+                  <option value="">Sem plano ativo</option>
+                  {planos.map(p => (
+                    <option key={p.id} value={p.id}>{p.nome} - R$ {Number(p.valorMensal).toFixed(2)}</option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-[#D4AF37]">
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="flex gap-4 justify-end">
@@ -166,6 +205,7 @@ export function Clientes() {
                 <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Nome</th>
                 <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Telefone</th>
                 <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Data de Cadastro</th>
+                <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Plano selecionado</th>
                 <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider text-right">Ações</th>
               </tr>
             </thead>
@@ -182,6 +222,7 @@ export function Clientes() {
                     <td className="py-4 px-6 text-[#E5E5E5]/60 text-sm">
                       {new Date(cliente.criadoEm).toLocaleDateString('pt-BR')}
                     </td>
+                    <td className="py-4 px-6 text-[#E5E5E5]/80">{cliente.assinaturas?.[0]?.plano.nome || '-'}</td>
                     <td className="py-4 px-6 text-right space-x-3">
                       <button 
                         onClick={() => editClient(cliente)}

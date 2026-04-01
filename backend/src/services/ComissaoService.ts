@@ -34,15 +34,18 @@ export class ComissaoService {
         let totalVendido = 0;
         let totalComissao = 0;
 
-        transacoes.forEach((transacao: Transacao) => {
-            transacao.itens.forEach((itemVendido: ItemTransacao) => {
-                const valorTotalDoItem = itemVendido.quantidade * Number(itemVendido.precoUnitario);
-
+        transacoes.forEach((transacao: any) => {
+            transacao.itens.forEach((itemVendido: any) => {
+                const isCredito = itemVendido.usouCreditoAssinatura;
+                const basePreco = isCredito ? Number(itemVendido.item.preco) : Number(itemVendido.precoUnitario);
+                
+                const valorTotalBase = itemVendido.quantidade * basePreco;
                 const percentualComissao = itemVendido.item.comissao ? Number(itemVendido.item.comissao) : 0;
-
-                const valorComissao = (valorTotalDoItem * percentualComissao) / 100;
-
-                totalVendido += valorTotalDoItem;
+                const valorComissao = (valorTotalBase * percentualComissao) / 100;
+                
+                // para fins de vendas da barbearia usaremos apenas o q foi para o caixa real
+                const valorTotalDaVendaReal = itemVendido.quantidade * Number(itemVendido.precoUnitario);
+                totalVendido += valorTotalDaVendaReal;
                 totalComissao += valorComissao;
             });
         });

@@ -23,7 +23,16 @@ jest.mock('../database/prisma', () => ({
     itemTransacao: {
       deleteMany: jest.fn(),
     },
-    $transaction: jest.fn(),
+    assinatura: {
+      findFirst: jest.fn(),
+      update: jest.fn(),
+    },
+    $transaction: jest.fn().mockImplementation(async (arg) => {
+      if (typeof arg === 'function') {
+        return arg(prisma);
+      }
+      return Promise.resolve([{}, {}]);
+    }),
   },
 }));
 

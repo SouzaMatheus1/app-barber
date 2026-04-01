@@ -7,6 +7,7 @@ import { ComissaoController } from '../controllers/ComissaoController';
 import { CaixaController } from '../controllers/CaixaController';
 import { isAuth, isAdmin } from '../middleware/auth';
 import { AuthController } from '../controllers/authController';
+import { AssinaturaController } from '../controllers/AssinaturaController';
 
 const routes = Router();
 const profissionalController = new ProfissionalController();
@@ -16,6 +17,7 @@ const transacaoController = new TransacaoController();
 const comissaoController = new ComissaoController();
 const caixaController = new CaixaController();
 const authController = new AuthController();
+const assinaturaController = new AssinaturaController();
 
 // pub
 // profissional
@@ -25,6 +27,7 @@ routes.put('/profissionais/:id', isAuth, profissionalController.editar);
 routes.delete('/profissionais/:id', isAuth, profissionalController.deletar);
 
 // cliente
+routes.get('/clientes/search', isAuth, clienteController.search);
 routes.get('/clientes', isAuth, clienteController.listar);
 routes.post('/clientes', isAuth, clienteController.criar);
 routes.put('/clientes/:id', isAuth, clienteController.editar);
@@ -39,8 +42,16 @@ routes.delete('/itens/:id', isAuth, itemCatalogoController.deletar);
 // transacao
 routes.get('/transacoes', isAuth, transacaoController.listar);
 routes.post('/transacoes', isAuth, transacaoController.criar);
-// routes.put('/transacoes/:id', isAuth, transacaoController.editar);
 routes.delete('/transacoes/:id', isAuth, transacaoController.deletar);
+
+// plano & assinatura
+routes.get('/planos', isAuth, assinaturaController.listarPlanos);
+routes.post('/planos', isAuth, assinaturaController.criarPlano);
+routes.put('/planos/:id', isAuth, assinaturaController.editarPlano);
+routes.delete('/planos/:id', isAuth, assinaturaController.deletarPlano);
+routes.get('/assinaturas', isAuth, assinaturaController.listarAssinaturas);
+routes.post('/assinaturas', isAuth, assinaturaController.assinar);
+routes.get('/assinaturas/cliente/:clienteId/ativa', isAuth, assinaturaController.getAssinaturaCliente);
 
 // comissao funcionarios
 routes.get('/comissoes/profissional/:id', isAuth, comissaoController.relatorio);

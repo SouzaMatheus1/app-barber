@@ -1,10 +1,17 @@
 import { api } from './api';
 
 export interface Cliente {
-    id: Number,
-    nome: string,
-    telefone: string,
-    criadoEm: string
+  id: string | number
+  nome: string
+  telefone: string | null
+  criadoEm: string
+  assinaturas?: {
+    planoId: number,
+    plano: {
+      id: number,
+      nome: string
+    }
+  }[]
 }
 
 export class ClienteService {
@@ -13,12 +20,17 @@ export class ClienteService {
     return response.data
   }
 
-  async criar(data: { nome: string; telefone?: string }): Promise<Cliente> {
+  async search(query: string): Promise<Cliente[]> {
+    const response = await api.get(`/clientes/search?q=${encodeURIComponent(query)}`)
+    return response.data
+  }
+
+  async criar(data: { nome: string; telefone?: string; planoId?: number }): Promise<Cliente> {
     const response = await api.post('/clientes', data)
     return response.data
   }
 
-  async editar(id: number, data: { nome?: string; telefone?: string }): Promise<Cliente> {
+  async editar(id: number, data: { nome?: string; telefone?: string; planoId?: number }): Promise<Cliente> {
     const response = await api.put(`/clientes/${id}`, data)
     return response.data
   }

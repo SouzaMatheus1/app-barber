@@ -1,5 +1,5 @@
 import { prisma } from '../database/prisma';
-import { ItemTransacao } from '@prisma/client';
+import { ItemTransacao, statusAssinatura } from '@prisma/client';
 
 export class TransacaoService {
     async listAll(){
@@ -25,7 +25,7 @@ export class TransacaoService {
         tipoTransacaoId: number,
         profissionalId: number,
         clienteId?: number,
-        itens: { itemId: number, quantidade: number } []
+        itens: { itemId: number, quantidade: number, usouCreditoAssinatura?: boolean } []
     }){
         const { descricao, tipoTransacaoId, profissionalId, clienteId, itens } = data;
 
@@ -39,29 +39,77 @@ export class TransacaoService {
             throw new Error("Um ou mais itens não estão cadastrados no catálogo.");
 
         let totalVenda = 0;
+        let requiresCredits = false;
+        
+        let assinaturaAtiva = null;
+        if (clienteId) {
+            assinaturaAtiva = await prisma.assinatura.findFirst({
+                where: { clienteId, status: statusAssinatura.ATIVA }
+            });
+        }
+
         const itensSelecionados = itens.map(itemRegistrado => { // itemRegistrado é o item vindo do parametro
             const itemSalvo = itensBd.find((itemBd: any) => itemBd.id == itemRegistrado.itemId);
-            const valorItem = Number(itemSalvo?.preco);
+            let valorItem = Number(itemSalvo?.preco);
+            
+            const usouCredito = itemRegistrado.usouCreditoAssinatura || false;
+            
+            if (usouCredito) {
+               requiresCredits = true;
+               if (!assinaturaAtiva) {
+                   throw new Error("O cliente marcou o uso de crédito mas não possui assinatura ativa no momento.");
+               }
+               
+               const nomeNormalizado = itemSalvo?.nome.toLowerCase() || "";
+               if (nomeNormalizado.includes('combo')) {
+                   if (assinaturaAtiva.creditosCombo < itemRegistrado.quantidade) throw new Error('Saldo insuficiente para Combos do plano.');
+                   assinaturaAtiva.creditosCombo -= itemRegistrado.quantidade;
+               } else if (nomeNormalizado.includes('barba')) {
+                   if (assinaturaAtiva.creditosBarba < itemRegistrado.quantidade) throw new Error('Saldo insuficiente para Barbas do plano.');
+                   assinaturaAtiva.creditosBarba -= itemRegistrado.quantidade;
+               } else {
+                   if (assinaturaAtiva.creditosCorte < itemRegistrado.quantidade) throw new Error('Saldo insuficiente para Cortes do plano.');
+                   assinaturaAtiva.creditosCorte -= itemRegistrado.quantidade;
+               }
+               valorItem = 0; // zerando p/ o caixa final
+            }
+
             totalVenda += valorItem * itemRegistrado.quantidade;
 
             return {
                 quantidade: itemRegistrado.quantidade,
                 precoUnitario: valorItem,
+                usouCreditoAssinatura: usouCredito,
                 item: { connect: { id: itemRegistrado.itemId }}
             }
         });
 
-        const transacao = await prisma.transacao.create({
-            data: {
-                valorTotal: totalVenda,
-                descricao,
-                tipo: { connect: { id: tipoTransacaoId } },
-                profissional: { connect: { id: profissionalId } },
-                ...(clienteId && { cliente: { connect: { id: clienteId } } }),
-                itens: {
-                    create: itensSelecionados
+        // Efetivar dentro do banco. (Usando transaction para nao quebrar em caso de erros subjacentes)
+        const transacao = await prisma.$transaction(async (tx) => {
+            const trx = await tx.transacao.create({
+                data: {
+                    valorTotal: totalVenda,
+                    descricao,
+                    tipo: { connect: { id: tipoTransacaoId } },
+                    profissional: { connect: { id: profissionalId } },
+                    ...(clienteId && { cliente: { connect: { id: clienteId } } }),
+                    itens: {
+                        create: itensSelecionados
+                    }
                 }
+            });
+            
+            if (requiresCredits && assinaturaAtiva) {
+                await tx.assinatura.update({
+                   where: { id: assinaturaAtiva.id },
+                   data: {
+                       creditosBarba: assinaturaAtiva.creditosBarba,
+                       creditosCorte: assinaturaAtiva.creditosCorte,
+                       creditosCombo: assinaturaAtiva.creditosCombo
+                   }
+                });
             }
+            return trx;
         });
 
         return transacao;

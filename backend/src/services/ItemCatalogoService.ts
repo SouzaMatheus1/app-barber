@@ -18,6 +18,14 @@ export class ItemCatalogoService {
     async create(data: any) {
         const { nome, preco, comissao, tipoItemId } = data;
 
+        const exists = await prisma.itemCatalogo.findFirst({
+            where: { nome }
+        });
+
+        if (exists) {
+            throw new Error('DUPLICATE_ITEM');
+        }
+
         const item = await prisma.itemCatalogo.create({
             data: {
                 nome,

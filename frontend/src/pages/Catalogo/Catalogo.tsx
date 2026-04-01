@@ -50,9 +50,13 @@ export function Catalogo() {
       }
       resetForm();
       await loadItens();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao salvar item do catálogo", error);
-      alert("Falha ao salvar o item do catálogo.");
+      if (error.response?.data?.error?.includes('DUPLICATE_ITEM')) {
+        alert("Já existe um serviço ou produto com este exato nome no catálogo.");
+      } else {
+        alert("Falha ao salvar o item do catálogo.");
+      }
     } finally {
       setLoadingAction(false);
     }

@@ -2,7 +2,15 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Transacoes from '../Transacoes';
 import { transacaoService } from '../../../services/TransacaoService';
+import { assinaturaService } from '../../../services/AssinaturaService';
 import userEvent from '@testing-library/user-event';
+
+// Mock do assinaturaService
+vi.mock('../../../services/AssinaturaService', () => ({
+  assinaturaService: {
+    getAssinaturaAtiva: vi.fn()
+  }
+}));
 
 // Mock do transacaoService
 vi.mock('../../../services/TransacaoService', () => ({
@@ -27,6 +35,7 @@ describe('Página de Transações', () => {
     (transacaoService.getCatalogo as any).mockResolvedValue(mockCatalogo);
     (transacaoService.getProfissionais as any).mockResolvedValue(mockProfissionais);
     (transacaoService.getClientes as any).mockResolvedValue(mockClientes);
+    (assinaturaService.getAssinaturaAtiva as any).mockResolvedValue(null);
   });
 
   it('deve carregar e renderizar os dados do banco nos selects corretamente', async () => {
@@ -129,7 +138,7 @@ describe('Página de Transações', () => {
         tipoTransacaoId: 1,
         profissionalId: 1,
         clienteId: 1, // Por ter escrito João Silva e ele existir no mockClientes
-        itens: [{ itemId: 1, quantidade: 1 }]
+        itens: [{ itemId: 1, quantidade: 1, usouCreditoAssinatura: false }]
       });
     });
 

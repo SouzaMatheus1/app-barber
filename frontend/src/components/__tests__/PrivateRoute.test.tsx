@@ -2,7 +2,6 @@ import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { PrivateRoute } from '../PrivateRoute';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import React from 'react';
 
 // Mock do hook useAuth
 const mockUseAuth = vi.fn();

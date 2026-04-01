@@ -2,7 +2,6 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Login from '../Login';
 import { authService } from '../../../services/authService';
-import React from 'react';
 
 // Mock dependências do React Router
 const mockNavigate = vi.fn();

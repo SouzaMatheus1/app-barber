@@ -7,9 +7,9 @@ dist/
 backend/dist/
 frontend/dist/
 
+backend/*.log
+frontend/*.log
+
 .env
 /generated/prisma
 .vite
-
-
-README.md

@@ -1,5 +1,6 @@
 import axios from 'axios';
 
+// cria ponte com backend
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3030',
   headers: {

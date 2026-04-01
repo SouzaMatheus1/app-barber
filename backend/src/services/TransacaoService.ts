@@ -62,9 +62,12 @@ export class TransacaoService {
                
                const nomeNormalizado = itemSalvo?.nome.toLowerCase() || "";
                if (nomeNormalizado.includes('combo')) {
-                   if (assinaturaAtiva.creditosCombo < itemRegistrado.quantidade) throw new Error('Saldo insuficiente para Combos do plano.');
-                   assinaturaAtiva.creditosCombo -= itemRegistrado.quantidade;
-               } else if (nomeNormalizado.includes('barba')) {
+                   // Combo = 1 corte + 1 barba
+                   if (assinaturaAtiva.creditosCorte < itemRegistrado.quantidade) throw new Error('Saldo insuficiente de Cortes para o Combo.');
+                   if (assinaturaAtiva.creditosBarba < itemRegistrado.quantidade) throw new Error('Saldo insuficiente de Barbas para o Combo.');
+                   assinaturaAtiva.creditosCorte -= itemRegistrado.quantidade;
+                   assinaturaAtiva.creditosBarba -= itemRegistrado.quantidade;
+               } else if (nomeNormalizado.includes('barba') || nomeNormalizado.includes('bigode')) {
                    if (assinaturaAtiva.creditosBarba < itemRegistrado.quantidade) throw new Error('Saldo insuficiente para Barbas do plano.');
                    assinaturaAtiva.creditosBarba -= itemRegistrado.quantidade;
                } else {
@@ -104,8 +107,7 @@ export class TransacaoService {
                    where: { id: assinaturaAtiva.id },
                    data: {
                        creditosBarba: assinaturaAtiva.creditosBarba,
-                       creditosCorte: assinaturaAtiva.creditosCorte,
-                       creditosCombo: assinaturaAtiva.creditosCombo
+                       creditosCorte: assinaturaAtiva.creditosCorte
                    }
                 });
             }

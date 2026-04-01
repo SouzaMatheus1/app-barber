@@ -3,14 +3,13 @@ import { statusAssinatura } from '@prisma/client';
 
 export class AssinaturaService {
     // Planos
-    async createPlano(data: { nome: string, valorMensal: number, qtCortes: number, qtBarbas: number, qtCombos: number }) {
+    async createPlano(data: { nome: string, valorMensal: number, qtCortes: number, qtBarbas: number }) {
         return prisma.plano.create({
             data: {
                 nome: data.nome,
                 valorMensal: data.valorMensal,
                 qtCortes: data.qtCortes,
                 qtBarbas: data.qtBarbas,
-                qtCombos: data.qtCombos,
                 ativo: true
             }
         });
@@ -20,7 +19,7 @@ export class AssinaturaService {
         return prisma.plano.findMany({ where: { ativo: true } });
     }
 
-    async editPlano(id: number, data: { nome?: string, valorMensal?: number, qtCortes?: number, qtBarbas?: number, qtCombos?: number }) {
+    async editPlano(id: number, data: { nome?: string, valorMensal?: number, qtCortes?: number, qtBarbas?: number }) {
         const plano = await prisma.plano.findUnique({ where: { id } });
         if (!plano) throw new Error('Plano não encontrado');
 
@@ -30,8 +29,7 @@ export class AssinaturaService {
                 nome: data.nome,
                 valorMensal: data.valorMensal,
                 qtCortes: data.qtCortes,
-                qtBarbas: data.qtBarbas,
-                qtCombos: data.qtCombos
+                qtBarbas: data.qtBarbas
             }
         });
     }
@@ -58,25 +56,30 @@ export class AssinaturaService {
         });
 
         if (assinaturaAtiva) {
-            throw new Error('Cliente já possui uma assinatura ativa. Por favor verifique.');
+            // Se já tem assinatura ativa, inativa ela antes de criar a nova (troca de plano)
+            await prisma.assinatura.update({
+                where: { id: assinaturaAtiva.id },
+                data: { status: statusAssinatura.INATIVA }
+            });
         }
 
         const hoje = new Date();
-        const assinatura = await prisma.$transaction(async (tx) => {
-            const novaAssinatura = await tx.assinatura.create({
-                data: {
-                    clienteId,
-                    planoId,
-                    status: statusAssinatura.ATIVA,
-                    creditosCorte: plano.qtCortes,
-                    creditosBarba: plano.qtBarbas,
-                    creditosCombo: plano.qtCombos,
-                    diaVencimento: hoje.getDate()
-                }
-            });
 
-            // Registrar pagamento no caixa automaticamente
-            await tx.transacao.create({
+        // Cria a assinatura primeiro (separado do registro de caixa)
+        const novaAssinatura = await prisma.assinatura.create({
+            data: {
+                clienteId,
+                planoId,
+                status: statusAssinatura.ATIVA,
+                creditosCorte: plano.qtCortes,
+                creditosBarba: plano.qtBarbas,
+                diaVencimento: hoje.getDate()
+            }
+        });
+
+        // Registra o pagamento no caixa (best-effort: não reverte a assinatura se falhar)
+        try {
+            await prisma.transacao.create({
                 data: {
                     valorTotal: plano.valorMensal,
                     descricao: `Pagamento/Renovação Plano de Assinatura: ${plano.nome}`,
@@ -85,11 +88,11 @@ export class AssinaturaService {
                     tipoTransacaoId: 1 // 1 equivale a ENTRADA
                 }
             });
+        } catch (err) {
+            console.warn('Aviso: Assinatura criada mas falhou ao registrar no caixa:', err);
+        }
 
-            return novaAssinatura;
-        });
-
-        return assinatura;
+        return novaAssinatura;
     }
 
     async getAssinaturaAtivaByClienteId(clienteId: number) {

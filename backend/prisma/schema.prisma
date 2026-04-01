@@ -104,7 +104,6 @@ model Plano {
   valorMensal   Decimal      @db.Decimal(10, 2)
   qtCortes      Int          @default(0)
   qtBarbas      Int          @default(0)
-  qtCombos      Int          @default(0)
   ativo         Boolean      @default(true)
   
   assinaturas   Assinatura[]
@@ -123,7 +122,6 @@ model Assinatura {
   
   creditosCorte   Int          @default(0)
   creditosBarba   Int          @default(0)
-  creditosCombo   Int          @default(0)
 
   clienteId       Int
   cliente         Cliente      @relation(fields: [clienteId], references: [id])

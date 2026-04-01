@@ -21,8 +21,7 @@ export class ClienteService {
                         nome: true,
                         valorMensal: true,
                         qtCortes: true,
-                        qtBarbas: true,
-                        qtCombos: true
+                        qtBarbas: true
                     }
                     }
                 }
@@ -110,8 +109,11 @@ export class ClienteService {
 
         if (data.planoId) {
             try {
+                // Busca o primeiro profissional disponível para registrar o caixa
+                const primeiroProf = await prisma.profissional.findFirst({ select: { id: true } });
+                const profId = primeiroProf?.id ?? 1;
                 const assinaturaService = new AssinaturaService();
-                await assinaturaService.subscribe(id, data.planoId, 1); // 1 = Admin padrão para este fluxo rápido
+                await assinaturaService.subscribe(id, data.planoId, profId);
             } catch (err) {
                 console.error("Erro ao ativar/alterar assinatura na edicao", err);
             }

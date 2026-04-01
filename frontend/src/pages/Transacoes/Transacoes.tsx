@@ -1,100 +1,145 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, CheckCircle2, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Plus, Trash2, CheckCircle2, Loader2, Crown, Scissors } from 'lucide-react';
 import { transacaoService } from '../../services/TransacaoService';
 import { assinaturaService } from '../../services/AssinaturaService';
 import { ClienteService } from '../../services/ClienteService';
 
 const clienteService = new ClienteService();
 
-interface TransactionItem {
-  id: string;
-  name: string;
-  quantity: number;
-  price: number;
-  usouCreditoAssinatura?: boolean;
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface AssinaturaAtiva {
+  id: number;
+  planoId: number;
+  creditosCorte: number;
+  creditosBarba: number;
+  plano: { id: number; nome: string };
 }
 
+interface CatalogItem {
+  id: number;
+  name: string;
+  price: number;
+  /** Tipo do item para validar créditos */
+  tipo: 'corte' | 'barba' | 'outro';
+}
+
+interface CartItem {
+  /** UUID local */
+  uuid: string;
+  /** id do item no catálogo (undefined enquanto não selecionado) */
+  itemId?: number;
+  name: string;
+  quantity: number;
+  originalPrice: number;
+  usouCredito: boolean;
+}
+
+interface TransacaoPayloadItem {
+  itemId: number;
+  quantidade: number;
+  usouCreditoAssinatura: boolean;
+}
+
+interface TransacaoPayload {
+  descricao: string;
+  tipoTransacaoId: number;
+  profissionalId: number;
+  clienteId: number | null;
+  itens: TransacaoPayloadItem[];
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function resolveItemTipo(name: string): CatalogItem['tipo'] {
+  const n = name.toLowerCase();
+  if (n.includes('barba') || n.includes('bigode')) return 'barba';
+  if (n.includes('corte') || n.includes('cabelo') || n.includes('degrad')) return 'corte';
+  return 'outro';
+}
+
+const fmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
 const Transacoes: React.FC = () => {
+  // Form state
   const [clientName, setClientName] = useState('');
+  const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
   const [professional, setProfessional] = useState('');
-  const [items, setItems] = useState<TransactionItem[]>([
-    { id: crypto.randomUUID(), name: '', quantity: 1, price: 0 }
+  const [cartItems, setCartItems] = useState<CartItem[]>([
+    { uuid: crypto.randomUUID(), itemId: undefined, name: '', quantity: 1, originalPrice: 0, usouCredito: false }
   ]);
+
+  // UI state
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-
-  const [catalog, setCatalog] = useState<{id: number, name: string, price: number}[]>([]);
-  const [profissionais, setProfissionais] = useState<{id: number, nome: string}[]>([]);
-  const [clientes, setClientes] = useState<{id: number, nome: string}[]>([]);
-  const [assinaturaAtiva, setAssinaturaAtiva] = useState<any>(null);
-
+  const [isSearchingClient, setIsSearchingClient] = useState(false);
   const [clientSuggestions, setClientSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [isSearchingClient, setIsSearchingClient] = useState(false);
-  const searchTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Data
+  const [catalog, setCatalog] = useState<CatalogItem[]>([]);
+  const [profissionais, setProfissionais] = useState<{ id: number; nome: string }[]>([]);
+  const [assinaturaAtiva, setAssinaturaAtiva] = useState<AssinaturaAtiva | null>(null);
+  const [loadingAssinatura, setLoadingAssinatura] = useState(false);
+
+  const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── Load static data ──
   useEffect(() => {
-    const loadData = async () => {
+    (async () => {
       try {
         const [catData, profData] = await Promise.all([
           transacaoService.getCatalogo(),
-          transacaoService.getProfissionais()
+          transacaoService.getProfissionais(),
         ]);
-        setCatalog(catData.map((c: any) => ({ id: c.id, name: c.nome, price: Number(c.preco) })));
+        setCatalog(
+          catData.map((c: any) => ({
+            id: c.id,
+            name: c.nome,
+            price: Number(c.preco),
+            tipo: resolveItemTipo(c.nome),
+          }))
+        );
         setProfissionais(profData);
       } catch (err) {
-        console.error("Erro ao carregar dados base:", err);
+        console.error('Erro ao carregar dados base:', err);
       }
-    };
-    loadData();
+    })();
   }, []);
 
-  useEffect(() => {
-    const checkAssinatura = async () => {
-      const foundClient = clientes.find(c => c.nome.toLowerCase() === clientName.toLowerCase()) || 
-                          clientSuggestions.find(c => c.nome.toLowerCase() === clientName.toLowerCase());
-      if (foundClient) {
-        try {
-           const ativa = await assinaturaService.getAssinaturaAtiva(foundClient.id);
-           setAssinaturaAtiva(ativa || null);
-        } catch(e) {
-           setAssinaturaAtiva(null);
-        }
-      } else {
-        setAssinaturaAtiva(null);
-      }
-    };
-    if (clientName) {
-      checkAssinatura();
-    } else {
+  // ── Fetch assinatura quando um cliente é selecionado ──
+  const fetchAssinatura = useCallback(async (clienteId: number) => {
+    setLoadingAssinatura(true);
+    try {
+      const ativa = await assinaturaService.getAssinaturaAtiva(clienteId);
+      setAssinaturaAtiva(ativa ?? null);
+    } catch {
       setAssinaturaAtiva(null);
+    } finally {
+      setLoadingAssinatura(false);
     }
-  }, [clientName]);
+  }, []);
 
+  // ── Client search with debounce ──
   const handleClientNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setClientName(value);
+    setSelectedClientId(null);
+    setAssinaturaAtiva(null);
     setShowSuggestions(true);
-    
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
+
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
 
     if (value.length >= 2) {
       setIsSearchingClient(true);
-      searchTimeoutRef.current = setTimeout(async () => {
+      searchTimeout.current = setTimeout(async () => {
         try {
           const results = await clienteService.search(value);
           setClientSuggestions(results);
-          setClientes(prev => {
-             const newC = [...prev];
-             results.forEach((r:any) => {
-                if(!newC.find(c => c.id === r.id)) newC.push(r);
-             });
-             return newC;
-          });
-        } catch (error) {
-          console.error("Erro na busca", error);
+        } catch {
+          console.error('Erro na busca de clientes');
         } finally {
           setIsSearchingClient(false);
         }
@@ -107,95 +152,116 @@ const Transacoes: React.FC = () => {
 
   const selectClient = (cliente: any) => {
     setClientName(cliente.nome);
+    setSelectedClientId(cliente.id);
     setShowSuggestions(false);
     setClientSuggestions([]);
+    // Reset créditos usados ao trocar cliente
+    setCartItems(prev => prev.map(i => ({ ...i, usouCredito: false })));
+    fetchAssinatura(cliente.id);
   };
 
-  const handleAddItem = () => {
-    setItems([
-      ...items,
-      { id: crypto.randomUUID(), name: '', quantity: 1, price: 0 }
+  // ── Cart management ──
+  const addItem = () => {
+    setCartItems(prev => [
+      ...prev,
+      { uuid: crypto.randomUUID(), itemId: undefined, name: '', quantity: 1, originalPrice: 0, usouCredito: false },
     ]);
   };
 
-  const handleRemoveItem = (id: string) => {
-    if (items.length > 1) {
-      setItems(items.filter(item => item.id !== id));
-    }
+  const removeItem = (uuid: string) => {
+    setCartItems(prev => prev.length > 1 ? prev.filter(i => i.uuid !== uuid) : prev);
   };
 
-  const handleItemChange = (id: string, field: keyof TransactionItem, value: any) => {
-    setItems(items.map(item => {
-      if (item.id === id) {
-        const updatedItem = { ...item, [field]: value };
-        // Preenchimento automatico do preço se o nome for de um serviço conhecido
-        if (field === 'name') {
-          const found = catalog.find(c => c.name === value);
-          if (found) {
-            updatedItem.price = found.price;
-            (updatedItem as any).itemId = found.id;
-          }
-        }
-        return updatedItem;
-      }
-      return item;
-    }));
+  const handleItemSelect = (uuid: string, name: string) => {
+    const found = catalog.find(c => c.name === name);
+    setCartItems(prev =>
+      prev.map(item =>
+        item.uuid === uuid
+          ? { ...item, name, itemId: found?.id, originalPrice: found?.price ?? 0, usouCredito: false }
+          : item
+      )
+    );
   };
 
-  const calculateTotal = () => {
-    return items.reduce((acc, item) => {
-        if (item.usouCreditoAssinatura) return acc;
-        return acc + (item.quantity * item.price);
-    }, 0);
+  const handleQtyChange = (uuid: string, qty: number) => {
+    setCartItems(prev =>
+      prev.map(item => (item.uuid === uuid ? { ...item, quantity: Math.max(1, qty) } : item))
+    );
   };
 
+  const handleCreditToggle = (uuid: string, checked: boolean) => {
+    setCartItems(prev =>
+      prev.map(item => (item.uuid === uuid ? { ...item, usouCredito: checked } : item))
+    );
+  };
+
+  // ── Derived calculations ──
+  const total = cartItems.reduce((acc, item) => {
+    if (item.usouCredito) return acc;
+    return acc + item.originalPrice * item.quantity;
+  }, 0);
+
+  const isCreditToggleEnabled = (item: CartItem): boolean => {
+    if (!assinaturaAtiva || !item.itemId) return false;
+    const catalogItem = catalog.find(c => c.id === item.itemId);
+    if (!catalogItem || catalogItem.tipo === 'outro') return false;
+    if (catalogItem.tipo === 'barba') return assinaturaAtiva.creditosBarba > 0;
+    // corte (default para qualquer serviço não classificado como barba)
+    return assinaturaAtiva.creditosCorte > 0;
+  };
+
+  const getCreditLabel = (item: CartItem): string => {
+    const catalogItem = catalog.find(c => c.id === item.itemId);
+    if (!catalogItem || !assinaturaAtiva) return 'Usar Crédito';
+    if (catalogItem.tipo === 'barba') return `Crédito Barba (${assinaturaAtiva.creditosBarba} disp.)`;
+    return `Crédito Corte (${assinaturaAtiva.creditosCorte} disp.)`;
+  };
+
+  // ── Submit ──
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setSuccess(false);
 
     try {
-      const foundClient = clientes.find(c => c.nome.toLowerCase() === clientName.toLowerCase());
-      
-      const payload = {
-        descricao: `Atendimento para: ${clientName}`,
-        tipoTransacaoId: 1, // 1 = ENTRADA na seed
-        profissionalId: Number(professional),
-        clienteId: foundClient ? foundClient.id : null,
-        itens: items.filter(i => (i as any).itemId).map(i => ({
-          itemId: (i as any).itemId,
-          quantidade: i.quantity,
-          usouCreditoAssinatura: i.usouCreditoAssinatura || false
-        }))
-      };
-      
-      if (payload.itens.length === 0) {
-        alert("Selecione itens válidos do catálogo.");
-        setLoading(false);
+      const itensValidos = cartItems.filter(i => i.itemId !== undefined);
+      if (itensValidos.length === 0) {
+        alert('Selecione ao menos um item válido do catálogo.');
         return;
       }
 
+      const payload: TransacaoPayload = {
+        descricao: `Atendimento: ${clientName || 'Avulso'}`,
+        tipoTransacaoId: 1,
+        profissionalId: Number(professional),
+        clienteId: selectedClientId,
+        itens: itensValidos.map(i => ({
+          itemId: i.itemId!,
+          quantidade: i.quantity,
+          usouCreditoAssinatura: i.usouCredito,
+        })),
+      };
+
       await transacaoService.create(payload);
-      // console.log('Transação registrada:', payload);
-      
-      await new Promise(resolve => setTimeout(resolve, 1000)); // fake delay
+
       setSuccess(true);
-      
-      // Reset apos sucesso
       setTimeout(() => {
         setSuccess(false);
         setClientName('');
+        setSelectedClientId(null);
+        setAssinaturaAtiva(null);
         setProfessional('');
-        setItems([{ id: crypto.randomUUID(), name: '', quantity: 1, price: 0 }]);
-      }, 2000);
-
+        setCartItems([{ uuid: crypto.randomUUID(), itemId: undefined, name: '', quantity: 1, originalPrice: 0, usouCredito: false }]);
+      }, 2500);
     } catch (error) {
       console.error('Erro ao registrar transação', error);
+      alert('Erro ao registrar a transação. Verifique o console.');
     } finally {
       setLoading(false);
     }
   };
 
+  // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500">
       <header>
@@ -203,9 +269,11 @@ const Transacoes: React.FC = () => {
         <p className="text-[#E5E5E5]/60 mt-1">Registre um novo atendimento ou venda.</p>
       </header>
 
-      <form onSubmit={handleSubmit} className="bg-[#1a1a1a] rounded-2xl border border-[#D4AF37]/20 shadow-lg p-6 md:p-8 space-y-8 relative overflow-hidden">
-        
-        {/* Overlay de Sucesso */}
+      <form
+        onSubmit={handleSubmit}
+        className="bg-[#1a1a1a] rounded-2xl border border-[#D4AF37]/20 shadow-lg p-6 md:p-8 space-y-8 relative overflow-hidden"
+      >
+        {/* ── Overlay de Sucesso ── */}
         {success && (
           <div className="absolute inset-0 bg-[#121212]/90 backdrop-blur-sm z-20 flex flex-col items-center justify-center animate-in fade-in zoom-in duration-300">
             <CheckCircle2 size={64} className="text-[#D4AF37] mb-4" />
@@ -214,9 +282,14 @@ const Transacoes: React.FC = () => {
           </div>
         )}
 
+        {/* ── Cliente + Profissional ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          {/* Cliente */}
           <div className="space-y-2 z-10 relative">
-            <label className="text-xs font-semibold text-[#E5E5E5]/80 uppercase tracking-wider">Nome do Cliente</label>
+            <label className="text-xs font-semibold text-[#E5E5E5]/80 uppercase tracking-wider">
+              Nome do Cliente
+            </label>
             <div className="relative">
               <input
                 type="text"
@@ -229,14 +302,14 @@ const Transacoes: React.FC = () => {
                 autoComplete="off"
               />
               {isSearchingClient && (
-                <div className="absolute right-3 top-3 text-[#D4AF37]">
-                   <Loader2 size={18} className="animate-spin" />
+                <div className="absolute right-3 top-3.5 text-[#D4AF37]">
+                  <Loader2 size={18} className="animate-spin" />
                 </div>
               )}
               {showSuggestions && clientSuggestions.length > 0 && (
                 <ul className="absolute z-50 w-full mt-1 bg-[#1a1a1a] border border-[#D4AF37]/30 rounded-lg shadow-xl max-h-48 overflow-y-auto">
-                  {clientSuggestions.map((cliente) => (
-                    <li 
+                  {clientSuggestions.map(cliente => (
+                    <li
                       key={cliente.id}
                       onClick={() => selectClient(cliente)}
                       className="px-4 py-3 cursor-pointer hover:bg-[#D4AF37]/10 text-[#E5E5E5] border-b border-[#D4AF37]/10 last:border-0 transition-colors"
@@ -248,18 +321,49 @@ const Transacoes: React.FC = () => {
                 </ul>
               )}
             </div>
-            {assinaturaAtiva && (
-               <div className="mt-2 text-xs font-bold text-[#121212] bg-[#D4AF37] inline-block px-3 py-1.5 rounded shadow-lg animate-in fade-in">
-                 💎 Assinante Premium Ativo | ✂️ Cortes: {assinaturaAtiva.creditosCorte} | 🧔 Barbas: {assinaturaAtiva.creditosBarba}
-               </div>
+
+            {/* ── Badge de Assinante ── */}
+            {loadingAssinatura && (
+              <div className="flex items-center gap-2 mt-2 text-[#D4AF37]/60 text-xs">
+                <Loader2 size={12} className="animate-spin" /> Verificando assinatura...
+              </div>
+            )}
+            {!loadingAssinatura && assinaturaAtiva && (
+              <div className="mt-2 animate-in fade-in slide-in-from-top-1 duration-300">
+                {/* Badge principal */}
+                <div className="inline-flex items-center gap-2 bg-[#D4AF37] text-[#121212] text-[11px] font-black uppercase tracking-widest px-3 py-1.5 rounded-md shadow-[0_0_12px_rgba(212,175,55,0.4)]">
+                  <Crown size={13} />
+                  Assinante Ativo — {assinaturaAtiva.plano.nome}
+                </div>
+                {/* Créditos disponíveis */}
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {assinaturaAtiva.creditosCorte > 0 && (
+                    <span className="flex items-center gap-1 text-[11px] font-bold text-[#D4AF37] bg-[#D4AF37]/10 border border-[#D4AF37]/20 px-2 py-1 rounded">
+                      <Scissors size={11} /> Cortes: {assinaturaAtiva.creditosCorte}
+                    </span>
+                  )}
+                  {assinaturaAtiva.creditosBarba > 0 && (
+                    <span className="flex items-center gap-1 text-[11px] font-bold text-[#D4AF37] bg-[#D4AF37]/10 border border-[#D4AF37]/20 px-2 py-1 rounded">
+                      🧔 Barbas: {assinaturaAtiva.creditosBarba}
+                    </span>
+                  )}
+                  {assinaturaAtiva.creditosCorte === 0 && assinaturaAtiva.creditosBarba === 0 && (
+                    <span className="text-[11px] text-[#E5E5E5]/40 italic">Sem créditos disponíveis neste mês.</span>
+                  )}
+                </div>
+              </div>
             )}
           </div>
+
+          {/* Profissional */}
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-[#E5E5E5]/80 uppercase tracking-wider">Profissional</label>
+            <label className="text-xs font-semibold text-[#E5E5E5]/80 uppercase tracking-wider">
+              Profissional
+            </label>
             <div className="relative">
               <select
                 value={professional}
-                onChange={(e) => setProfessional(e.target.value)}
+                onChange={e => setProfessional(e.target.value)}
                 className="w-full px-4 py-3 bg-[#121212] text-[#E5E5E5] rounded-lg border border-[#D4AF37]/20 focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all duration-300 appearance-none"
                 required
               >
@@ -269,18 +373,21 @@ const Transacoes: React.FC = () => {
                 ))}
               </select>
               <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-[#D4AF37]">
-                <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
+                <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                  <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                </svg>
               </div>
             </div>
           </div>
         </div>
 
+        {/* ── Carrinho de Itens ── */}
         <div className="space-y-4">
           <div className="flex justify-between items-end border-b border-[#D4AF37]/20 pb-2">
-            <h3 className="text-lg font-bold text-[#D4AF37]">Itens do Serviço/Produto</h3>
+            <h3 className="text-lg font-bold text-[#D4AF37]">Itens do Serviço / Produto</h3>
             <button
               type="button"
-              onClick={handleAddItem}
+              onClick={addItem}
               className="text-xs flex items-center gap-1 text-[#E5E5E5] bg-[#121212] px-3 py-1.5 rounded-md border border-[#D4AF37]/30 hover:bg-[#D4AF37]/10 hover:text-[#D4AF37] transition-colors uppercase font-medium tracking-wider"
             >
               <Plus size={14} /> Adicionar Item
@@ -288,88 +395,111 @@ const Transacoes: React.FC = () => {
           </div>
 
           <div className="space-y-3">
-            {items.map((item) => (
-              <div key={item.id} className="flex flex-col md:flex-row gap-4 items-start md:items-center bg-[#121212] p-4 rounded-lg border border-[#D4AF37]/10">
-                <div className="flex-1 w-full space-y-1">
-                  <label className="text-[10px] text-[#E5E5E5]/50 uppercase tracking-wider md:hidden">Item</label>
-                  <select
-                    value={item.name}
-                    onChange={(e) => handleItemChange(item.id, 'name', e.target.value)}
-                    className="w-full bg-transparent appearance-none text-[#E5E5E5] border-b border-[#D4AF37]/30 focus:outline-none focus:border-[#D4AF37] px-2 py-1 leading-tight"
-                    required
-                  >
-                    <option value="" disabled className="bg-[#121212]">Selecione um serviço/produto</option>
-                    {catalog.map(c => (
-                      <option key={c.id} value={c.name} className="bg-[#121212]">
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div className="w-full md:w-24 space-y-1">
-                  <label className="text-[10px] text-[#E5E5E5]/50 uppercase tracking-wider md:hidden">Qtd</label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={item.quantity}
-                    onChange={(e) => handleItemChange(item.id, 'quantity', Number(e.target.value))}
-                    className="w-full bg-transparent text-[#E5E5E5] border-b border-[#D4AF37]/30 focus:outline-none focus:border-[#D4AF37] px-2 py-1 text-center font-medium"
-                    required
-                  />
-                </div>
+            {cartItems.map(item => {
+              const creditEnabled = isCreditToggleEnabled(item);
+              const displayPrice = item.usouCredito ? 0 : item.originalPrice;
 
-                <div className="w-full md:w-32 space-y-1">
-                  <label className="text-[10px] text-[#E5E5E5]/50 uppercase tracking-wider md:hidden">Preço Un (R$)</label>
-                  <div className="relative">
-                    <span className="absolute left-0 top-1 text-[#E5E5E5]/50 text-sm pl-2">R$</span>
+              return (
+                <div
+                  key={item.uuid}
+                  className={`flex flex-col md:flex-row gap-4 items-start md:items-center bg-[#121212] p-4 rounded-lg border transition-all duration-200 ${
+                    item.usouCredito ? 'border-[#D4AF37]/40 shadow-[0_0_8px_rgba(212,175,55,0.15)]' : 'border-[#D4AF37]/10'
+                  }`}
+                >
+                  {/* Serviço */}
+                  <div className="flex-1 w-full space-y-1">
+                    <label className="text-[10px] text-[#E5E5E5]/50 uppercase tracking-wider md:hidden">Item</label>
+                    <select
+                      value={item.name}
+                      onChange={e => handleItemSelect(item.uuid, e.target.value)}
+                      className="w-full bg-transparent appearance-none text-[#E5E5E5] border-b border-[#D4AF37]/30 focus:outline-none focus:border-[#D4AF37] px-2 py-1 leading-tight"
+                      required
+                    >
+                      <option value="" disabled className="bg-[#1a1a1a]">Selecione um serviço / produto</option>
+                      {catalog.map(c => (
+                        <option key={c.id} value={c.name} className="bg-[#1a1a1a]">{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Quantidade */}
+                  <div className="w-full md:w-20 space-y-1">
+                    <label className="text-[10px] text-[#E5E5E5]/50 uppercase tracking-wider md:hidden">Qtd</label>
                     <input
                       type="number"
-                      min="0"
-                      step="0.01"
-                      value={item.usouCreditoAssinatura ? 0 : item.price}
-                      readOnly={item.usouCreditoAssinatura}
-                      onChange={(e) => handleItemChange(item.id, 'price', Number(e.target.value))}
-                      className={`w-full bg-transparent text-[#D4AF37] border-b border-[#D4AF37]/30 focus:outline-none focus:border-[#D4AF37] py-1 pl-8 pr-2 font-bold ${item.usouCreditoAssinatura ? 'opacity-50' : ''}`}
+                      min="1"
+                      value={item.quantity}
+                      onChange={e => handleQtyChange(item.uuid, Number(e.target.value))}
+                      className="w-full bg-transparent text-[#E5E5E5] border-b border-[#D4AF37]/30 focus:outline-none focus:border-[#D4AF37] px-2 py-1 text-center font-medium"
                       required
                     />
                   </div>
-                </div>
 
-                {assinaturaAtiva && (
-                    <div className="w-full md:w-auto mt-2 md:mt-2 flex items-center justify-center">
-                       <label className="flex items-center gap-2 cursor-pointer text-[11px] font-bold tracking-wider uppercase text-[#D4AF37] bg-[#D4AF37]/10 px-2 py-1.5 rounded-lg border border-[#D4AF37]/20 hover:bg-[#D4AF37]/20 transition-colors">
-                         <input 
-                            type="checkbox" 
-                            checked={item.usouCreditoAssinatura || false}
-                            onChange={(e) => handleItemChange(item.id, 'usouCreditoAssinatura', e.target.checked)}
-                            className="w-3.5 h-3.5 accent-[#D4AF37] border-none rounded"
-                         />
-                         Usar Crédito
-                       </label>
+                  {/* Preço unitário */}
+                  <div className="w-full md:w-32 space-y-1">
+                    <label className="text-[10px] text-[#E5E5E5]/50 uppercase tracking-wider md:hidden">Preço Un (R$)</label>
+                    <div className="relative">
+                      <span className="absolute left-2 top-1 text-[#E5E5E5]/50 text-sm">R$</span>
+                      <input
+                        type="number"
+                        readOnly
+                        value={displayPrice.toFixed(2)}
+                        className={`w-full bg-transparent border-b border-[#D4AF37]/30 py-1 pl-9 pr-2 font-bold transition-colors duration-200 ${
+                          item.usouCredito ? 'text-[#D4AF37]/50 line-through' : 'text-[#D4AF37]'
+                        }`}
+                      />
                     </div>
-                )}
+                  </div>
 
-                <button
-                  type="button"
-                  onClick={() => handleRemoveItem(item.id)}
-                  disabled={items.length === 1}
-                  className="mt-4 md:mt-0 p-2 text-[#E5E5E5]/50 hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors disabled:opacity-30 disabled:cursor-not-allowed mx-auto md:mx-0 flex"
-                  title="Remover item"
-                >
-                  <Trash2 size={18} />
-                </button>
-              </div>
-            ))}
+                  {/* Toggle de crédito */}
+                  {assinaturaAtiva && (
+                    <div className="w-full md:w-auto flex items-center">
+                      <label
+                        className={`flex items-center gap-2 text-[11px] font-bold tracking-wider uppercase px-2.5 py-1.5 rounded-lg border transition-all duration-200 select-none ${
+                          creditEnabled
+                            ? 'cursor-pointer text-[#D4AF37] bg-[#D4AF37]/10 border-[#D4AF37]/30 hover:bg-[#D4AF37]/20'
+                            : 'cursor-not-allowed text-[#E5E5E5]/25 bg-transparent border-[#E5E5E5]/10'
+                        }`}
+                        title={!creditEnabled ? 'Sem créditos disponíveis para este serviço' : undefined}
+                      >
+                        <input
+                          type="checkbox"
+                          disabled={!creditEnabled}
+                          checked={item.usouCredito}
+                          onChange={e => handleCreditToggle(item.uuid, e.target.checked)}
+                          className="w-3.5 h-3.5 accent-[#D4AF37] rounded"
+                        />
+                        {creditEnabled ? getCreditLabel(item) : 'Sem Crédito'}
+                      </label>
+                    </div>
+                  )}
+
+                  {/* Remover */}
+                  <button
+                    type="button"
+                    onClick={() => removeItem(item.uuid)}
+                    disabled={cartItems.length === 1}
+                    className="mt-2 md:mt-0 p-2 text-[#E5E5E5]/40 hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors disabled:opacity-20 disabled:cursor-not-allowed flex mx-auto md:mx-0"
+                    title="Remover item"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
 
+        {/* ── Total e Submit ── */}
         <div className="border-t border-[#D4AF37]/20 pt-6 flex flex-col items-end gap-6">
           <div className="text-right">
             <p className="text-[#E5E5E5]/60 text-sm uppercase tracking-wider font-semibold mb-1">Total da Transação</p>
-            <p className="text-4xl font-bold font-serif text-[#D4AF37]">
-              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(calculateTotal())}
-            </p>
+            <p className="text-4xl font-bold font-serif text-[#D4AF37]">{fmt.format(total)}</p>
+            {cartItems.some(i => i.usouCredito) && (
+              <p className="text-xs text-[#D4AF37]/60 mt-1 italic">
+                Itens com crédito do plano não entram no total financeiro.
+              </p>
+            )}
           </div>
 
           <button
@@ -377,7 +507,7 @@ const Transacoes: React.FC = () => {
             disabled={loading}
             className="w-full md:w-auto px-10 py-4 bg-[#D4AF37] text-[#121212] font-bold rounded-lg uppercase tracking-wider hover:bg-[#E5C158] hover:shadow-[0_0_15px_rgba(212,175,55,0.4)] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-[0.98] text-sm flex items-center justify-center gap-2"
           >
-            {loading ? 'Processando...' : 'Finalizar Transação'}
+            {loading ? <><Loader2 size={16} className="animate-spin" /> Processando...</> : 'Finalizar Transação'}
           </button>
         </div>
       </form>

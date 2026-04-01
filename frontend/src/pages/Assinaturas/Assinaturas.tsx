@@ -16,7 +16,6 @@ const Assinaturas: React.FC = () => {
   const [planoValor, setPlanoValor] = useState<number | ''>('');
   const [planoCortes, setPlanoCortes] = useState<number>(0);
   const [planoBarbas, setPlanoBarbas] = useState<number>(0);
-  const [planoCombos, setPlanoCombos] = useState<number>(0);
 
   useEffect(() => {
     fetchData();
@@ -46,8 +45,7 @@ const Assinaturas: React.FC = () => {
         nome: planoNome,
         valorMensal: Number(planoValor),
         qtCortes: planoCortes,
-        qtBarbas: planoBarbas,
-        qtCombos: planoCombos
+        qtBarbas: planoBarbas
       };
 
       if (planoEditingId) {
@@ -88,7 +86,6 @@ const Assinaturas: React.FC = () => {
     setPlanoValor(Number(plano.valorMensal));
     setPlanoCortes(plano.qtCortes);
     setPlanoBarbas(plano.qtBarbas);
-    setPlanoCombos(plano.qtCombos);
   };
 
   const resetForm = () => {
@@ -98,7 +95,6 @@ const Assinaturas: React.FC = () => {
     setPlanoValor('');
     setPlanoCortes(0);
     setPlanoBarbas(0);
-    setPlanoCombos(0);
   };
 
   return (
@@ -170,7 +166,7 @@ const Assinaturas: React.FC = () => {
               />
             </div>
 
-            <div className="col-span-1 md:col-span-2 grid grid-cols-3 gap-4 border-t border-[#D4AF37]/20 pt-4 mt-2">
+            <div className="col-span-1 md:col-span-2 grid grid-cols-2 gap-4 border-t border-[#D4AF37]/20 pt-4 mt-2">
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-[#E5E5E5]/80 uppercase tracking-wider">Cortes Inclusos</label>
                 <input
@@ -190,17 +186,6 @@ const Assinaturas: React.FC = () => {
                   required
                   value={planoBarbas}
                   onChange={e => setPlanoBarbas(Number(e.target.value))}
-                  className="w-full px-4 py-3 bg-[#121212] text-[#D4AF37] font-bold rounded-lg border border-[#D4AF37]/20 focus:outline-none focus:border-[#D4AF37] transition-colors text-center"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-[#E5E5E5]/80 uppercase tracking-wider">Combos Inclusos</label>
-                <input
-                  type="number"
-                  min="0"
-                  required
-                  value={planoCombos}
-                  onChange={e => setPlanoCombos(Number(e.target.value))}
                   className="w-full px-4 py-3 bg-[#121212] text-[#D4AF37] font-bold rounded-lg border border-[#D4AF37]/20 focus:outline-none focus:border-[#D4AF37] transition-colors text-center"
                 />
               </div>
@@ -253,7 +238,6 @@ const Assinaturas: React.FC = () => {
                 <div className="text-sm border-t border-[#D4AF37]/20 pt-4 w-full text-[#E5E5E5]/70 space-y-2">
                   {plano.qtCortes > 0 && <p className="flex justify-between"><span>Cortes Inclusos</span> <span className="text-[#D4AF37] font-bold">x{plano.qtCortes}</span></p>}
                   {plano.qtBarbas > 0 && <p className="flex justify-between"><span>Barbas Inclusas</span> <span className="text-[#D4AF37] font-bold">x{plano.qtBarbas}</span></p>}
-                  {plano.qtCombos > 0 && <p className="flex justify-between"><span>Combos Inclusos</span> <span className="text-[#D4AF37] font-bold">x{plano.qtCombos}</span></p>}
                 </div>
               </div>
             ))}

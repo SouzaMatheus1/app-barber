@@ -18,7 +18,7 @@ export const transacaoService = {
     tipoTransacaoId: number;
     profissionalId: number;
     clienteId?: number | null;
-    itens: { itemId: number; quantidade: number }[];
+    itens: { itemId: number; quantidade: number; usouCreditoAssinatura: boolean }[];
   }) => {
     const response = await api.post('/transacoes', data);
     return response.data;

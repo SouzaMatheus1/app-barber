@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Crown, Package, Users, Plus, Edit2, Trash2, Loader2, Save } from 'lucide-react';
+import { Crown, Package, Users, Plus, Edit2, Trash2, Loader2, Save, BarChart3, TrendingUp } from 'lucide-react';
 import { assinaturaService } from '../../services/AssinaturaService';
 
 const Assinaturas: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'planos' | 'assinantes'>('planos');
+  const [activeTab, setActiveTab] = useState<'planos' | 'assinantes' | 'relatorios'>('planos');
   const [planos, setPlanos] = useState<any[]>([]);
   const [assinaturas, setAssinaturas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -130,6 +130,12 @@ const Assinaturas: React.FC = () => {
         >
           <Users size={18} /> Assinantes
         </button>
+        <button
+          onClick={() => { setActiveTab('relatorios'); resetForm(); }}
+          className={`flex-1 md:flex-none px-6 py-3 font-medium text-sm flex items-center justify-center gap-2 border-b-2 transition-colors ${activeTab === 'relatorios' ? 'border-[#D4AF37] text-[#D4AF37]' : 'border-transparent text-[#E5E5E5]/50 hover:text-[#E5E5E5]'}`}
+        >
+          <BarChart3 size={18} /> Relatórios
+        </button>
       </div>
 
       {activeTab === 'planos' && isEditingPlano && (
@@ -252,7 +258,6 @@ const Assinaturas: React.FC = () => {
                   <th className="pb-3 px-4 text-center">Status</th>
                   <th className="pb-3 px-4 text-center">Cortes Disp.</th>
                   <th className="pb-3 px-4 text-center">Barbas Disp.</th>
-                  <th className="pb-3 px-4 text-center">Combos Disp.</th>
                 </tr>
               </thead>
               <tbody className="text-sm font-medium">
@@ -268,7 +273,6 @@ const Assinaturas: React.FC = () => {
                     </td>
                     <td className="py-4 px-4 text-[#E5E5E5] text-center">{ass.creditosCorte}</td>
                     <td className="py-4 px-4 text-[#E5E5E5] text-center">{ass.creditosBarba}</td>
-                    <td className="py-4 px-4 text-[#E5E5E5] text-center">{ass.creditosCombo}</td>
                   </tr>
                 ))}
               </tbody>
@@ -276,6 +280,59 @@ const Assinaturas: React.FC = () => {
           </div>
         )}
       </div>
+
+      {activeTab === 'relatorios' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-[#1a1a1a] rounded-xl p-6 border-l-4 border-[#D4AF37] shadow-lg relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-4 opacity-10 text-[#D4AF37]">
+                <Users size={80} />
+              </div>
+              <h3 className="text-[#E5E5E5]/70 text-sm font-medium uppercase tracking-wider mb-2">Assinantes Ativos</h3>
+              <p className="text-4xl font-bold text-[#D4AF37]">
+                {assinaturas.filter(a => a.status === 'ATIVA').length}
+              </p>
+            </div>
+            
+            <div className="bg-[#1a1a1a] rounded-xl p-6 border-l-4 border-emerald-500 shadow-lg relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-4 opacity-10 text-emerald-500">
+                <TrendingUp size={80} />
+              </div>
+              <h3 className="text-[#E5E5E5]/70 text-sm font-medium uppercase tracking-wider mb-2">Receita Recorrente (MRR)</h3>
+              <p className="text-4xl font-bold text-emerald-400">
+                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                  assinaturas.filter(a => a.status === 'ATIVA').reduce((acc, curr) => acc + Number(curr.plano?.valorMensal || 0), 0)
+                )}
+              </p>
+              <p className="text-xs text-[#E5E5E5]/40 mt-1 uppercase">Estimativa de ganhos mensais garantidos</p>
+            </div>
+          </div>
+
+          <div className="bg-[#1a1a1a] rounded-xl border border-[#D4AF37]/20 overflow-hidden shadow-lg">
+            <div className="p-6 border-b border-[#D4AF37]/20 bg-[#1a1a1a]">
+              <h2 className="text-xl font-bold text-[#D4AF37]">Popularidade dos Planos</h2>
+            </div>
+            <div className="p-6 space-y-4">
+              {planos.map(plano => {
+                const count = assinaturas.filter(a => a.status === 'ATIVA' && a.planoId === plano.id).length;
+                return (
+                  <div key={plano.id} className="flex justify-between items-center border-b border-[#D4AF37]/10 pb-4 last:border-0 last:pb-0">
+                    <div>
+                      <h4 className="text-[#E5E5E5] font-bold text-lg">{plano.nome}</h4>
+                      <p className="text-sm text-[#E5E5E5]/50">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(plano.valorMensal))} / mês</p>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-2xl font-black text-[#D4AF37]">{count}</span>
+                      <span className="text-[#E5E5E5]/50 ml-2 text-sm uppercase">ativos</span>
+                    </div>
+                  </div>
+                )
+              })}
+              {planos.length === 0 && <p className="text-center text-[#E5E5E5]/50 py-4">Nenhum plano cadastrado.</p>}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

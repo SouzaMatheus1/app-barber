@@ -6,6 +6,7 @@
     "dev:front": "npm run dev --prefix frontend",
     "build:back": "npm run build --prefix backend",
     "build:front": "npm run build --prefix frontend",
-    "dev:all": "npm run dev:back & npm run dev:front"
+    "dev:all:win": "start npm run dev:back && start npm run dev:front",
+    "dev:all:lin": "npm run dev:back & npm run dev:front"
   }
 }

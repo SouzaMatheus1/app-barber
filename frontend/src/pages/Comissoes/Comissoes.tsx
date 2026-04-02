@@ -160,6 +160,47 @@ export function Comissoes() {
               </p>
             </div>
           </div>
+
+          <div className="bg-[#1a1a1a] rounded-xl border border-[#D4AF37]/20 overflow-hidden shadow-lg mt-8">
+            <div className="p-6 border-b border-[#D4AF37]/20 flex justify-between items-center bg-[#1a1a1a]">
+              <h2 className="text-xl font-bold text-[#D4AF37]">Descrição das Vendas e Serviços</h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-[#121212]">
+                    <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Cliente</th>
+                    <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Serviço/Produto</th>
+                    <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Data/Hora</th>
+                    <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Valor de venda R$</th>
+                    <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider text-right">Comissão R$</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#D4AF37]/10">
+                  {relatorio.transacoes && relatorio.transacoes.map((tx: any) => (
+                    <tr key={tx.id} className="hover:bg-[#D4AF37]/5 transition-colors group">
+                      <td className="py-4 px-6 text-[#E5E5E5] font-medium">{tx.cliente}</td>
+                      <td className="py-4 px-6 text-[#E5E5E5]/80 max-w-[200px] truncate" title={tx.servicos}>{tx.servicos}</td>
+                      <td className="py-4 px-6 text-[#E5E5E5]/60 text-sm">
+                        {new Date(tx.dataHora).toLocaleTimeString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </td>
+                      <td className="py-4 px-6 text-[#E5E5E5]/80 text-center truncate" title={String(tx.valorTotalVendaReal)}>
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(tx.valorTotalVendaReal)}
+                      </td>
+                      <td className="py-4 px-6 text-emerald-400 font-bold text-right">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(tx.comissao)}
+                      </td>
+                    </tr>
+                  ))}
+                  {(!relatorio.transacoes || relatorio.transacoes.length === 0) && (
+                    <tr>
+                      <td colSpan={4} className="py-8 text-center text-[#E5E5E5]/50">Nenhuma transação encontrada no período.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       )}
     </div>

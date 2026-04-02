@@ -14,21 +14,27 @@ export class ComissaoService {
         let filtro: any = { profissionalId };
 
         if (dataInicio || dataFim) {
-            filtro.criadoEm = {};
-            if (dataInicio)
-                filtro.criadoEm.gte = new Date(dataInicio); // gte = Greater than or equal (Maior ou igual)
+            filtro.data = {};
+            if (dataInicio) {
+                const inicioStr = dataInicio.includes('T') ? dataInicio : `${dataInicio}T00:00:00.000Z`;
+                filtro.data.gte = new Date(inicioStr);
+            }
 
-            if (dataFim)
-                filtro.criadoEm.lte = new Date(dataFim);    // lte = Less than or equal (Menor ou igual)
+            if (dataFim) {
+                const fimStr = dataFim.includes('T') ? dataFim : `${dataFim}T23:59:59.999Z`;
+                filtro.data.lte = new Date(fimStr);
+            }
         }
 
         const transacoes = await prisma.transacao.findMany({
             where: filtro,
             include: {
+                cliente: { select: { nome: true } },
                 itens: {
                     include: { item: true } // Traz o item do catálogo para pegarmos a porcentagem da comissão
                 }
-            }
+            },
+            orderBy: { data: 'desc' }
         });
 
         let totalVendido = 0;
@@ -50,6 +56,28 @@ export class ComissaoService {
             });
         });
 
+        const transacoesDetalhadas = transacoes.map((t: any) => {
+            let comissaoDestaTransacao = 0;
+            const servicos = t.itens.map((i: any) => {
+                const isCredito = i.usouCreditoAssinatura;
+                const basePreco = isCredito ? Number(i.item.preco) : Number(i.precoUnitario);
+                const valorTotalBase = i.quantidade * basePreco;
+                const percentual = i.item.comissao ? Number(i.item.comissao) : 0;
+                comissaoDestaTransacao += (valorTotalBase * percentual) / 100;
+                
+                return `${i.quantidade}x ${i.item.nome}`;
+            }).join(', ');
+
+            return {
+                id: t.id,
+                cliente: t.cliente?.nome || 'Cliente Avulso',
+                servicos: servicos,
+                dataHora: t.data,
+                valorTotalVendaReal: Number(t.valorTotal),
+                comissao: comissaoDestaTransacao
+            };
+        });
+
         return {
             profissional: profissional.nome,
             periodo: {
@@ -57,11 +85,9 @@ export class ComissaoService {
                 fim: dataFim || 'Todo o período'
             },
             quantidadeTransacoes: transacoes.length,
-            resumoFinanceiro: {
-                totalVendido: totalVendido,
-                valorReceber: totalComissao,
-                // parteDaBarbearia: totalVendido - totalComissao
-            }
+            totalMovimentado: totalVendido,
+            totalComissao: totalComissao,
+            transacoes: transacoesDetalhadas
         };
     }
 }

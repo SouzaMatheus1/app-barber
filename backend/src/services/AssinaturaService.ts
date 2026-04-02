@@ -97,7 +97,8 @@ export class AssinaturaService {
 
     async getAssinaturaAtivaByClienteId(clienteId: number) {
         return prisma.assinatura.findFirst({
-            where: { clienteId, status: statusAssinatura.ATIVA },
+            where: { clienteId },
+            orderBy: { id: 'desc' },
             include: { plano: true }
         });
     }

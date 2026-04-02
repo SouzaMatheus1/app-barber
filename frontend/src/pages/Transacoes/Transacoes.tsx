@@ -13,6 +13,7 @@ interface AssinaturaAtiva {
   planoId: number;
   creditosCorte: number;
   creditosBarba: number;
+  status: 'ATIVA' | 'INATIVA';
   plano: { id: number; nome: string };
 }
 
@@ -202,7 +203,7 @@ const Transacoes: React.FC = () => {
   }, 0);
 
   const isCreditToggleEnabled = (item: CartItem): boolean => {
-    if (!assinaturaAtiva || !item.itemId) return false;
+    if (!assinaturaAtiva || !item.itemId || assinaturaAtiva.status !== 'ATIVA') return false;
     const catalogItem = catalog.find(c => c.id === item.itemId);
     if (!catalogItem || catalogItem.tipo === 'outro') return false;
     if (catalogItem.tipo === 'barba') return assinaturaAtiva.creditosBarba > 0;
@@ -330,27 +331,34 @@ const Transacoes: React.FC = () => {
             )}
             {!loadingAssinatura && assinaturaAtiva && (
               <div className="mt-2 animate-in fade-in slide-in-from-top-1 duration-300">
-                {/* Badge principal */}
-                <div className="inline-flex items-center gap-2 bg-[#D4AF37] text-[#121212] text-[11px] font-black uppercase tracking-widest px-3 py-1.5 rounded-md shadow-[0_0_12px_rgba(212,175,55,0.4)]">
-                  <Crown size={13} />
-                  Assinante Ativo — {assinaturaAtiva.plano.nome}
-                </div>
-                {/* Créditos disponíveis */}
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {assinaturaAtiva.creditosCorte > 0 && (
-                    <span className="flex items-center gap-1 text-[11px] font-bold text-[#D4AF37] bg-[#D4AF37]/10 border border-[#D4AF37]/20 px-2 py-1 rounded">
-                      <Scissors size={11} /> Cortes: {assinaturaAtiva.creditosCorte}
-                    </span>
-                  )}
-                  {assinaturaAtiva.creditosBarba > 0 && (
-                    <span className="flex items-center gap-1 text-[11px] font-bold text-[#D4AF37] bg-[#D4AF37]/10 border border-[#D4AF37]/20 px-2 py-1 rounded">
-                      🧔 Barbas: {assinaturaAtiva.creditosBarba}
-                    </span>
-                  )}
-                  {assinaturaAtiva.creditosCorte === 0 && assinaturaAtiva.creditosBarba === 0 && (
-                    <span className="text-[11px] text-[#E5E5E5]/40 italic">Sem créditos disponíveis neste mês.</span>
-                  )}
-                </div>
+                {assinaturaAtiva.status === 'ATIVA' ? (
+                  <>
+                    <div className="inline-flex items-center gap-2 bg-[#D4AF37] text-[#121212] text-[11px] font-black uppercase tracking-widest px-3 py-1.5 rounded-md shadow-[0_0_12px_rgba(212,175,55,0.4)]">
+                      <Crown size={13} />
+                      Assinante Ativo — {assinaturaAtiva.plano.nome}
+                    </div>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {assinaturaAtiva.creditosCorte > 0 && (
+                        <span className="flex items-center gap-1 text-[11px] font-bold text-[#D4AF37] bg-[#D4AF37]/10 border border-[#D4AF37]/20 px-2 py-1 rounded">
+                          <Scissors size={11} /> Cortes: {assinaturaAtiva.creditosCorte}
+                        </span>
+                      )}
+                      {assinaturaAtiva.creditosBarba > 0 && (
+                        <span className="flex items-center gap-1 text-[11px] font-bold text-[#D4AF37] bg-[#D4AF37]/10 border border-[#D4AF37]/20 px-2 py-1 rounded">
+                          🧔 Barbas: {assinaturaAtiva.creditosBarba}
+                        </span>
+                      )}
+                      {assinaturaAtiva.creditosCorte === 0 && assinaturaAtiva.creditosBarba === 0 && (
+                        <span className="text-[11px] text-[#E5E5E5]/40 italic">Sem créditos disponíveis neste mês.</span>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div className="inline-flex items-center gap-2 bg-red-500/10 border border-red-500/30 text-red-500 text-[11px] font-black uppercase tracking-widest px-3 py-1.5 rounded-md">
+                    <Crown size={13} className="opacity-50" />
+                    Plano Inativo — {assinaturaAtiva.plano.nome}
+                  </div>
+                )}
               </div>
             )}
           </div>

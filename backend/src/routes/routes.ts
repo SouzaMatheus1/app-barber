@@ -19,7 +19,6 @@ const caixaController = new CaixaController();
 const authController = new AuthController();
 const assinaturaController = new AssinaturaController();
 
-// pub
 // profissional
 routes.get('/profissionais', isAuth, profissionalController.listar);
 routes.post('/profissionais', isAuth, profissionalController.criar);

@@ -59,7 +59,7 @@ export class ProfissionalController {
         try {
             const result = await this.profissionalService.delete(id);
     
-            return res.status(400).json(result);
+            return res.status(200).json(result);
         } catch (error: any) {
             return res.status(400).json({ error: error.message });
         }

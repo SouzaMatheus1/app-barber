@@ -3,38 +3,40 @@ import { AssinaturaService } from './AssinaturaService';
 import { statusAssinatura } from '@prisma/client';
 
 export class ClienteService {
-    async listAll() {
+    async listAll(barbeariaId: number) {
         const clientes = await prisma.cliente.findMany({
+            where: { barbeariaId },
             select: {
                 id: true,
                 nome: true,
                 telefone: true,
                 criadoEm: true,
                 assinaturas: {
-                where: { status: statusAssinatura.ATIVA },
-                select: {
-                    planoId: true,
-                    status: true,
-                    plano: { 
+                    where: { status: statusAssinatura.ATIVA },
                     select: {
-                        id: true,
-                        nome: true,
-                        valorMensal: true,
-                        qtCortes: true,
-                        qtBarbas: true
+                        planoId: true,
+                        status: true,
+                        plano: { 
+                            select: {
+                                id: true,
+                                nome: true,
+                                valorMensal: true,
+                                qtCortes: true,
+                                qtBarbas: true
+                            }
+                        }
                     }
-                    }
-                }
                 }
             }
-            });
+        });
 
         return clientes;
     }
 
-    async searchByName(nome: string) {
+    async searchByName(nome: string, barbeariaId: number) {
         const clientes = await prisma.cliente.findMany({
             where: {
+                barbeariaId,
                 nome: {
                     contains: nome
                 }
@@ -49,13 +51,14 @@ export class ClienteService {
         return clientes;
     }
 
-    async create(data: { nome: string, telefone?: string, planoId?: number }) {
+    async create(data: { nome: string, telefone?: string, planoId?: number }, barbeariaId: number) {
         const { nome, telefone, planoId } = data;
 
         const cliente = await prisma.cliente.create({
             data: {
                 nome,
-                telefone
+                telefone,
+                barbeariaId // Vínculo obrigatório
             },
             select: {
                 id: true,
@@ -71,8 +74,15 @@ export class ClienteService {
 
         if (planoId) {
             try {
+                // Busca o primeiro profissional disponível DESTA barbearia para o registro da transação
+                const primeiroProf = await prisma.profissional.findFirst({ 
+                    where: { barbeariaId },
+                    select: { id: true } 
+                });
+                const profId = primeiroProf?.id ?? 0;
+
                 const assinaturaService = new AssinaturaService();
-                await assinaturaService.subscribe(cliente.id, planoId, 1); // 1 = Admin padrão para este fluxo rápido
+                await assinaturaService.subscribe(cliente.id, planoId, profId, barbeariaId); 
             } catch (err) {
                 console.error("Erro ao ativar assinatura no cadastro rápido", err);
             }
@@ -81,13 +91,14 @@ export class ClienteService {
         return cliente;
     }
 
-    async edit(id: number, data: { nome?: string, telefone?: string, planoId?: number }) {
-        const cliente = await prisma.cliente.findUnique({
-            where: { id }
+    async edit(id: number, data: { nome?: string, telefone?: string, planoId?: number }, barbeariaId: number) {
+        // Verifica se o cliente pertence à barbearia antes de editar
+        const clienteExistente = await prisma.cliente.findFirst({
+            where: { id, barbeariaId }
         });
 
-        if(!cliente)
-            throw new Error('Cliente não encontrado');
+        if(!clienteExistente)
+            throw new Error('Cliente não encontrado ou acesso negado');
 
         const result = await prisma.cliente.update({
             where: { id },
@@ -109,11 +120,14 @@ export class ClienteService {
 
         if (data.planoId) {
             try {
-                // Busca o primeiro profissional disponível para registrar o caixa
-                const primeiroProf = await prisma.profissional.findFirst({ select: { id: true } });
-                const profId = primeiroProf?.id ?? 1;
+                // Busca o primeiro profissional disponível DESTA barbearia
+                const primeiroProf = await prisma.profissional.findFirst({ 
+                    where: { barbeariaId },
+                    select: { id: true } 
+                });
+                const profId = primeiroProf?.id ?? 0;
                 const assinaturaService = new AssinaturaService();
-                await assinaturaService.subscribe(id, data.planoId, profId);
+                await assinaturaService.subscribe(id, data.planoId, profId, barbeariaId);
             } catch (err) {
                 console.error("Erro ao ativar/alterar assinatura na edicao", err);
             }
@@ -122,13 +136,13 @@ export class ClienteService {
         return { result, message: 'Registro alterado com sucesso' }
     }
 
-    async delete(id: number) {
-        const cliente = await prisma.cliente.findUnique({
-            where: { id }
+    async delete(id: number, barbeariaId: number) {
+        const clienteExistente = await prisma.cliente.findFirst({
+            where: { id, barbeariaId }
         });
 
-        if (!cliente)
-            throw new Error('Cliente não encontrado');
+        if (!clienteExistente)
+            throw new Error('Cliente não encontrado ou acesso negado');
 
         await prisma.cliente.delete({
             where: { id }

@@ -1,11 +1,10 @@
 import { prisma } from '../database/prisma';
-import { Transacao, ItemTransacao } from '@prisma/client';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 
 export class CaixaService {
-    async resumoDiario(dataString?: string) {
+    async resumoDiario(barbeariaId: number, dataString?: string) {
         dayjs.extend(utc);
         dayjs.extend(timezone);
 
@@ -13,8 +12,12 @@ export class CaixaService {
         const inicioDia = dataAlvo.startOf('day').toDate();
         const fimDia = dataAlvo.endOf('day').toDate();
 
+        // Saldo Acumulado Anterior (Isolado por Barbearia)
         const transacoesPassadas = await prisma.transacao.findMany({
-            where: { data: { lt: inicioDia } },
+            where: { 
+                data: { lt: inicioDia },
+                barbeariaId 
+            },
             include: { itens: { include: { item: true } } }
         });
 
@@ -27,8 +30,12 @@ export class CaixaService {
             });
         });
 
+        // Transações do Dia (Isolado por Barbearia)
         const transacoesHoje = await prisma.transacao.findMany({
-            where: { data: { gte: inicioDia, lte: fimDia } },
+            where: { 
+                data: { gte: inicioDia, lte: fimDia },
+                barbeariaId 
+            },
             include: {
                 profissional: { select: { nome: true } },
                 itens: { include: { item: true } }

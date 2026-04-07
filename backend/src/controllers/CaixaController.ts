@@ -5,10 +5,11 @@ export class CaixaController {
     private caixaService = new CaixaService();
     
     resumo = async (req: Request, res: Response) => {
+        const { barbeariaId } = res.locals.user;
         const data = req.query.data as string;
 
         try {
-            const result = await this.caixaService.resumoDiario(data);
+            const result = await this.caixaService.resumoDiario(barbeariaId, data);
             return res.status(200).json(result);
         } catch (error: any) {
             return res.status(400).json({ error: error.message });

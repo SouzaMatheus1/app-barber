@@ -1,17 +1,20 @@
-import { ItemTransacao, Transacao } from '@prisma/client';
 import { prisma } from '../database/prisma';
 
 export class ComissaoService {
-    async calcularComissao(profissionalId: number, dataInicio?: string, dataFim?: string) {
-        const profissional = await prisma.profissional.findUnique({
-            where: { id: profissionalId },
+    async calcularComissao(barbeariaId: number, profissionalId: number, dataInicio?: string, dataFim?: string) {
+        // Verifica se o profissional pertence à barbearia
+        const profissional = await prisma.profissional.findFirst({
+            where: { id: profissionalId, barbeariaId },
             select: { nome: true }
         });
 
         if (!profissional)
-            throw new Error('Profissional não encontrado');
+            throw new Error('Profissional não encontrado ou acesso negado');
 
-        let filtro: any = { profissionalId };
+        let filtro: any = { 
+            profissionalId,
+            barbeariaId // Isolamento
+        };
 
         if (dataInicio || dataFim) {
             filtro.data = {};
@@ -31,7 +34,7 @@ export class ComissaoService {
             include: {
                 cliente: { select: { nome: true } },
                 itens: {
-                    include: { item: true } // Traz o item do catálogo para pegarmos a porcentagem da comissão
+                    include: { item: true }
                 }
             },
             orderBy: { data: 'desc' }
@@ -49,7 +52,6 @@ export class ComissaoService {
                 const percentualComissao = itemVendido.item.comissao ? Number(itemVendido.item.comissao) : 0;
                 const valorComissao = (valorTotalBase * percentualComissao) / 100;
                 
-                // para fins de vendas da barbearia usaremos apenas o q foi para o caixa real
                 const valorTotalDaVendaReal = itemVendido.quantidade * Number(itemVendido.precoUnitario);
                 totalVendido += valorTotalDaVendaReal;
                 totalComissao += valorComissao;

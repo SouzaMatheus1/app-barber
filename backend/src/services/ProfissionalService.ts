@@ -1,9 +1,11 @@
 import { prisma } from '../database/prisma';
 import bcrypt from 'bcryptjs';
+import { Perfil } from '@prisma/client';
 
 export class ProfissionalService {
-    async listAll() {
+    async listAll(barbeariaId: number) {
         const profissionais = await prisma.profissional.findMany({
+            where: { barbeariaId },
             select: {
                 id: true,
                 nome: true,
@@ -16,8 +18,8 @@ export class ProfissionalService {
         return profissionais;
     }
 
-    async create(data: any) {
-        const { nome, email, senha, perfilId } = data;
+    async create(data: any, barbeariaId: number) {
+        const { nome, email, senha, perfil } = data;
 
         const profissionalCadastrado = await prisma.profissional.findUnique({
             where: { email }
@@ -34,7 +36,8 @@ export class ProfissionalService {
                 nome,
                 email,
                 senha: senhaHash,
-                perfil: {connect: { id: perfilId }}
+                perfil: perfil as Perfil || Perfil.BARBEIRO,
+                barbeariaId
             },
             select: {
                 id: true,
@@ -48,15 +51,15 @@ export class ProfissionalService {
         return profissional;
     }
 
-    async edit(id: number, data: any) {
-        const { nome, email, senha, perfilId } = data;
+    async edit(id: number, data: any, barbeariaId: number) {
+        const { nome, email, senha, perfil } = data;
 
-        const profissional = await prisma.profissional.findUnique({
-            where: { id }
+        const profissional = await prisma.profissional.findFirst({
+            where: { id, barbeariaId }
         });
 
         if(!profissional)
-            throw new Error('Usuário não encontrado');
+            throw new Error('Usuário não encontrado ou acesso negado');
 
         if(email) {
             const emailProfissional = await prisma.profissional.findUnique({
@@ -77,8 +80,8 @@ export class ProfissionalService {
             data: {
                 nome: nome,
                 email: email,
-                senha: senhaHash,
-                perfil: { connect: { id: perfilId }}
+                senha: (senha && senhaHash) ? senhaHash : undefined,
+                perfil: perfil as Perfil
             },
             select: {
                 id: true,
@@ -92,13 +95,13 @@ export class ProfissionalService {
         return { result, message: 'Registro alterado'}
     }
 
-    async delete(id: number) {
-        const profissional = await prisma.profissional.findUnique({
-            where: { id }
+    async delete(id: number, barbeariaId: number) {
+        const profissional = await prisma.profissional.findFirst({
+            where: { id, barbeariaId }
         });
 
         if (!profissional)
-            throw new Error('Usuário não encontrado')
+            throw new Error('Usuário não encontrado ou acesso negado')
 
         await prisma.profissional.delete({
             where: { id }

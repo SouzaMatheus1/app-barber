@@ -3,7 +3,8 @@ import { verify } from 'jsonwebtoken';
 
 interface Payload {
     id: number;
-    perfil: string;
+    perfil: 'SUPER_ADMIN' | 'TENANT_ADMIN' | 'BARBEIRO';
+    barbeariaId: number;
 }
 
 export function isAuth(req: Request, res: Response, next: NextFunction) {
@@ -27,11 +28,21 @@ export function isAuth(req: Request, res: Response, next: NextFunction) {
     }
 }
 
-export function isAdmin(req: Request, res: Response, next: NextFunction) {
+export function isSuperAdmin(req: Request, res: Response, next: NextFunction) {
     const user = res.locals.user as Payload;
 
-    if (!user || user.perfil !== 'ADMIN') {
-        return res.status(403).json({ error: 'Acesso negado. Apenas administradores podem acessar esta rota.' });
+    if (!user || user.perfil !== 'SUPER_ADMIN') {
+        return res.status(403).json({ error: 'Acesso negado. Apenas Super Administradores podem acessar esta rota.' });
+    }
+
+    return next();
+}
+
+export function isTenantAdmin(req: Request, res: Response, next: NextFunction) {
+    const user = res.locals.user as Payload;
+
+    if (!user || (user.perfil !== 'TENANT_ADMIN' && user.perfil !== 'SUPER_ADMIN')) {
+        return res.status(403).json({ error: 'Acesso negado. Apenas administradores da barbearia podem acessar esta rota.' });
     }
 
     return next();

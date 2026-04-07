@@ -4,10 +4,8 @@ import { sign } from 'jsonwebtoken';
 
 export class AuthService {
     async login(email: string, senhaPlana: string) {
-        // Traz o profissional e o perfil dele junto
         const profissional = await prisma.profissional.findUnique({
-            where: { email },
-            include: { perfil: true }
+            where: { email }
         });
 
         if (!profissional)
@@ -17,12 +15,13 @@ export class AuthService {
         if (!senhaBate)
             throw new Error('Email ou senha incorretos');
 
-        const perfilProfissional = profissional.perfil.descricao.toUpperCase();
+        const perfilProfissional = profissional.perfil;
 
         const token = sign(
             { 
                 id: profissional.id, 
-                perfil: perfilProfissional 
+                perfil: perfilProfissional,
+                barbeariaId: profissional.barbeariaId
             },
             process.env.JWT_SECRET as string,
             { expiresIn: '1d' }
@@ -33,7 +32,8 @@ export class AuthService {
             profissional: {
                 id: profissional.id,
                 nome: profissional.nome,
-                perfil: perfilProfissional
+                perfil: perfilProfissional,
+                barbeariaId: profissional.barbeariaId
             }
         };
     }

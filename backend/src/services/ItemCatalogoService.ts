@@ -1,8 +1,10 @@
 import { prisma } from '../database/prisma';
+import { TipoItem } from '@prisma/client';
 
 export class ItemCatalogoService {
-    async listAll() {
+    async listAll(barbeariaId: number) {
         const itens = await prisma.itemCatalogo.findMany({
+            where: { barbeariaId },
             select: {
                 id: true,
                 nome: true,
@@ -15,11 +17,11 @@ export class ItemCatalogoService {
         return itens;
     }
 
-    async create(data: any) {
-        const { nome, preco, comissao, tipoItemId } = data;
+    async create(data: { nome: string, preco: number, comissao?: number, tipo: TipoItem }, barbeariaId: number) {
+        const { nome, preco, comissao, tipo } = data;
 
         const exists = await prisma.itemCatalogo.findFirst({
-            where: { nome }
+            where: { nome, barbeariaId }
         });
 
         if (exists) {
@@ -31,7 +33,8 @@ export class ItemCatalogoService {
                 nome,
                 preco,
                 comissao,
-                tipo: { connect: { id: tipoItemId }}
+                tipo,
+                barbeariaId
             },
             select: {
                 id: true,
@@ -45,13 +48,13 @@ export class ItemCatalogoService {
         return item;
     }
 
-    async edit(id: number, data: { nome?: string, preco?: number, comissao?: number, tipoItemId?: number }) {
-        const item = await prisma.itemCatalogo.findUnique({
-            where: { id }
+    async edit(id: number, data: { nome?: string, preco?: number, comissao?: number, tipo?: TipoItem }, barbeariaId: number) {
+        const item = await prisma.itemCatalogo.findFirst({
+            where: { id, barbeariaId }
         });
 
         if(!item)
-            throw new Error('Item não encontrado');
+            throw new Error('Item não encontrado ou acesso negado');
 
         const result = await prisma.itemCatalogo.update({
             where: { id },
@@ -59,7 +62,7 @@ export class ItemCatalogoService {
                 nome: data.nome,
                 preco: data.preco,
                 comissao: data.comissao,
-                tipoItemId: data.tipoItemId
+                tipo: data.tipo
             },
             select: {
                 id: true,
@@ -73,13 +76,13 @@ export class ItemCatalogoService {
         return { result, message: 'Registro alterado'}
     }
 
-    async delete(id: number) {
-        const item = await prisma.itemCatalogo.findUnique({
-            where: { id }
+    async delete(id: number, barbeariaId: number) {
+        const item = await prisma.itemCatalogo.findFirst({
+            where: { id, barbeariaId }
         });
 
         if (!item)
-            throw new Error('Item não encontrado')
+            throw new Error('Item não encontrado ou acesso negado')
 
         await prisma.itemCatalogo.delete({
             where: { id }

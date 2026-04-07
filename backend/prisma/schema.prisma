@@ -12,6 +12,38 @@ datasource db {
   provider = "mysql"
 }
 
+enum Perfil {
+  SUPER_ADMIN
+  TENANT_ADMIN
+  BARBEIRO
+}
+
+enum TipoItem {
+  SERVICO
+  PRODUTO
+}
+
+enum TipoTransacao {
+  ENTRADA
+  SAIDA
+}
+
+model Barbearia {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  cnpj      String?  @unique
+  descricao String?
+  status    String   @default("ATIVO")
+  criadoEm  DateTime @default(now())
+
+  profissionais Profissional[]
+  clientes      Cliente[]
+  itensCatalogo ItemCatalogo[]
+  transacoes    Transacao[]
+  assinaturas   Assinatura[]
+  planos        Plano[]
+}
+
 model Profissional {
   id         Int      @id @default(autoincrement())
   nome       String
@@ -19,17 +51,12 @@ model Profissional {
   senha      String
   criadoEm   DateTime @default(now())
   
-  perfilId   Int      @default(1)
-  perfil     Perfil   @relation(fields: [perfilId], references: [id])
+  barbeariaId Int
+  barbearia   Barbearia @relation(fields: [barbeariaId], references: [id])
   
-  transacoes Transacao[]
-}
+  perfil      Perfil    @default(BARBEIRO)
 
-model Perfil {
-  id            Int            @id @default(autoincrement())
-  descricao     String         @unique // Ex: "ADMIN", "BARBEIRO"
-  
-  profissionais Profissional[]
+  transacoes Transacao[]
 }
 
 model Cliente {
@@ -38,6 +65,9 @@ model Cliente {
   telefone   String?
   criadoEm   DateTime @default(now())
   
+  barbeariaId Int
+  barbearia   Barbearia @relation(fields: [barbeariaId], references: [id])
+
   transacoes  Transacao[]
   assinaturas Assinatura[]
 }
@@ -48,17 +78,12 @@ model ItemCatalogo {
   preco      Decimal         @db.Decimal(10, 2)
   comissao   Decimal?        @db.Decimal(5, 2) // % de comissão
   
-  tipoItemId Int
-  tipo       TipoItem        @relation(fields: [tipoItemId], references: [id])
+  barbeariaId Int
+  barbearia   Barbearia @relation(fields: [barbeariaId], references: [id])
   
-  itensTransacao ItemTransacao[]
-}
+  tipo        TipoItem
 
-model TipoItem {
-  id            Int            @id @default(autoincrement())
-  descricao     String         @unique // Ex: "SERVICO", "PRODUTO"
-  
-  itens         ItemCatalogo[]
+  itensTransacao ItemTransacao[]
 }
 
 model Transacao {
@@ -67,23 +92,18 @@ model Transacao {
   valorTotal     Decimal       @db.Decimal(10, 2)
   data           DateTime      @default(now())
   
-  tipoTransacaoId Int
-  tipo            TipoTransacao @relation(fields: [tipoTransacaoId], references: [id])
-  
   profissionalId  Int
   profissional    Profissional? @relation(fields: [profissionalId], references: [id])
   
   clienteId       Int?
   cliente         Cliente?      @relation(fields: [clienteId], references: [id])
 
-  itens          ItemTransacao[]
-}
-
-model TipoTransacao {
-  id            Int            @id @default(autoincrement())
-  descricao     String         @unique // Ex: "ENTRADA", "SAIDA"
+  barbeariaId Int
+  barbearia   Barbearia @relation(fields: [barbeariaId], references: [id])
   
-  transacoes    Transacao[]
+  tipo        TipoTransacao
+
+  itens          ItemTransacao[]
 }
 
 model ItemTransacao {
@@ -106,6 +126,9 @@ model Plano {
   qtBarbas      Int          @default(0)
   ativo         Boolean      @default(true)
   
+  barbeariaId Int
+  barbearia   Barbearia @relation(fields: [barbeariaId], references: [id])
+
   assinaturas   Assinatura[]
 }
 
@@ -128,4 +151,7 @@ model Assinatura {
 
   planoId         Int
   plano           Plano        @relation(fields: [planoId], references: [id])
+
+  barbeariaId Int
+  barbearia   Barbearia @relation(fields: [barbeariaId], references: [id])
 }

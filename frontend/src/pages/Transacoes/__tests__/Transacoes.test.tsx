@@ -12,6 +12,22 @@ vi.mock('../../../services/AssinaturaService', () => ({
   }
 }));
 
+// Mock do ClienteService
+vi.mock('../../../services/ClienteService', () => {
+  return {
+    ClienteService: vi.fn().mockImplementation(() => ({
+      search: vi.fn().mockResolvedValue([{ id: 1, nome: 'João Silva', telefone: '123456789' }])
+    }))
+  };
+});
+
+// Mock do ClienteService
+vi.mock('../../../services/ClienteService', () => ({
+  ClienteService: class {
+    search = vi.fn().mockResolvedValue([{ id: 1, nome: 'João Silva', telefone: '123456789' }])
+  }
+}));
+
 // Mock do transacaoService
 vi.mock('../../../services/TransacaoService', () => ({
   transacaoService: {
@@ -118,9 +134,13 @@ describe('Página de Transações', () => {
     const selectProf = selects[0];
     const selectItem = selects[1];
 
-    // Set client
+    // Set client and select from suggestions
     const inputCliente = screen.getByPlaceholderText(/Ex: João Silva ou Avulso/i);
-    await user.type(inputCliente, 'João Silva');
+    await user.type(inputCliente, 'João');
+
+    // Wait for and click selection
+    const suggestion = await screen.findByText('João Silva');
+    await user.click(suggestion);
 
     await user.selectOptions(selectProf, '1'); // Admin
     await user.selectOptions(selectItem, 'Corte');
@@ -134,10 +154,10 @@ describe('Página de Transações', () => {
 
     await waitFor(() => {
       expect(transacaoService.create).toHaveBeenCalledWith({
-        descricao: 'Atendimento para: João Silva',
+        descricao: 'Atendimento: João Silva',
         tipoTransacaoId: 1,
         profissionalId: 1,
-        clienteId: 1, // Por ter escrito João Silva e ele existir no mockClientes
+        clienteId: 1,
         itens: [{ itemId: 1, quantidade: 1, usouCreditoAssinatura: false }]
       });
     });

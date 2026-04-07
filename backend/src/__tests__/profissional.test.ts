@@ -150,7 +150,7 @@ describe('Profissional API', () => {
         .delete('/profissionais/1')
         .set('Authorization', `Bearer ${token}`);
 
-      expect(res.status).toBe(400); // Controller de profissional retorna 400 no sucesso no método delete!
+      expect(res.status).toBe(200); // Controller de profissional retorna 200 no sucesso no método delete
       expect(res.body.message).toBe('Registro excluído');
     });
 

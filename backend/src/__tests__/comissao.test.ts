@@ -62,21 +62,21 @@ describe('Comissão API', () => {
       (prisma.transacao.findMany as jest.Mock).mockResolvedValueOnce(mockTransacoes);
 
       const res = await request(app)
-        .get('/comissoes/profissional/2')
+        .get('/comissoes/profissional/2?dataInicio=2026-01-01&dataFim=2026-01-31')
         .set('Authorization', `Bearer ${token}`);
 
       expect(res.status).toBe(200);
       expect(res.body.profissional).toBe('Barbeiro Teste');
       expect(res.body.quantidadeTransacoes).toBe(1);
-      expect(res.body.resumoFinanceiro.totalVendido).toBe(110.0); // 50 + 60
-      expect(res.body.resumoFinanceiro.valorReceber).toBe(31.0); // 25 + 6
+      expect(res.body.totalMovimentado).toBe(110.0); // 50 + 60
+      expect(res.body.totalComissao).toBe(31.0); // 25 + 6
     });
 
     it('deve retornar erro 400 se profissional não for encontrado', async () => {
       (prisma.profissional.findUnique as jest.Mock).mockResolvedValueOnce(null);
 
       const res = await request(app)
-        .get('/comissoes/profissional/99')
+        .get('/comissoes/profissional/99?dataInicio=2026-01-01&dataFim=2026-01-31')
         .set('Authorization', `Bearer ${token}`);
 
       expect(res.status).toBe(400);

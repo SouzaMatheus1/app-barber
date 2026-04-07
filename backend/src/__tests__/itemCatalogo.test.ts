@@ -13,6 +13,7 @@ jest.mock('../database/prisma', () => ({
     itemCatalogo: {
       findMany: jest.fn(),
       create: jest.fn(),
+      findFirst: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
@@ -76,6 +77,7 @@ describe('ItemCatalogo API', () => {
         tipo: { id: 1, descricao: 'SERVICO' }
       };
 
+      (prisma.itemCatalogo.findFirst as jest.Mock).mockResolvedValueOnce(null);
       (prisma.itemCatalogo.create as jest.Mock).mockResolvedValueOnce(mockNovoItem);
 
       const res = await request(app)

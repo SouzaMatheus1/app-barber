@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Plus, Trash2, CheckCircle2, Loader2, Crown, Scissors } from 'lucide-react';
+import { Plus, Trash2, CheckCircle2, Loader2, Crown } from 'lucide-react';
 import { transacaoService } from '../../services/TransacaoService';
 import { assinaturaService } from '../../services/AssinaturaService';
 import { ClienteService } from '../../services/ClienteService';

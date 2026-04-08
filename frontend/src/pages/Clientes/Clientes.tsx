@@ -51,9 +51,17 @@ export function Clientes() {
     setLoadingAction(true);
     try {
       if (editingId) {
-        await clienteService.editar(editingId, { nome, telefone, planoId: planoId ? Number(planoId) : undefined });
+        await clienteService.editar(editingId, { 
+          nome, 
+          telefone, 
+          planoId: planoId === '' ? 0 : Number(planoId) 
+        });
       } else {
-        await clienteService.criar({ nome, telefone, planoId: planoId ? Number(planoId) : undefined });
+        await clienteService.criar({ 
+          nome, 
+          telefone, 
+          planoId: planoId === '' ? 0 : Number(planoId) 
+        });
       }
       resetForm();
       await loadClientes();

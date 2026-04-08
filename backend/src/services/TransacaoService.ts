@@ -45,7 +45,10 @@ export class TransacaoService {
         if (clienteId) {
             assinaturaAtiva = await prisma.assinatura.findFirst({
                 where: { clienteId, status: statusAssinatura.ATIVA },
-                include: { creditos: true }
+                include: { 
+                    creditos: true,
+                    plano: { include: { itens: true } }
+                }
             });
         }
 
@@ -84,10 +87,19 @@ export class TransacaoService {
                    });
                }
 
-               valorItem = 0; // zerando p/ o caixa final
+               // Cálculo proporcional: Mensalidade / Total de créditos no plano
+               const itensPlano = assinaturaAtiva.plano.itens || [];
+               const totalItensNoPlano = itensPlano.reduce((sum, ip) => sum + ip.quantidade, 0);
+               const mensalidade = Number(assinaturaAtiva.plano.valorMensal || 0);
+               
+               const valorProporcional = totalItensNoPlano > 0 ? mensalidade / totalItensNoPlano : 0;
+               valorItem = valorProporcional; // Usar valor proporcional p/ o ItemTransacao
             }
 
-            totalVenda += valorItem * itemRegistrado.quantidade;
+            // Para o totalVenda do Caixa, se usou crédito, a contribuição financeira é 0
+            if (!usouCredito) {
+                totalVenda += valorItem * itemRegistrado.quantidade;
+            }
 
             return {
                 quantidade: itemRegistrado.quantidade,

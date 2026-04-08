@@ -33,7 +33,7 @@ export class ClienteController {
             const result = await this.clienteService.create({
                 nome,
                 telefone,
-                planoId: planoId ? Number(planoId) : undefined
+                planoId: (planoId !== undefined && planoId !== null && planoId !== '') ? Number(planoId) : undefined
             });
             return res.status(201).json(result);
         } catch (error: any) {
@@ -51,7 +51,7 @@ export class ClienteController {
                 {
                     nome,
                     telefone,
-                    planoId: planoId ? Number(planoId) : undefined
+                    planoId: (planoId !== undefined && planoId !== null && planoId !== '') ? Number(planoId) : undefined
                 }
             );
             return res.status(200).json(result);

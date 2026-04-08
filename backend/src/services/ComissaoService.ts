@@ -57,45 +57,31 @@ export class ComissaoService {
         const transacoesDetalhadas = transacoes.map((t: any) => {
             let comissaoDestaTransacao = 0;
             
-            const servicos = t.itens.map((i: any) => {
-                const isCredito = i.usouCreditoAssinatura;
-                let valorBaseParaComissao = 0;
-
-                if (isCredito) {
-                    // Nova regra: valor proporcional do plano
-                    const assinaturaAtiva = t.cliente?.assinaturas[0];
-                    if (assinaturaAtiva && assinaturaAtiva.plano) {
-                        const totalItensNoPlano = assinaturaAtiva.plano.itens.reduce((acc: number, curr: any) => acc + curr.quantidade, 0);
-                        if (totalItensNoPlano > 0) {
-                            const valorMensal = Number(assinaturaAtiva.plano.valorMensal);
-                            valorBaseParaComissao = valorMensal / totalItensNoPlano;
-                        } else {
-                            valorBaseParaComissao = Number(i.item.preco); // Fallback
-                        }
-                    } else {
-                        valorBaseParaComissao = Number(i.item.preco); // Fallback se não achar assinatura (histórico)
-                    }
-                } else {
-                    valorBaseParaComissao = Number(i.precoUnitario);
-                }
-
+            const itensTransacaoDetalhados = t.itens.map((i: any) => {
+                const valorBase = Number(i.precoUnitario); // Já é o proporcional se for assinatura
                 const percentual = i.item.comissao ? Number(i.item.comissao) : 0;
-                const valorComissaoItem = (valorBaseParaComissao * i.quantidade * percentual) / 100;
+                const valorComissaoItem = (valorBase * i.quantidade * percentual) / 100;
                 comissaoDestaTransacao += valorComissaoItem;
                 
-                return `${i.quantidade}x ${i.item.nome}`;
-            }).join(', ');
+                return {
+                    label: `${i.quantidade}x ${i.item.nome}`,
+                    valorReal: valorBase * i.quantidade,
+                    usouCredito: i.usouCreditoAssinatura
+                };
+            });
 
-            totalVendido += Number(t.valorTotal);
+            const volumeVendaTransacao = itensTransacaoDetalhados.reduce((acc: number, curr: any) => acc + curr.valorReal, 0);
+            totalVendido += volumeVendaTransacao;
             totalComissao += comissaoDestaTransacao;
 
             return {
                 id: t.id,
                 profissional: t.profissional?.nome || 'N/A',
                 cliente: t.cliente?.nome || 'Cliente Avulso',
-                servicos: servicos,
+                servicos: itensTransacaoDetalhados.map((it: any) => it.label).join(', '),
                 dataHora: t.data,
-                valorTotalVendaReal: Number(t.valorTotal),
+                valorTotalVendaReal: volumeVendaTransacao, // Valor Real de Performance
+                valorRecebidoCaixa: Number(t.valorTotal),    // Valor de Entrada no Caixa
                 comissao: comissaoDestaTransacao
             };
         });

@@ -12,7 +12,12 @@ interface AssinaturaAtiva {
   id: number;
   planoId: number;
   status: 'ATIVA' | 'INATIVA';
-  plano: { id: number; nome: string };
+  plano: { 
+    id: number; 
+    nome: string; 
+    valorMensal: number; 
+    itens: { id: number; quantidade: number }[] 
+  };
   creditos: {
     id: number;
     itemId: number;
@@ -63,7 +68,6 @@ function resolveItemTipo(name: string): CatalogItem['tipo'] {
   return 'outro';
 }
 
-const fmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -200,10 +204,22 @@ const Transacoes: React.FC = () => {
     );
   };
 
+  const getValorProporcional = useCallback((): number => {
+    if (!assinaturaAtiva || !assinaturaAtiva.plano) return 0;
+    const totalItens = assinaturaAtiva.plano.itens.reduce((acc, i) => acc + i.quantidade, 0);
+    if (totalItens === 0) return 0;
+    return (assinaturaAtiva.plano.valorMensal || 0) / totalItens;
+  }, [assinaturaAtiva]);
+
   // ── Derived calculations ──
-  const total = cartItems.reduce((acc, item) => {
+  const totalAPagar = cartItems.reduce((acc, item) => {
     if (item.usouCredito) return acc;
     return acc + item.originalPrice * item.quantity;
+  }, 0);
+
+  const totalAtendimento = cartItems.reduce((acc, item) => {
+    const valorItem = item.usouCredito ? getValorProporcional() : item.originalPrice;
+    return acc + (valorItem * item.quantity);
   }, 0);
 
   const isCreditToggleEnabled = (item: CartItem): boolean => {
@@ -401,7 +417,8 @@ const Transacoes: React.FC = () => {
           <div className="space-y-3">
             {cartItems.map(item => {
               const creditEnabled = isCreditToggleEnabled(item);
-              const displayPrice = item.usouCredito ? 0 : item.originalPrice;
+              const valorProporcional = getValorProporcional();
+              const displayPrice = item.usouCredito ? valorProporcional : item.originalPrice;
 
               return (
                 <div
@@ -449,7 +466,7 @@ const Transacoes: React.FC = () => {
                         readOnly
                         value={displayPrice.toFixed(2)}
                         className={`w-full bg-transparent border-b border-[#D4AF37]/30 py-1 pl-9 pr-2 font-bold transition-colors duration-200 ${
-                          item.usouCredito ? 'text-[#D4AF37]/50 line-through' : 'text-[#D4AF37]'
+                          item.usouCredito ? 'text-[#D4AF37]/80' : 'text-[#D4AF37]'
                         }`}
                       />
                     </div>
@@ -496,12 +513,32 @@ const Transacoes: React.FC = () => {
 
         {/* ── Total e Submit ── */}
         <div className="border-t border-[#D4AF37]/20 pt-6 flex flex-col items-end gap-6">
-          <div className="text-right">
-            <p className="text-[#E5E5E5]/60 text-sm uppercase tracking-wider font-semibold mb-1">Total da Transação</p>
-            <p className="text-4xl font-bold font-serif text-[#D4AF37]">{fmt.format(total)}</p>
+          {/* Totals Section */}
+          <div className="bg-[#1A1A1A] border border-[#D4AF37]/20 rounded-xl p-6 space-y-4 w-full md:w-80">
+            <div className="flex items-center justify-between text-[#E5E5E5]/60 hover:text-[#E5E5E5] transition-colors cursor-help group relative">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium uppercase tracking-wider">Valor do Atendimento</span>
+                <div className="opacity-0 group-hover:opacity-100 absolute bottom-full left-0 mb-2 w-64 p-2 bg-[#2a2a2a] border border-[#D4AF37]/30 text-[10px] rounded shadow-xl pointer-events-none transition-opacity duration-200 z-50">
+                  Soma total dos serviços prestados (incluindo o valor proporcional do plano).
+                </div>
+              </div>
+              <span className="text-xl font-medium">
+                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalAtendimento)}
+              </span>
+            </div>
+
+            <div className="h-px bg-gradient-to-r from-transparent via-[#D4AF37]/30 to-transparent" />
+
+            <div className="flex items-center justify-between text-[#D4AF37]">
+              <span className="text-sm font-bold uppercase tracking-wider">Total a Pagar Hoje</span>
+              <span className="text-3xl font-black tracking-tight">
+                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalAPagar)}
+              </span>
+            </div>
+            
             {cartItems.some(i => i.usouCredito) && (
-              <p className="text-xs text-[#D4AF37]/60 mt-1 italic">
-                Itens com crédito do plano não entram no total financeiro.
+              <p className="text-[10px] text-center text-[#D4AF37]/60 italic font-medium">
+                * Créditos do plano foram descontados do total a pagar.
               </p>
             )}
           </div>

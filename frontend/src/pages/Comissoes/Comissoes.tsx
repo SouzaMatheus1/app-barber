@@ -174,7 +174,8 @@ export function Comissoes() {
                     <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Cliente</th>
                     <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Serviço/Produto</th>
                     <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Data/Hora</th>
-                    <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Valor de venda R$</th>
+                    <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Volume Venda</th>
+                    <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Recebido (Caixa)</th>
                     <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider text-right">Comissão R$</th>
                   </tr>
                 </thead>
@@ -187,8 +188,13 @@ export function Comissoes() {
                       <td className="py-4 px-6 text-[#E5E5E5]/60 text-sm">
                         {new Date(tx.dataHora).toLocaleTimeString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </td>
-                      <td className="py-4 px-6 text-[#E5E5E5]/80 text-center truncate" title={String(tx.valorTotalVendaReal)}>
+                      <td className="py-4 px-6 text-[#E5E5E5]/80 font-medium whitespace-nowrap" title={String(tx.valorTotalVendaReal)}>
                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(tx.valorTotalVendaReal)}
+                      </td>
+                      <td className="py-4 px-6 text-[#E5E5E5]/40 text-xs italic whitespace-nowrap">
+                        {tx.valorRecebidoCaixa > 0 
+                          ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(tx.valorRecebidoCaixa)
+                          : 'Plano (R$ 0,00)'}
                       </td>
                       <td className="py-4 px-6 text-emerald-400 font-bold text-right">
                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(tx.comissao)}

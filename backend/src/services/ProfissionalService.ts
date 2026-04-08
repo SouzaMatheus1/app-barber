@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 export class ProfissionalService {
     async listAll() {
         const profissionais = await prisma.profissional.findMany({
+            where: { ativo: true },
             select: {
                 id: true,
                 nome: true,
@@ -100,8 +101,9 @@ export class ProfissionalService {
         if (!profissional)
             throw new Error('Usuário não encontrado')
 
-        await prisma.profissional.delete({
-            where: { id }
+        await prisma.profissional.update({
+            where: { id },
+            data: { ativo: false }
         });
 
         return { message: 'Registro excluído' };

@@ -5,8 +5,8 @@ import { sign } from 'jsonwebtoken';
 export class AuthService {
     async login(email: string, senhaPlana: string) {
         // Traz o profissional e o perfil dele junto
-        const profissional = await prisma.profissional.findUnique({
-            where: { email },
+        const profissional = await prisma.profissional.findFirst({
+            where: { email, ativo: true },
             include: { perfil: true }
         });
 

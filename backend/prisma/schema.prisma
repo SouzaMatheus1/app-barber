@@ -12,6 +12,7 @@ model Profissional {
   email      String      @unique
   senha      String
   criadoEm   DateTime    @default(now())
+  ativo      Boolean     @default(true)
   perfilId   Int         @default(1)
   perfil     Perfil      @relation(fields: [perfilId], references: [id])
   transacoes Transacao[]
@@ -30,6 +31,7 @@ model Cliente {
   nome        String
   telefone    String?
   criadoEm    DateTime     @default(now())
+  ativo       Boolean      @default(true)
   assinaturas Assinatura[]
   transacoes  Transacao[]
 }
@@ -39,6 +41,7 @@ model ItemCatalogo {
   nome               String
   preco              Decimal             @db.Decimal(10, 2)
   comissao           Decimal?            @db.Decimal(5, 2)
+  ativo              Boolean             @default(true)
   tipoItemId         Int
   creditosAssinatura CreditoAssinatura[]
   tipo               TipoItem            @relation(fields: [tipoItemId], references: [id])

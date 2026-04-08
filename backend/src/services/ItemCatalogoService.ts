@@ -3,6 +3,7 @@ import { prisma } from '../database/prisma';
 export class ItemCatalogoService {
     async listAll() {
         const itens = await prisma.itemCatalogo.findMany({
+            where: { ativo: true },
             select: {
                 id: true,
                 nome: true,
@@ -81,8 +82,9 @@ export class ItemCatalogoService {
         if (!item)
             throw new Error('Item não encontrado')
 
-        await prisma.itemCatalogo.delete({
-            where: { id }
+        await prisma.itemCatalogo.update({
+            where: { id },
+            data: { ativo: false }
         });
 
         return { message: 'Registro excluído' };

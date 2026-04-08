@@ -5,6 +5,7 @@ import { statusAssinatura } from '@prisma/client';
 export class ClienteService {
     async listAll() {
         const clientes = await prisma.cliente.findMany({
+            where: { ativo: true },
             select: {
                 id: true,
                 nome: true,
@@ -34,6 +35,7 @@ export class ClienteService {
     async searchByName(nome: string) {
         const clientes = await prisma.cliente.findMany({
             where: {
+                ativo: true,
                 nome: {
                     contains: nome
                 }
@@ -88,6 +90,27 @@ export class ClienteService {
         if(!cliente)
             throw new Error('Cliente não encontrado');
 
+        if (data.planoId === 0) {
+            try {
+                await prisma.assinatura.updateMany({
+                    where: { clienteId: id, status: statusAssinatura.ATIVA },
+                    data: { status: statusAssinatura.INATIVA }
+                });
+            } catch (err) {
+                console.error("Erro ao inativar assinatura na edicao", err);
+            }
+        } else if (data.planoId) {
+            try {
+                // Busca o primeiro profissional disponível para registrar o caixa
+                const primeiroProf = await prisma.profissional.findFirst({ select: { id: true } });
+                const profId = primeiroProf?.id ?? 1;
+                const assinaturaService = new AssinaturaService();
+                await assinaturaService.subscribe(id, data.planoId, profId);
+            } catch (err) {
+                console.error("Erro ao ativar/alterar assinatura na edicao", err);
+            }
+        }
+
         const result = await prisma.cliente.update({
             where: { id },
             data: {
@@ -101,22 +124,10 @@ export class ClienteService {
                 criadoEm: true,
                 assinaturas: {
                     where: { status: statusAssinatura.ATIVA },
-                    select: { planoId: true }
+                    select: { planoId: true, plano: { select: { nome: true } } }
                 }
             }
         });
-
-        if (data.planoId) {
-            try {
-                // Busca o primeiro profissional disponível para registrar o caixa
-                const primeiroProf = await prisma.profissional.findFirst({ select: { id: true } });
-                const profId = primeiroProf?.id ?? 1;
-                const assinaturaService = new AssinaturaService();
-                await assinaturaService.subscribe(id, data.planoId, profId);
-            } catch (err) {
-                console.error("Erro ao ativar/alterar assinatura na edicao", err);
-            }
-        }
 
         return { result, message: 'Registro alterado com sucesso' }
     }
@@ -129,8 +140,9 @@ export class ClienteService {
         if (!cliente)
             throw new Error('Cliente não encontrado');
 
-        await prisma.cliente.delete({
-            where: { id }
+        await prisma.cliente.update({
+            where: { id },
+            data: { ativo: false }
         });
 
         return { message: 'Registro excluído com sucesso' };

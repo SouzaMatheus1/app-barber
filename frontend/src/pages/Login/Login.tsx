@@ -20,7 +20,7 @@ const Login: React.FC = () => {
     try {
       // Usa o serviço real do backend
       const response = await authService.login(email, password);
-      
+
       login(response.token, response.profissional);
       navigate('/dashboard');
     } catch (err) {
@@ -37,9 +37,9 @@ const Login: React.FC = () => {
         {/* Elementos Decorativos de Luxo */}
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent opacity-70"></div>
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#D4AF37] rounded-full blur-[100px] opacity-10 pointer-events-none"></div>
-        
+
         <div className="mb-10 text-center relative z-10">
-          <h1 className="text-4xl font-serif font-bold text-[#D4AF37] tracking-widest uppercase mb-2">WS Barber Shop</h1>
+          <h1 className="text-4xl font-serif font-bold text-[#D4AF37] tracking-widest uppercase mb-2">Santana's Barbearia</h1>
           <p className="text-[#E5E5E5]/60 text-sm tracking-widest uppercase">Barbearia • 𝐖𝐒𝟏𝟖 𝐁𝐚𝐫𝐛𝐞𝐫 𝐒𝐡𝐨𝐩</p>
         </div>
 

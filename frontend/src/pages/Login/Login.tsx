@@ -40,7 +40,7 @@ const Login: React.FC = () => {
 
         <div className="mb-10 text-center relative z-10">
           <h1 className="text-4xl font-serif font-bold text-[#D4AF37] tracking-widest uppercase mb-2">Santana's Barbearia</h1>
-          <p className="text-[#E5E5E5]/60 text-sm tracking-widest uppercase">Barbearia • 𝐖𝐒𝟏𝟖 𝐁𝐚𝐫𝐛𝐞𝐫 𝐒𝐡𝐨𝐩</p>
+          <p className="text-[#E5E5E5]/60 text-sm tracking-widest uppercase">Onde o corte vira identidade, qualidade em cada detalhe.</p>
         </div>
 
         {error && (

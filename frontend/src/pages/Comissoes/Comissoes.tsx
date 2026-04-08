@@ -37,7 +37,7 @@ export function Comissoes() {
 
   const handleBuscar = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!profissionalId) {
+    if (profissionalId === '') {
       alert("Selecione um profissional.");
       return;
     }
@@ -87,6 +87,7 @@ export function Comissoes() {
                 className="w-full px-4 py-3 bg-[#121212] text-[#E5E5E5] rounded-lg border border-[#D4AF37]/20 focus:outline-none focus:border-[#D4AF37] transition-colors appearance-none cursor-pointer"
               >
                 <option value="" disabled>Selecione um barbeiro</option>
+                <option value="0">Todos os profissionais</option>
                 {profissionais.map(p => (
                   <option key={p.id} value={p.id}>{p.nome}</option>
                 ))}
@@ -169,6 +170,7 @@ export function Comissoes() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-[#121212]">
+                    <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Profissional</th>
                     <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Cliente</th>
                     <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Serviço/Produto</th>
                     <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Data/Hora</th>
@@ -179,6 +181,7 @@ export function Comissoes() {
                 <tbody className="divide-y divide-[#D4AF37]/10">
                   {relatorio.transacoes && relatorio.transacoes.map((tx: any) => (
                     <tr key={tx.id} className="hover:bg-[#D4AF37]/5 transition-colors group">
+                      <td className="py-4 px-6 text-[#D4AF37] font-bold text-xs uppercase tracking-widest">{tx.profissional}</td>
                       <td className="py-4 px-6 text-[#E5E5E5] font-medium">{tx.cliente}</td>
                       <td className="py-4 px-6 text-[#E5E5E5]/80 max-w-[200px] truncate" title={tx.servicos}>{tx.servicos}</td>
                       <td className="py-4 px-6 text-[#E5E5E5]/60 text-sm">

@@ -20,8 +20,7 @@ export class ClienteService {
                         id: true,
                         nome: true,
                         valorMensal: true,
-                        qtCortes: true,
-                        qtBarbas: true
+                        itens: { include: { item: true } }
                     }
                     }
                 }

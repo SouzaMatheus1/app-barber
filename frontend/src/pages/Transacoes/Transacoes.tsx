@@ -11,10 +11,14 @@ const clienteService = new ClienteService();
 interface AssinaturaAtiva {
   id: number;
   planoId: number;
-  creditosCorte: number;
-  creditosBarba: number;
   status: 'ATIVA' | 'INATIVA';
   plano: { id: number; nome: string };
+  creditos: {
+    id: number;
+    itemId: number;
+    quantidadeRestante: number;
+    item: { nome: string };
+  }[];
 }
 
 interface CatalogItem {
@@ -204,18 +208,15 @@ const Transacoes: React.FC = () => {
 
   const isCreditToggleEnabled = (item: CartItem): boolean => {
     if (!assinaturaAtiva || !item.itemId || assinaturaAtiva.status !== 'ATIVA') return false;
-    const catalogItem = catalog.find(c => c.id === item.itemId);
-    if (!catalogItem || catalogItem.tipo === 'outro') return false;
-    if (catalogItem.tipo === 'barba') return assinaturaAtiva.creditosBarba > 0;
-    // corte (default para qualquer serviço não classificado como barba)
-    return assinaturaAtiva.creditosCorte > 0;
+    const credito = assinaturaAtiva.creditos.find(c => c.itemId === item.itemId);
+    return !!credito && credito.quantidadeRestante > 0;
   };
 
   const getCreditLabel = (item: CartItem): string => {
-    const catalogItem = catalog.find(c => c.id === item.itemId);
-    if (!catalogItem || !assinaturaAtiva) return 'Usar Crédito';
-    if (catalogItem.tipo === 'barba') return `Crédito Barba (${assinaturaAtiva.creditosBarba} disp.)`;
-    return `Crédito Corte (${assinaturaAtiva.creditosCorte} disp.)`;
+    if (!assinaturaAtiva || !item.itemId) return 'Usar Crédito';
+    const credito = assinaturaAtiva.creditos.find(c => c.itemId === item.itemId);
+    if (!credito) return 'Não incluso no plano';
+    return `Crédito ${credito.item.nome} (${credito.quantidadeRestante} disp.)`;
   };
 
   // ── Submit ──
@@ -338,19 +339,14 @@ const Transacoes: React.FC = () => {
                       Assinante Ativo — {assinaturaAtiva.plano.nome}
                     </div>
                     <div className="flex flex-wrap gap-2 mt-2">
-                      {assinaturaAtiva.creditosCorte > 0 && (
-                        <span className="flex items-center gap-1 text-[11px] font-bold text-[#D4AF37] bg-[#D4AF37]/10 border border-[#D4AF37]/20 px-2 py-1 rounded">
-                          <Scissors size={11} /> Cortes: {assinaturaAtiva.creditosCorte}
-                        </span>
-                      )}
-                      {assinaturaAtiva.creditosBarba > 0 && (
-                        <span className="flex items-center gap-1 text-[11px] font-bold text-[#D4AF37] bg-[#D4AF37]/10 border border-[#D4AF37]/20 px-2 py-1 rounded">
-                          🧔 Barbas: {assinaturaAtiva.creditosBarba}
-                        </span>
-                      )}
-                      {assinaturaAtiva.creditosCorte === 0 && assinaturaAtiva.creditosBarba === 0 && (
-                        <span className="text-[11px] text-[#E5E5E5]/40 italic">Sem créditos disponíveis neste mês.</span>
-                      )}
+                       {assinaturaAtiva.creditos?.map(cred => (
+                         <span key={cred.id} className={`flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded border ${cred.quantidadeRestante > 0 ? 'text-[#D4AF37] bg-[#D4AF37]/10 border-[#D4AF37]/20' : 'text-red-500/50 bg-red-500/5 border-red-500/10'}`}>
+                           {cred.item?.nome}: {cred.quantidadeRestante}
+                         </span>
+                       ))}
+                       {(!assinaturaAtiva.creditos || assinaturaAtiva.creditos.length === 0) && (
+                         <span className="text-[11px] text-[#E5E5E5]/40 italic">Sem créditos associados a este plano.</span>
+                       )}
                     </div>
                   </>
                 ) : (

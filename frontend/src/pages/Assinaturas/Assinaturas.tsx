@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Crown, Package, Users, Plus, Edit2, Trash2, Loader2, Save, BarChart3, TrendingUp } from 'lucide-react';
 import { assinaturaService } from '../../services/AssinaturaService';
+import { itemCatalogoService } from '../../services/ItemCatalogoService';
 
 const Assinaturas: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'planos' | 'assinantes' | 'relatorios'>('planos');
@@ -14,8 +15,8 @@ const Assinaturas: React.FC = () => {
   const [planoEditingId, setPlanoEditingId] = useState<number | null>(null);
   const [planoNome, setPlanoNome] = useState('');
   const [planoValor, setPlanoValor] = useState<number | ''>('');
-  const [planoCortes, setPlanoCortes] = useState<number>(0);
-  const [planoBarbas, setPlanoBarbas] = useState<number>(0);
+  const [itensPlanoSelected, setItensPlanoSelected] = useState<{ itemId: number, quantidade: number }[]>([]);
+  const [catalogo, setCatalogo] = useState<any[]>([]);
 
   useEffect(() => {
     fetchData();
@@ -26,8 +27,10 @@ const Assinaturas: React.FC = () => {
     try {
       const p = await assinaturaService.getPlanos();
       const a = await assinaturaService.getAssinaturas();
+      const c = await itemCatalogoService.listar();
       setPlanos(p);
       setAssinaturas(a);
+      setCatalogo(c.filter((i: any) => i.tipo?.descricao === 'SERVICO'));
     } catch (err) {
       console.error(err);
     } finally {
@@ -44,8 +47,7 @@ const Assinaturas: React.FC = () => {
       const payload = {
         nome: planoNome,
         valorMensal: Number(planoValor),
-        qtCortes: planoCortes,
-        qtBarbas: planoBarbas
+        itens: itensPlanoSelected
       };
 
       if (planoEditingId) {
@@ -84,8 +86,10 @@ const Assinaturas: React.FC = () => {
     setPlanoEditingId(Number(plano.id));
     setPlanoNome(plano.nome);
     setPlanoValor(Number(plano.valorMensal));
-    setPlanoCortes(plano.qtCortes);
-    setPlanoBarbas(plano.qtBarbas);
+    setItensPlanoSelected(plano.itens?.map((i: any) => ({
+      itemId: i.itemId,
+      quantidade: i.quantidade
+    })) || []);
   };
 
   const resetForm = () => {
@@ -93,8 +97,23 @@ const Assinaturas: React.FC = () => {
     setPlanoEditingId(null);
     setPlanoNome('');
     setPlanoValor('');
-    setPlanoCortes(0);
-    setPlanoBarbas(0);
+    setItensPlanoSelected([]);
+  };
+
+  const addServiceToPlano = () => {
+    setItensPlanoSelected([...itensPlanoSelected, { itemId: 0, quantidade: 1 }]);
+  };
+
+  const removeServiceFromPlano = (index: number) => {
+    const newItens = [...itensPlanoSelected];
+    newItens.splice(index, 1);
+    setItensPlanoSelected(newItens);
+  };
+
+  const updateServiceInPlano = (index: number, field: 'itemId' | 'quantidade', value: number) => {
+    const newItens = [...itensPlanoSelected];
+    newItens[index] = { ...newItens[index], [field]: value };
+    setItensPlanoSelected(newItens);
   };
 
   return (
@@ -172,29 +191,60 @@ const Assinaturas: React.FC = () => {
               />
             </div>
 
-            <div className="col-span-1 md:col-span-2 grid grid-cols-2 gap-4 border-t border-[#D4AF37]/20 pt-4 mt-2">
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-[#E5E5E5]/80 uppercase tracking-wider">Cortes Inclusos</label>
-                <input
-                  type="number"
-                  min="0"
-                  required
-                  value={planoCortes}
-                  onChange={e => setPlanoCortes(Number(e.target.value))}
-                  className="w-full px-4 py-3 bg-[#121212] text-[#D4AF37] font-bold rounded-lg border border-[#D4AF37]/20 focus:outline-none focus:border-[#D4AF37] transition-colors text-center"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-[#E5E5E5]/80 uppercase tracking-wider">Barbas Inclusas</label>
-                <input
-                  type="number"
-                  min="0"
-                  required
-                  value={planoBarbas}
-                  onChange={e => setPlanoBarbas(Number(e.target.value))}
-                  className="w-full px-4 py-3 bg-[#121212] text-[#D4AF37] font-bold rounded-lg border border-[#D4AF37]/20 focus:outline-none focus:border-[#D4AF37] transition-colors text-center"
-                />
-              </div>
+            <div className="col-span-1 md:col-span-2 border-t border-[#D4AF37]/20 pt-4 mt-2 space-y-4">
+               <div className="flex justify-between items-center">
+                  <h3 className="text-sm font-bold text-[#D4AF37] uppercase tracking-wider">Serviços Inclusos no Plano</h3>
+                  <button 
+                    type="button"
+                    onClick={addServiceToPlano}
+                    className="text-xs bg-[#D4AF37]/10 text-[#D4AF37] px-3 py-1 rounded border border-[#D4AF37]/30 hover:bg-[#D4AF37]/20 transition-colors flex items-center gap-1"
+                  >
+                    <Plus size={14} /> Adicionar Serviço
+                  </button>
+               </div>
+               
+               {itensPlanoSelected.length === 0 && (
+                 <p className="text-xs text-[#E5E5E5]/40 italic py-2">Nenhum serviço selecionado.</p>
+               )}
+
+               <div className="space-y-3">
+                 {itensPlanoSelected.map((item, index) => (
+                   <div key={index} className="flex gap-4 items-end animate-in slide-in-from-left-2 duration-300">
+                     <div className="flex-1 space-y-2">
+                       <label className="text-[10px] font-semibold text-[#E5E5E5]/60 uppercase tracking-widest">Serviço</label>
+                       <select
+                         required
+                         value={item.itemId || ''}
+                         onChange={(e) => updateServiceInPlano(index, 'itemId', Number(e.target.value))}
+                         className="w-full px-3 py-2 bg-[#121212] text-[#E5E5E5] rounded border border-[#D4AF37]/20 focus:outline-none focus:border-[#D4AF37] text-sm"
+                       >
+                         <option value="" disabled>Selecione</option>
+                         {catalogo.map(c => (
+                           <option key={c.id} value={c.id}>{c.nome}</option>
+                         ))}
+                       </select>
+                     </div>
+                     <div className="w-24 space-y-2">
+                       <label className="text-[10px] font-semibold text-[#E5E5E5]/60 uppercase tracking-widest">Qtd.</label>
+                       <input
+                         type="number"
+                         min="1"
+                         required
+                         value={item.quantidade}
+                         onChange={(e) => updateServiceInPlano(index, 'quantidade', Number(e.target.value))}
+                         className="w-full px-3 py-2 bg-[#121212] text-[#D4AF37] font-bold rounded border border-[#D4AF37]/20 focus:outline-none focus:border-[#D4AF37] text-sm text-center"
+                       />
+                     </div>
+                     <button
+                       type="button"
+                       onClick={() => removeServiceFromPlano(index)}
+                       className="p-2.5 text-red-500 hover:bg-red-500/10 rounded transition-colors"
+                     >
+                       <Trash2 size={18} />
+                     </button>
+                   </div>
+                 ))}
+               </div>
             </div>
           </div>
 
@@ -242,8 +292,13 @@ const Assinaturas: React.FC = () => {
                   {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(plano.valorMensal)}
                 </div>
                 <div className="text-sm border-t border-[#D4AF37]/20 pt-4 w-full text-[#E5E5E5]/70 space-y-2">
-                  {plano.qtCortes > 0 && <p className="flex justify-between"><span>Cortes Inclusos</span> <span className="text-[#D4AF37] font-bold">x{plano.qtCortes}</span></p>}
-                  {plano.qtBarbas > 0 && <p className="flex justify-between"><span>Barbas Inclusas</span> <span className="text-[#D4AF37] font-bold">x{plano.qtBarbas}</span></p>}
+                  {plano.itens?.map((i: any) => (
+                    <p key={i.id} className="flex justify-between">
+                      <span>{i.item?.nome || 'Serviço'}</span> 
+                      <span className="text-[#D4AF37] font-bold">x{i.quantidade}</span>
+                    </p>
+                  ))}
+                  {(!plano.itens || plano.itens.length === 0) && <p className="text-xs text-[#E5E5E5]/40 italic">Sem serviços inclusos</p>}
                 </div>
               </div>
             ))}
@@ -256,8 +311,7 @@ const Assinaturas: React.FC = () => {
                   <th className="pb-3 px-4">Cliente</th>
                   <th className="pb-3 px-4">Plano</th>
                   <th className="pb-3 px-4 text-center">Status</th>
-                  <th className="pb-3 px-4 text-center">Cortes Disp.</th>
-                  <th className="pb-3 px-4 text-center">Barbas Disp.</th>
+                  <th className="pb-3 px-4 text-right">Saldo de Créditos</th>
                 </tr>
               </thead>
               <tbody className="text-sm font-medium">
@@ -271,8 +325,16 @@ const Assinaturas: React.FC = () => {
                         {ass.status}
                       </span>
                     </td>
-                    <td className="py-4 px-4 text-[#E5E5E5] text-center">{ass.creditosCorte}</td>
-                    <td className="py-4 px-4 text-[#E5E5E5] text-center">{ass.creditosBarba}</td>
+                    <td className="py-4 px-4 text-[#E5E5E5] text-right">
+                      <div className="flex flex-col gap-1 items-end">
+                        {ass.creditos?.map((c: any) => (
+                          <div key={c.id} className="text-xs">
+                            <span className="text-[#E5E5E5]/60 mr-2">{c.item?.nome}:</span>
+                            <span className={`${c.quantidadeRestante > 0 ? 'text-emerald-400' : 'text-red-400'} font-bold`}>{c.quantidadeRestante}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>

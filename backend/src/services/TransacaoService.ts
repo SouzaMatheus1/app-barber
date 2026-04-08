@@ -44,11 +44,14 @@ export class TransacaoService {
         let assinaturaAtiva = null;
         if (clienteId) {
             assinaturaAtiva = await prisma.assinatura.findFirst({
-                where: { clienteId, status: statusAssinatura.ATIVA }
+                where: { clienteId, status: statusAssinatura.ATIVA },
+                include: { creditos: true }
             });
         }
 
-        const itensSelecionados = itens.map(itemRegistrado => { // itemRegistrado é o item vindo do parametro
+        const creditosParaAtualizar: { id: number, novaQuantidade: number }[] = [];
+
+        const itensSelecionados = itens.map(itemRegistrado => {
             const itemSalvo = itensBd.find((itemBd: any) => itemBd.id == itemRegistrado.itemId);
             let valorItem = Number(itemSalvo?.preco);
             
@@ -60,20 +63,27 @@ export class TransacaoService {
                    throw new Error("O cliente marcou o uso de crédito mas não possui assinatura ativa no momento.");
                }
                
-               const nomeNormalizado = itemSalvo?.nome.toLowerCase() || "";
-               if (nomeNormalizado.includes('combo')) {
-                   // Combo = 1 corte + 1 barba
-                   if (assinaturaAtiva.creditosCorte < itemRegistrado.quantidade) throw new Error('Saldo insuficiente de Cortes para o Combo.');
-                   if (assinaturaAtiva.creditosBarba < itemRegistrado.quantidade) throw new Error('Saldo insuficiente de Barbas para o Combo.');
-                   assinaturaAtiva.creditosCorte -= itemRegistrado.quantidade;
-                   assinaturaAtiva.creditosBarba -= itemRegistrado.quantidade;
-               } else if (nomeNormalizado.includes('barba') || nomeNormalizado.includes('bigode')) {
-                   if (assinaturaAtiva.creditosBarba < itemRegistrado.quantidade) throw new Error('Saldo insuficiente para Barbas do plano.');
-                   assinaturaAtiva.creditosBarba -= itemRegistrado.quantidade;
-               } else {
-                   if (assinaturaAtiva.creditosCorte < itemRegistrado.quantidade) throw new Error('Saldo insuficiente para Cortes do plano.');
-                   assinaturaAtiva.creditosCorte -= itemRegistrado.quantidade;
+               const creditoEncontrado = assinaturaAtiva.creditos.find(c => c.itemId === itemRegistrado.itemId);
+               
+               if (!creditoEncontrado) {
+                   throw new Error(`O plano do cliente não inclui o serviço: ${itemSalvo?.nome}`);
                }
+
+               if (creditoEncontrado.quantidadeRestante < itemRegistrado.quantidade) {
+                   throw new Error(`Saldo insuficiente para o serviço: ${itemSalvo?.nome}. Restante: ${creditoEncontrado.quantidadeRestante}`);
+               }
+
+               // Registrar para atualização posterior (dentro da transaction)
+               const jaRegistrado = creditosParaAtualizar.find(c => c.id === creditoEncontrado.id);
+               if (jaRegistrado) {
+                   jaRegistrado.novaQuantidade -= itemRegistrado.quantidade;
+               } else {
+                   creditosParaAtualizar.push({
+                       id: creditoEncontrado.id,
+                       novaQuantidade: creditoEncontrado.quantidadeRestante - itemRegistrado.quantidade
+                   });
+               }
+
                valorItem = 0; // zerando p/ o caixa final
             }
 
@@ -87,7 +97,6 @@ export class TransacaoService {
             }
         });
 
-        // Efetivar dentro do banco. (Usando transaction para nao quebrar em caso de erros subjacentes)
         const transacao = await prisma.$transaction(async (tx) => {
             const trx = await tx.transacao.create({
                 data: {
@@ -102,14 +111,13 @@ export class TransacaoService {
                 }
             });
             
-            if (requiresCredits && assinaturaAtiva) {
-                await tx.assinatura.update({
-                   where: { id: assinaturaAtiva.id },
-                   data: {
-                       creditosBarba: assinaturaAtiva.creditosBarba,
-                       creditosCorte: assinaturaAtiva.creditosCorte
-                   }
-                });
+            if (requiresCredits && creditosParaAtualizar.length > 0) {
+                for (const cred of creditosParaAtualizar) {
+                    await tx.creditoAssinatura.update({
+                        where: { id: cred.id },
+                        data: { quantidadeRestante: cred.novaQuantidade }
+                    });
+                }
             }
             return trx;
         });

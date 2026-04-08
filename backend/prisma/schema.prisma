@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,119 +7,140 @@ datasource db {
 }
 
 model Profissional {
-  id         Int      @id @default(autoincrement())
+  id         Int         @id @default(autoincrement())
   nome       String
-  email      String   @unique
+  email      String      @unique
   senha      String
-  criadoEm   DateTime @default(now())
-  
-  perfilId   Int      @default(1)
-  perfil     Perfil   @relation(fields: [perfilId], references: [id])
-  
+  criadoEm   DateTime    @default(now())
+  perfilId   Int         @default(1)
+  perfil     Perfil      @relation(fields: [perfilId], references: [id])
   transacoes Transacao[]
+
+  @@index([perfilId], map: "Profissional_perfilId_fkey")
 }
 
 model Perfil {
   id            Int            @id @default(autoincrement())
-  descricao     String         @unique // Ex: "ADMIN", "BARBEIRO"
-  
+  descricao     String         @unique
   profissionais Profissional[]
 }
 
 model Cliente {
-  id         Int      @id @default(autoincrement())
-  nome       String
-  telefone   String?
-  criadoEm   DateTime @default(now())
-  
-  transacoes  Transacao[]
+  id          Int          @id @default(autoincrement())
+  nome        String
+  telefone    String?
+  criadoEm    DateTime     @default(now())
   assinaturas Assinatura[]
+  transacoes  Transacao[]
 }
 
 model ItemCatalogo {
-  id         Int             @id @default(autoincrement())
-  nome       String
-  preco      Decimal         @db.Decimal(10, 2)
-  comissao   Decimal?        @db.Decimal(5, 2) // % de comissão
-  
-  tipoItemId Int
-  tipo       TipoItem        @relation(fields: [tipoItemId], references: [id])
-  
-  itensTransacao ItemTransacao[]
+  id                 Int                 @id @default(autoincrement())
+  nome               String
+  preco              Decimal             @db.Decimal(10, 2)
+  comissao           Decimal?            @db.Decimal(5, 2)
+  tipoItemId         Int
+  creditosAssinatura CreditoAssinatura[]
+  tipo               TipoItem            @relation(fields: [tipoItemId], references: [id])
+  itensNoPlano       ItemPlano[]
+  itensTransacao     ItemTransacao[]
+
+  @@index([tipoItemId], map: "ItemCatalogo_tipoItemId_fkey")
 }
 
 model TipoItem {
-  id            Int            @id @default(autoincrement())
-  descricao     String         @unique // Ex: "SERVICO", "PRODUTO"
-  
-  itens         ItemCatalogo[]
+  id        Int            @id @default(autoincrement())
+  descricao String         @unique
+  itens     ItemCatalogo[]
 }
 
 model Transacao {
-  id             Int           @id @default(autoincrement())
-  descricao      String?
-  valorTotal     Decimal       @db.Decimal(10, 2)
-  data           DateTime      @default(now())
-  
-  tipoTransacaoId Int
-  tipo            TipoTransacao @relation(fields: [tipoTransacaoId], references: [id])
-  
+  id              Int             @id @default(autoincrement())
+  descricao       String?
+  valorTotal      Decimal         @db.Decimal(10, 2)
+  data            DateTime        @default(now())
   profissionalId  Int
-  profissional    Profissional? @relation(fields: [profissionalId], references: [id])
-  
   clienteId       Int?
-  cliente         Cliente?      @relation(fields: [clienteId], references: [id])
+  tipoTransacaoId Int
+  itens           ItemTransacao[]
+  cliente         Cliente?        @relation(fields: [clienteId], references: [id])
+  profissional    Profissional    @relation(fields: [profissionalId], references: [id])
+  tipo            TipoTransacao   @relation(fields: [tipoTransacaoId], references: [id])
 
-  itens          ItemTransacao[]
+  @@index([clienteId], map: "Transacao_clienteId_fkey")
+  @@index([profissionalId], map: "Transacao_profissionalId_fkey")
+  @@index([tipoTransacaoId], map: "Transacao_tipoTransacaoId_fkey")
 }
 
 model TipoTransacao {
-  id            Int            @id @default(autoincrement())
-  descricao     String         @unique // Ex: "ENTRADA", "SAIDA"
-  
-  transacoes    Transacao[]
+  id         Int         @id @default(autoincrement())
+  descricao  String      @unique
+  transacoes Transacao[]
 }
 
 model ItemTransacao {
-  id            Int          @id @default(autoincrement())
-  transacaoId   Int
-  itemId        Int
-  quantidade    Int          @default(1)
-  precoUnitario Decimal      @db.Decimal(10, 2) // Preço no momento da venda
-  usouCreditoAssinatura Boolean @default(false)
+  id                    Int          @id @default(autoincrement())
+  transacaoId           Int
+  itemId                Int
+  quantidade            Int          @default(1)
+  precoUnitario         Decimal      @db.Decimal(10, 2)
+  usouCreditoAssinatura Boolean      @default(false)
+  item                  ItemCatalogo @relation(fields: [itemId], references: [id])
+  transacao             Transacao    @relation(fields: [transacaoId], references: [id])
 
-  transacao     Transacao    @relation(fields: [transacaoId], references: [id])
-  item          ItemCatalogo @relation(fields: [itemId], references: [id])
+  @@index([itemId], map: "ItemTransacao_itemId_fkey")
+  @@index([transacaoId], map: "ItemTransacao_transacaoId_fkey")
 }
 
 model Plano {
-  id            Int          @id @default(autoincrement())
-  nome          String
-  valorMensal   Decimal      @db.Decimal(10, 2)
-  qtCortes      Int          @default(0)
-  qtBarbas      Int          @default(0)
-  ativo         Boolean      @default(true)
-  
-  assinaturas   Assinatura[]
+  id          Int          @id @default(autoincrement())
+  nome        String
+  valorMensal Decimal      @db.Decimal(10, 2)
+  ativo       Boolean      @default(true)
+  assinaturas Assinatura[]
+  itens       ItemPlano[]
+}
+
+model ItemPlano {
+  id         Int          @id @default(autoincrement())
+  planoId    Int
+  itemId     Int
+  quantidade Int
+  item       ItemCatalogo @relation(fields: [itemId], references: [id])
+  plano      Plano        @relation(fields: [planoId], references: [id])
+
+  @@index([itemId], map: "ItemPlano_itemId_fkey")
+  @@index([planoId], map: "ItemPlano_planoId_fkey")
+}
+
+model Assinatura {
+  id            Int                 @id @default(autoincrement())
+  status        statusAssinatura    @default(ATIVA)
+  diaVencimento Int?
+  criadoEm      DateTime            @default(now())
+  clienteId     Int
+  planoId       Int
+  cliente       Cliente             @relation(fields: [clienteId], references: [id])
+  plano         Plano               @relation(fields: [planoId], references: [id])
+  creditos      CreditoAssinatura[]
+
+  @@index([clienteId], map: "Assinatura_clienteId_fkey")
+  @@index([planoId], map: "Assinatura_planoId_fkey")
+}
+
+model CreditoAssinatura {
+  id                 Int          @id @default(autoincrement())
+  assinaturaId       Int
+  itemId             Int
+  quantidadeRestante Int
+  assinatura         Assinatura   @relation(fields: [assinaturaId], references: [id])
+  item               ItemCatalogo @relation(fields: [itemId], references: [id])
+
+  @@index([assinaturaId], map: "CreditoAssinatura_assinaturaId_fkey")
+  @@index([itemId], map: "CreditoAssinatura_itemId_fkey")
 }
 
 enum statusAssinatura {
   ATIVA
   INATIVA
-}
-
-model Assinatura {
-  id              Int          @id @default(autoincrement())
-  status          statusAssinatura       @default(ATIVA)
-  diaVencimento   Int?
-  criadoEm        DateTime     @default(now())
-  
-  creditosCorte   Int          @default(0)
-  creditosBarba   Int          @default(0)
-
-  clienteId       Int
-  cliente         Cliente      @relation(fields: [clienteId], references: [id])
-
-  planoId         Int
-  plano           Plano        @relation(fields: [planoId], references: [id])
 }

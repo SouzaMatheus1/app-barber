@@ -10,8 +10,8 @@ export class ComissaoController {
         const dataInicio = req.query.dataInicio as string;
         const dataFim = req.query.dataFim as string;
 
-        if (!dataInicio || !dataFim || !profissionalId) {
-            return res.status(400).json({ error: "Os parâmetros dataInicio, dataFim e o profissionalId são obrigatórios." });
+        if (!dataInicio || !dataFim || (isNaN(profissionalId))) {
+            return res.status(400).json({ error: "Os parâmetros dataInicio e dataFim são obrigatórios." });
         }
 
         try {

@@ -74,7 +74,7 @@ describe('Página Dashboard', () => {
     render(<Dashboard />);
 
     await waitFor(() => {
-      expect(screen.getByText('Santana's Barbearia')).toBeInTheDocument(); // Title is there, loading finished
+      expect(screen.getByText("Santana's Barbearia")).toBeInTheDocument(); // Title is there, loading finished
     });
 
     expect(consoleSpy).toHaveBeenCalledWith("Erro ao carregar os dados do dashboard", expect.any(Error));

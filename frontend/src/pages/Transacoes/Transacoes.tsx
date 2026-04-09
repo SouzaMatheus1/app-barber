@@ -94,8 +94,6 @@ const Transacoes: React.FC = () => {
   const [assinaturaAtiva, setAssinaturaAtiva] = useState<AssinaturaAtiva | null>(null);
   const [loadingAssinatura, setLoadingAssinatura] = useState(false);
 
-  const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   // ── Load static data ──
   useEffect(() => {
     (async () => {

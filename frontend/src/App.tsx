@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard/Dashboard'
 import { Clientes } from './pages/Clientes/Clientes'
 import { Profissionais } from './pages/Profissionais/Profissionais'
 import { Catalogo } from './pages/Catalogo/Catalogo'
+import { Agenda } from './pages/Agenda/Agenda'
 import Transacoes from './pages/Transacoes/Transacoes'
 import { Comissoes } from './pages/Comissoes/Comissoes'
 import Assinaturas from './pages/Assinaturas/Assinaturas'
@@ -31,6 +32,7 @@ export default function App() {
           <Route element={<PrivateRoute adminOnly />}>
             <Route element={<Layout />}>
               <Route path="/profissionais" element={<Profissionais />} />
+              <Route path="/agenda" element={<Agenda />} />
               <Route path="/catalogo" element={<Catalogo />} />
               <Route path="/comissoes" element={<Comissoes />} />
               <Route path="/assinaturas" element={<Assinaturas />} />

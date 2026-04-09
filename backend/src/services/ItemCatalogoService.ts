@@ -32,7 +32,7 @@ export class ItemCatalogoService {
                 nome,
                 preco,
                 comissao,
-                tipo: { connect: { id: tipoItemId }}
+                tipo: { connect: { id: tipoItemId } }
             },
             select: {
                 id: true,
@@ -51,7 +51,7 @@ export class ItemCatalogoService {
             where: { id }
         });
 
-        if(!item)
+        if (!item)
             throw new Error('Item não encontrado');
 
         const result = await prisma.itemCatalogo.update({
@@ -71,7 +71,7 @@ export class ItemCatalogoService {
             }
         });
 
-        return { result, message: 'Registro alterado'}
+        return { result, message: 'Registro alterado' }
     }
 
     async delete(id: number) {

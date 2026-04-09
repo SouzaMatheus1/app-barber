@@ -45,9 +45,9 @@ describe('Página Dashboard', () => {
       // Metric titles
       expect(screen.getByText('Faturamento do Dia')).toBeInTheDocument();
       expect(screen.getByText(/R\$ 500,50/i)).toBeInTheDocument();
-      
+
       expect(screen.getByText('Cortes Realizados')).toBeInTheDocument();
-      
+
       // Ticket médio (500.5 / 10 = 50.05)
       expect(screen.getByText('Ticket Médio')).toBeInTheDocument();
       expect(screen.getByText(/R\$ 50,05/i)).toBeInTheDocument();
@@ -65,7 +65,7 @@ describe('Página Dashboard', () => {
 
   it('deve lidar com falhas nos serviços amigavelmente (exibindo vazio ou console erro)', async () => {
     // Se der erro, ele faz console.error() e exibe metricas como zeros.
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
 
     (dashboardService.getResumoDiario as any).mockRejectedValueOnce(new Error('Erro backend'));
     (dashboardService.getTransacoes as any).mockResolvedValueOnce([]);
@@ -74,7 +74,7 @@ describe('Página Dashboard', () => {
     render(<Dashboard />);
 
     await waitFor(() => {
-      expect(screen.getByText('WS Barber Shop')).toBeInTheDocument(); // Title is there, loading finished
+      expect(screen.getByText('Barbearia X')).toBeInTheDocument(); // Title is there, loading finished
     });
 
     expect(consoleSpy).toHaveBeenCalledWith("Erro ao carregar os dados do dashboard", expect.any(Error));

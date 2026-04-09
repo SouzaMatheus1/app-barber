@@ -106,9 +106,18 @@ export class AgendamentoService {
         const agendamento = await prisma.agendamento.findUnique({ where: { id } });
         if (!agendamento) throw new Error('Agendamento não encontrado.');
 
+        const updateData: any = { status };
+
+        if (status === 'CONCLUIDO') {
+            const now = new Date();
+            if (agendamento.dataHoraFim > now) {
+                updateData.dataHoraFim = now;
+            }
+        }
+
         const agendamentoAtualizado = await prisma.agendamento.update({
             where: { id },
-            data: { status }
+            data: updateData
         });
 
         return agendamentoAtualizado;

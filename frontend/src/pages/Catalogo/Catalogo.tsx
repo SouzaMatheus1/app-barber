@@ -6,10 +6,10 @@ export function Catalogo() {
   const [itens, setItens] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingAction, setLoadingAction] = useState(false);
-  
+
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  
+
   // Form State
   const [nome, setNome] = useState('');
   const [preco, setPreco] = useState<number | ''>('');
@@ -36,11 +36,11 @@ export function Catalogo() {
     e.preventDefault();
     setLoadingAction(true);
     try {
-      const payload = { 
-        nome, 
-        preco: Number(preco), 
-        comissao: comissao ? Number(comissao) : null, 
-        tipoItemId 
+      const payload = {
+        nome,
+        preco: Number(preco),
+        comissao: comissao ? Number(comissao) : null,
+        tipoItemId
       };
 
       if (editingId) {
@@ -110,7 +110,7 @@ export function Catalogo() {
           <p className="text-[#E5E5E5]/60 mt-1">Gerencie os serviços prestados e produtos em venda.</p>
         </div>
         {!isEditing && (
-          <button 
+          <button
             onClick={() => setIsEditing(true)}
             className="flex items-center gap-2 px-4 py-2 bg-[#D4AF37] text-[#121212] font-bold rounded-lg uppercase tracking-wider hover:bg-[#E5C158] transition-colors text-sm"
           >
@@ -126,7 +126,7 @@ export function Catalogo() {
             <Scissors className="text-[#D4AF37]" size={20} />
             {editingId ? 'Editar Item do Catálogo' : 'Novo Item do Catálogo'}
           </h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-xs font-semibold text-[#E5E5E5]/80 uppercase tracking-wider">Nome</label>
@@ -139,7 +139,7 @@ export function Catalogo() {
                 placeholder="Ex: Corte Degrade ou Pomada"
               />
             </div>
-            
+
             <div className="space-y-2">
               <label className="text-xs font-semibold text-[#E5E5E5]/80 uppercase tracking-wider">Tipo</label>
               <div className="relative">
@@ -190,15 +190,15 @@ export function Catalogo() {
           </div>
 
           <div className="flex gap-4 justify-end">
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={resetForm}
               className="px-6 py-2 text-[#E5E5E5]/60 hover:text-[#E5E5E5] transition-colors uppercase text-sm font-semibold"
             >
               Cancelar
             </button>
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={loadingAction}
               className="px-8 py-2 bg-[#D4AF37] text-[#121212] font-bold rounded-lg uppercase tracking-wider hover:bg-[#E5C158] transition-colors text-sm disabled:opacity-50 flex items-center gap-2"
             >
@@ -232,11 +232,10 @@ export function Catalogo() {
                   <tr key={item.id.toString()} className="hover:bg-[#D4AF37]/5 transition-colors group">
                     <td className="py-4 px-6 text-[#E5E5E5] font-medium">{item.nome}</td>
                     <td className="py-4 px-6 text-[#E5E5E5]/80">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                        item.tipo?.descricao === 'SERVICO' 
-                        ? 'bg-[#121212] border-indigo-500/30 text-indigo-400'
-                        : 'bg-[#121212] border-orange-500/30 text-orange-400'
-                      }`}>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${item.tipo?.descricao === 'SERVICO'
+                          ? 'bg-[#121212] border-indigo-500/30 text-indigo-400'
+                          : 'bg-[#121212] border-orange-500/30 text-orange-400'
+                        }`}>
                         {item.tipo?.descricao || '-'}
                       </span>
                     </td>
@@ -247,14 +246,14 @@ export function Catalogo() {
                       {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(item.preco))}
                     </td>
                     <td className="py-4 px-6 text-right space-x-3">
-                      <button 
+                      <button
                         onClick={() => editItem(item)}
                         className="text-[#E5E5E5]/50 hover:text-[#D4AF37] transition-colors p-1"
                         title="Editar"
                       >
                         <Edit2 size={18} />
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleDelete(Number(item.id))}
                         className="text-[#E5E5E5]/50 hover:text-red-500 transition-colors p-1"
                         title="Excluir"

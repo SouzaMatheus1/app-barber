@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Plus, Trash2, CheckCircle2, Loader2, Crown } from 'lucide-react';
+import { Plus, Trash2, CheckCircle2, Loader2, Crown, User } from 'lucide-react';
 import { transacaoService } from '../../services/TransacaoService';
 import { assinaturaService } from '../../services/AssinaturaService';
 import { ClienteService } from '../../services/ClienteService';
@@ -83,9 +83,10 @@ const Transacoes: React.FC = () => {
   // UI state
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [isSearchingClient, setIsSearchingClient] = useState(false);
-  const [clientSuggestions, setClientSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Data
+  const [allClientes, setAllClientes] = useState<any[]>([]);
 
   // Data
   const [catalog, setCatalog] = useState<CatalogItem[]>([]);
@@ -112,6 +113,17 @@ const Transacoes: React.FC = () => {
           }))
         );
         setProfissionais(profData);
+        
+        try {
+          // Busca todos os clientes uma vex só
+          const cliData = await clienteService.listar(); // Fallback to list
+          setAllClientes(cliData);
+        } catch {
+          // Se clienteService.listar() não existir, faz na mão:
+          const { api } = await import('../../services/api');
+          const cliRes = await api.get('/clientes');
+          setAllClientes(cliRes.data);
+        }
       } catch (err) {
         console.error('Erro ao carregar dados base:', err);
       }
@@ -131,39 +143,10 @@ const Transacoes: React.FC = () => {
     }
   }, []);
 
-  // ── Client search with debounce ──
-  const handleClientNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setClientName(value);
-    setSelectedClientId(null);
-    setAssinaturaAtiva(null);
-    setShowSuggestions(true);
-
-    if (searchTimeout.current) clearTimeout(searchTimeout.current);
-
-    if (value.length >= 2) {
-      setIsSearchingClient(true);
-      searchTimeout.current = setTimeout(async () => {
-        try {
-          const results = await clienteService.search(value);
-          setClientSuggestions(results);
-        } catch {
-          console.error('Erro na busca de clientes');
-        } finally {
-          setIsSearchingClient(false);
-        }
-      }, 400);
-    } else {
-      setClientSuggestions([]);
-      setIsSearchingClient(false);
-    }
-  };
-
   const selectClient = (cliente: any) => {
     setClientName(cliente.nome);
     setSelectedClientId(cliente.id);
     setShowSuggestions(false);
-    setClientSuggestions([]);
     // Reset créditos usados ao trocar cliente
     setCartItems(prev => prev.map(i => ({ ...i, usouCredito: false })));
     fetchAssinatura(cliente.id);
@@ -312,31 +295,39 @@ const Transacoes: React.FC = () => {
               <input
                 type="text"
                 value={clientName}
-                onChange={handleClientNameChange}
-                onFocus={() => { if (clientSuggestions.length > 0) setShowSuggestions(true); }}
+                onChange={e => {
+                   setClientName(e.target.value);
+                   setSelectedClientId(null);
+                   setAssinaturaAtiva(null);
+                   setShowSuggestions(true);
+                }}
+                onFocus={() => setShowSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                className="w-full px-4 py-3 bg-[#121212] text-[#E5E5E5] rounded-lg border border-[#D4AF37]/20 focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all duration-300 placeholder-[#E5E5E5]/30"
+                className={`w-full px-4 py-3 bg-[#1a1a1a] border border-[#D4AF37]/30 outline-none transition-colors ${selectedClientId ? 'text-[#D4AF37] font-bold' : 'text-[#E5E5E5]'}`}
+                style={{ borderRadius: showSuggestions && allClientes.filter(c => c.nome.toLowerCase().includes(clientName.toLowerCase())).length > 0 ? '0.5rem 0.5rem 0 0' : '0.5rem' }}
                 placeholder="Ex: João Silva ou Avulso"
                 autoComplete="off"
               />
-              {isSearchingClient && (
-                <div className="absolute right-3 top-3.5 text-[#D4AF37]">
-                  <Loader2 size={18} className="animate-spin" />
-                </div>
-              )}
-              {showSuggestions && clientSuggestions.length > 0 && (
-                <ul className="absolute z-50 w-full mt-1 bg-[#1a1a1a] border border-[#D4AF37]/30 rounded-lg shadow-xl max-h-48 overflow-y-auto">
-                  {clientSuggestions.map(cliente => (
-                    <li
+              
+              {showSuggestions && (
+                <div className="absolute z-50 w-full bg-[#1a1a1a] border border-t-0 border-[#D4AF37]/30 rounded-b-lg max-h-48 overflow-y-auto shadow-2xl">
+                  {allClientes.filter(c => c.nome.toLowerCase().includes(clientName.toLowerCase())).map(cliente => (
+                    <div
                       key={cliente.id}
                       onClick={() => selectClient(cliente)}
-                      className="px-4 py-3 cursor-pointer hover:bg-[#D4AF37]/10 text-[#E5E5E5] border-b border-[#D4AF37]/10 last:border-0 transition-colors"
+                      className="px-4 py-3 cursor-pointer hover:bg-[#D4AF37]/10 text-[#E5E5E5] border-b border-[#D4AF37]/10 last:border-0 transition-colors flex items-center gap-3"
                     >
-                      <div className="font-bold">{cliente.nome}</div>
-                      <div className="text-xs text-[#E5E5E5]/60">{cliente.telefone || 'Sem telefone'}</div>
-                    </li>
+                      <User size={16} className="text-[#D4AF37]" />
+                      <div>
+                        <div className="font-bold text-sm tracking-wide">{cliente.nome}</div>
+                        <div className="text-[10px] text-[#E5E5E5]/40 mt-0.5">{cliente.telefone || 'Sem telefone'}</div>
+                      </div>
+                    </div>
                   ))}
-                </ul>
+                  {allClientes.filter(c => c.nome.toLowerCase().includes(clientName.toLowerCase())).length === 0 && (
+                    <div className="px-4 py-3 text-[#E5E5E5]/40 text-sm">Pressione Enter para salvar como avulso.</div>
+                  )}
+                </div>
               )}
             </div>
 

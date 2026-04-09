@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Trash2, CheckCircle2, Loader2, Crown, User } from 'lucide-react';
 import { transacaoService } from '../../services/TransacaoService';
 import { assinaturaService } from '../../services/AssinaturaService';

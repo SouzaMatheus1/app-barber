@@ -8,6 +8,7 @@ import { CaixaController } from '../controllers/CaixaController';
 import { isAuth, isAdmin } from '../middleware/auth';
 import { AuthController } from '../controllers/authController';
 import { AssinaturaController } from '../controllers/AssinaturaController';
+import { AgendamentoController } from '../controllers/AgendamentoController';
 
 const routes = Router();
 const profissionalController = new ProfissionalController();
@@ -18,6 +19,7 @@ const comissaoController = new ComissaoController();
 const caixaController = new CaixaController();
 const authController = new AuthController();
 const assinaturaController = new AssinaturaController();
+const agendamentoController = new AgendamentoController();
 
 // profissional
 routes.get('/profissionais', isAuth, profissionalController.listar);
@@ -60,5 +62,13 @@ routes.get('/comissoes/profissional/:id', isAuth, comissaoController.relatorio);
 routes.get('/caixa/diario', isAuth, isAdmin, caixaController.resumo);
 
 routes.post('/login', authController.login)
+
+// Agendamentos
+routes.get('/agendamentos', agendamentoController.listar);
+// Nota: Para clientes agendarem via web poderemos precisar tirar o isAuth do `post` futuramente, 
+// ou usar um token de JWT simplificado pra clientes na Fase 3.
+routes.post('/agendamentos', agendamentoController.criar);
+routes.put('/agendamentos/:id/status', isAuth, agendamentoController.alterarStatus);
+routes.delete('/agendamentos/:id', isAuth, agendamentoController.deletar);
 
 export { routes };

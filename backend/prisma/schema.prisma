@@ -16,6 +16,7 @@ model Profissional {
   perfilId   Int         @default(1)
   perfil     Perfil      @relation(fields: [perfilId], references: [id])
   transacoes Transacao[]
+  agendamentos Agendamento[]
 
   @@index([perfilId], map: "Profissional_perfilId_fkey")
 }
@@ -34,6 +35,7 @@ model Cliente {
   ativo       Boolean      @default(true)
   assinaturas Assinatura[]
   transacoes  Transacao[]
+  agendamentos Agendamento[]
 }
 
 model ItemCatalogo {
@@ -43,10 +45,12 @@ model ItemCatalogo {
   comissao           Decimal?            @db.Decimal(5, 2)
   ativo              Boolean             @default(true)
   tipoItemId         Int
+  duracaoMinutos     Int                 @default(30)
   creditosAssinatura CreditoAssinatura[]
   tipo               TipoItem            @relation(fields: [tipoItemId], references: [id])
   itensNoPlano       ItemPlano[]
   itensTransacao     ItemTransacao[]
+  itensAgendamento   ServicoAgendamento[]
 
   @@index([tipoItemId], map: "ItemCatalogo_tipoItemId_fkey")
 }
@@ -146,4 +150,41 @@ model CreditoAssinatura {
 enum statusAssinatura {
   ATIVA
   INATIVA
+}
+
+model Agendamento {
+  id              Int               @id @default(autoincrement())
+  dataHoraInicio  DateTime
+  dataHoraFim     DateTime
+  clienteId       Int?
+  profissionalId  Int
+  status          StatusAgendamento @default(CONFIRMADO)
+  criadoEm        DateTime          @default(now())
+  observacao      String?
+
+  cliente         Cliente?          @relation(fields: [clienteId], references: [id])
+  profissional    Profissional      @relation(fields: [profissionalId], references: [id])
+  servicos        ServicoAgendamento[]
+
+  @@index([clienteId])
+  @@index([profissionalId])
+  @@index([dataHoraInicio, dataHoraFim])
+}
+
+model ServicoAgendamento {
+  agendamentoId Int
+  itemId        Int
+  agendamento   Agendamento  @relation(fields: [agendamentoId], references: [id], onDelete: Cascade)
+  item          ItemCatalogo @relation(fields: [itemId], references: [id])
+
+  @@id([agendamentoId, itemId])
+}
+
+enum StatusAgendamento {
+  CONFIRMADO
+  EM_ANDAMENTO
+  CONCLUIDO
+  CANCELADO
+  NO_SHOW
+  INDISPONIVEL
 }

@@ -37,6 +37,7 @@ export class AgendamentoController {
                 servicosIds: servicosIds.map(id => Number(id)),
                 observacao,
                 status: status as StatusAgendamento,
+                ignorarAntecedencia: true // Vem do painel admin, ignora a regra de 30min
             });
 
             return res.status(201).json(novoAgendamento);

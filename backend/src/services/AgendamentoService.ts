@@ -2,7 +2,7 @@ import { prisma } from '../database/prisma';
 import { StatusAgendamento, Prisma } from '@prisma/client';
 
 export class AgendamentoService {
-    
+
     /**
      * Retorna agendamentos de um profissional num intervalo de datas.
      * Útil pro calendário do painel.
@@ -46,9 +46,15 @@ export class AgendamentoService {
         servicosIds: number[];
         observacao?: string;
         status?: StatusAgendamento;
+        ignorarAntecedencia?: boolean;
     }) {
         const datetimeInicio = new Date(data.dataHoraInicio);
         const datetimeFim = new Date(data.dataHoraFim);
+
+        const antecedenciaMinima = new Date(Date.now() + 29 * 60000); // margem de 1min
+        if (!data.ignorarAntecedencia && data.status !== 'INDISPONIVEL' && datetimeInicio < antecedenciaMinima) {
+            throw new Error('Agendamentos devem ser feitos com no mínimo 30 minutos de antecedência.');
+        }
 
         if (datetimeInicio >= datetimeFim) {
             throw new Error('A data de fim deve ser maior que a data de início.');

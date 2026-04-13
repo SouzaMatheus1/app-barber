@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Plus, Trash2, CheckCircle2, Loader2, Crown } from 'lucide-react';
 import { transacaoService } from '../../services/TransacaoService';
 import { assinaturaService } from '../../services/AssinaturaService';
@@ -73,6 +74,7 @@ function resolveItemTipo(name: string): CatalogItem['tipo'] {
 
 const Transacoes: React.FC = () => {
   // Form state
+  const [searchParams] = useSearchParams();
   const [clientName, setClientName] = useState('');
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
   const [professional, setProfessional] = useState('');
@@ -112,11 +114,26 @@ const Transacoes: React.FC = () => {
           }))
         );
         setProfissionais(profData);
+
+        // Preenche com os dados importados via querystring (ao finalizar agenda)
+        const URLProfissionalId = searchParams.get('profissionalId');
+        const URLClienteId = searchParams.get('clienteId');
+        const URLClienteNome = searchParams.get('clienteNome');
+
+        if (URLProfissionalId) setProfessional(URLProfissionalId);
+        
+        if (URLClienteId) {
+          setSelectedClientId(Number(URLClienteId));
+          setClientName(URLClienteNome || 'Cliente Vinculado');
+          fetchAssinaturaRef(Number(URLClienteId)); // A reference to the fetched signature
+        } else if (URLClienteNome) {
+          setClientName(URLClienteNome);
+        }
       } catch (err) {
         console.error('Erro ao carregar dados base:', err);
       }
     })();
-  }, []);
+  }, [searchParams]);
 
   // ── Fetch assinatura quando um cliente é selecionado ──
   const fetchAssinatura = useCallback(async (clienteId: number) => {
@@ -130,6 +147,9 @@ const Transacoes: React.FC = () => {
       setLoadingAssinatura(false);
     }
   }, []);
+
+  // Use this internal function ref so useEffect can invoke it safely
+  const fetchAssinaturaRef = (id: number) => fetchAssinatura(id);
 
   // ── Client search with debounce ──
   const handleClientNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {

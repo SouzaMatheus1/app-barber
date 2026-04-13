@@ -9,7 +9,9 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  // Define qual token usar dependendo de onde o usuário está navegando
+  const isPortalView = window.location.pathname.startsWith('/portal');
+  const token = localStorage.getItem(isPortalView ? 'portal_token' : 'token');
   
   if (token) {
     if (config.headers && typeof config.headers.set === 'function') {

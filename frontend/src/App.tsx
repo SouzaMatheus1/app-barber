@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { PrivateRoute } from './components/PrivateRoute'
+import { PortalPrivateRoute } from './components/PortalPrivateRoute'
 
 import Login from './pages/Login/Login'
 import Dashboard from './pages/Dashboard/Dashboard'
@@ -13,6 +14,10 @@ import { Comissoes } from './pages/Comissoes/Comissoes'
 import Assinaturas from './pages/Assinaturas/Assinaturas'
 import Layout from './components/Layout/Layout'
 
+// PWA:
+import LoginPortal from './pages/Portal/Login/LoginPortal'
+import HomePortal from './pages/Portal/Home/HomePortal'
+
 export default function App() {
   return (
     <AuthProvider>
@@ -20,6 +25,15 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
+          {/* ===== ROTAS PWA / PORTAL DO CLIENTE ===== */}
+          <Route path="/portal/login" element={<LoginPortal />} />
+          
+          <Route element={<PortalPrivateRoute />}>
+            <Route path="/portal" element={<Navigate to="/portal/home" />} />
+            <Route path="/portal/home" element={<HomePortal />} />
+          </Route>
+          {/* ========================================= */}
 
           <Route element={<PrivateRoute />}>
             <Route element={<Layout />}>

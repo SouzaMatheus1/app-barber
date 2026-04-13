@@ -173,7 +173,7 @@ const Assinaturas: React.FC = () => {
                 value={planoNome}
                 onChange={e => setPlanoNome(e.target.value)}
                 className="w-full px-4 py-3 bg-[#121212] text-[#E5E5E5] rounded-lg border border-[#D4AF37]/20 focus:outline-none focus:border-[#D4AF37] transition-colors"
-                placeholder="Ex: Plano Elite Prata"
+                placeholder="Ex: Plano Prata"
               />
             </div>
             

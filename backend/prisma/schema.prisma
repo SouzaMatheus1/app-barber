@@ -31,6 +31,8 @@ model Cliente {
   id          Int          @id @default(autoincrement())
   nome        String
   telefone    String?
+  email       String?
+  senha       String?
   criadoEm    DateTime     @default(now())
   ativo       Boolean      @default(true)
   assinaturas Assinatura[]

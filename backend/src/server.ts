@@ -2,12 +2,15 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import { routes } from './routes/routes';
+import { portalRoutes } from './routes/portal.routes';
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use(routes);
+app.use('/api', routes); // Se quiser separar ou jogar direto em /
+app.use(routes); // Compatibilidade legado
+app.use(portalRoutes);
 
 app.get('/ping', (req, res) => {
   return res.json({ message: 'Servidor da Barbearia rodando perfeitamente! ✂️' });

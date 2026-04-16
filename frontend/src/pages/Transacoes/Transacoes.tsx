@@ -69,6 +69,15 @@ const Transacoes: React.FC = () => {
   const [professional, setProfessional] = useState('');
   const [formaPagamentoId, setFormaPagamentoId] = useState<number>(1);
   const [dataPersonalizada, setDataPersonalizada] = useState<string>(getFormatDataAtual());
+  
+  const [descricao, setDescricao] = useState('Atendimento: Avulso');
+  const [descricaoDirty, setDescricaoDirty] = useState(false);
+
+  useEffect(() => {
+    if (!descricaoDirty) {
+      setDescricao(`Atendimento: ${clientName || 'Avulso'}`);
+    }
+  }, [clientName, descricaoDirty]);
   const [cartItems, setCartItems] = useState<CartItem[]>([
     { uuid: crypto.randomUUID(), itemId: undefined, name: '', quantity: 1, originalPrice: 0, usouCredito: false }
   ]);
@@ -235,7 +244,7 @@ const Transacoes: React.FC = () => {
       }
 
       await transacaoService.create({
-        descricao: `Atendimento: ${clientName || 'Avulso'}`,
+        descricao: descricao.trim() || `Atendimento: ${clientName || 'Avulso'}`,
         tipoTransacaoId: 1,
         profissionalId: Number(professional),
         clienteId: selectedClientId,
@@ -257,6 +266,8 @@ const Transacoes: React.FC = () => {
         setProfessional('');
         setFormaPagamentoId(1);
         setDataPersonalizada(getFormatDataAtual());
+        setDescricaoDirty(false);
+        setDescricao('Atendimento: Avulso');
         setCartItems([{ uuid: crypto.randomUUID(), itemId: undefined, name: '', quantity: 1, originalPrice: 0, usouCredito: false }]);
       }, 2500);
     } catch (error) {
@@ -465,6 +476,23 @@ const Transacoes: React.FC = () => {
                 style={{ colorScheme: 'light' }}
                 onChange={e => setDataPersonalizada(e.target.value)}
                 className="w-full px-4 py-3 bg-[#121212] text-[#E5E5E5] rounded-lg border border-[#D4AF37]/20 focus:border-[#D4AF37] outline-none"
+              />
+            </div>
+
+            {/* Descrição */}
+            <div className="space-y-2 col-span-1 md:col-span-2">
+              <label className="text-xs font-semibold text-[#E5E5E5]/80 uppercase tracking-wider">
+                Descrição
+              </label>
+              <input
+                type="text"
+                value={descricao}
+                onChange={e => {
+                  setDescricao(e.target.value);
+                  setDescricaoDirty(true);
+                }}
+                className="w-full px-4 py-3 bg-[#121212] text-[#E5E5E5] rounded-lg border border-[#D4AF37]/20 focus:border-[#D4AF37] outline-none"
+                placeholder="Ex: Atendimento: João Silva"
               />
             </div>
 

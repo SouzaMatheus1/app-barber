@@ -18,9 +18,23 @@ export const transacaoService = {
     tipoTransacaoId: number;
     profissionalId: number;
     clienteId?: number | null;
+    formaPagamentoId?: number;
+    data?: string;
     itens: { itemId: number; quantidade: number; usouCreditoAssinatura: boolean }[];
   }) => {
     const response = await api.post('/transacoes', data);
+    return response.data;
+  },
+  listar: async () => {
+    const response = await api.get('/transacoes');
+    return response.data;
+  },
+  editar: async (id: number, data: any) => {
+    const response = await api.put(`/transacoes/${id}`, data);
+    return response.data;
+  },
+  deletar: async (id: number) => {
+    const response = await api.delete(`/transacoes/${id}`);
     return response.data;
   }
 };

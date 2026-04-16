@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { TrendingUp, Users, Scissors, DollarSign, Loader2 } from 'lucide-react';
 import { dashboardService } from '../../services/dashboardService';
 
 const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState<any[]>([]);
   const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
@@ -20,13 +22,13 @@ const Dashboard: React.FC = () => {
         ]);
 
         const totalFaturamento = resumo.movimentoDia.faturamentoTotal || 0;
-        const totalTx = resumo.quantidadeTransacoes || 0;
+        const totalTx = resumo.atendimentosRealizados || resumo.quantidadeTransacoes || 0;
         const ticketMedio = totalTx > 0 ? totalFaturamento / totalTx : 0;
         const clientesCount = clientes.length || 0;
 
         setMetrics([
           { id: 1, title: 'Faturamento do Dia', value: `R$ ${totalFaturamento.toFixed(2).replace('.', ',')}`, icon: <TrendingUp size={24} />, trend: '' },
-          { id: 2, title: 'Cortes Realizados', value: totalTx.toString(), icon: <Scissors size={24} />, trend: '' },
+          { id: 2, title: 'Atendimentos Hoje', value: totalTx.toString(), icon: <Scissors size={24} />, trend: '' },
           { id: 3, title: 'Ticket Médio', value: `R$ ${ticketMedio.toFixed(2).replace('.', ',')}`, icon: <DollarSign size={24} />, trend: '' },
           { id: 4, title: 'Total de Clientes', value: clientesCount.toString(), icon: <Users size={24} />, trend: '' },
         ]);
@@ -96,7 +98,10 @@ const Dashboard: React.FC = () => {
       <div className="bg-[#1a1a1a] rounded-xl border border-[#D4AF37]/20 overflow-hidden shadow-lg">
         <div className="p-6 border-b border-[#D4AF37]/20 flex justify-between items-center bg-[#1a1a1a]">
           <h2 className="text-xl font-bold text-[#D4AF37]">Últimas Transações</h2>
-          <button className="text-sm text-[#E5E5E5]/70 hover:text-[#D4AF37] transition-colors uppercase tracking-wider font-semibold">
+          <button 
+            onClick={() => navigate('/transacoes')}
+            className="text-sm text-[#E5E5E5]/70 hover:text-[#D4AF37] transition-colors uppercase tracking-wider font-semibold"
+          >
             Ver todas
           </button>
         </div>
@@ -115,7 +120,7 @@ const Dashboard: React.FC = () => {
               {recentTransactions.map((tx) => (
                 <tr key={tx.id} className="hover:bg-[#D4AF37]/5 transition-colors group">
                   <td className="py-4 px-6 text-[#E5E5E5] font-medium">{tx.client}</td>
-                  <td className="py-4 px-6 text-[#E5E5E5]/80">{tx.service}</td>
+                  <td className="py-4 px-6 text-[#E5E5E5]/80 max-w-[200px] truncate" title={tx.service}>{tx.service}</td>
                   <td className="py-4 px-6 text-[#E5E5E5]/80">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#121212] border border-[#D4AF37]/30 text-[#D4AF37]">
                       {tx.professional}

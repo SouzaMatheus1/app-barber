@@ -42,6 +42,31 @@ async function main() {
     create: { descricao: 'SAIDA' },
   });
 
+  console.log('Populando Métodos de Pagamento...');
+  const pix = await prisma.metodoPagamento.upsert({
+    where: { descricao: 'PIX' },
+    update: {},
+    create: { descricao: 'PIX' }
+  });
+
+  const cartaoCredito = await prisma.metodoPagamento.upsert({
+    where: { descricao: 'Cartão de Crédito' },
+    update: {},
+    create: { descricao: 'Cartão de Crédito' }
+  });
+
+  const cartaoDebito = await prisma.metodoPagamento.upsert({
+    where: { descricao: 'Cartão de Débito' },
+    update: {},
+    create: { descricao: 'Cartão de Débito' }
+  });
+
+  const dinheiro = await prisma.metodoPagamento.upsert({
+    where: { descricao: 'Dinheiro' },
+    update: {},
+    create: { descricao: 'Dinheiro' }
+  });
+
   // --- TABELAS NÍVEL 1 ---
   console.log('Criando Profissionais e Clientes...');
   const senhaHash = await bcrypt.hash('admin123', 10);

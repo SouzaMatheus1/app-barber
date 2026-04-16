@@ -39,7 +39,16 @@ export class CaixaService {
         let parteBarbeariaDia = 0;
         let comissoesDia = 0;
 
+        const clientesUnicos = new Set();
+        let avulsosCount = 0;
+
         transacoesHoje.forEach((transacao: any) => {
+            if (transacao.clienteId) {
+                clientesUnicos.add(transacao.clienteId);
+            } else {
+                avulsosCount++;
+            }
+
             transacao.itens.forEach((itemTransacao: any) => {
                 const totalItem = itemTransacao.quantidade * Number(itemTransacao.precoUnitario);
                 const percentualComissao = itemTransacao.item.comissao ? Number(itemTransacao.item.comissao) : 0;
@@ -61,6 +70,7 @@ export class CaixaService {
             },
             saldoFinal: saldoInicial + parteBarbeariaDia,
             quantidadeTransacoes: transacoesHoje.length,
+            atendimentosRealizados: clientesUnicos.size + avulsosCount,
             detalhesTransacoes: transacoesHoje.map((transacao : any) => ({
                 id: transacao.id,
                 profissional: transacao.profissionalId,

@@ -41,6 +41,7 @@ routes.delete('/itens/:id', isAuth, itemCatalogoController.deletar);
 // transacao
 routes.get('/transacoes', isAuth, transacaoController.listar);
 routes.post('/transacoes', isAuth, transacaoController.criar);
+routes.put('/transacoes/:id', isAuth, transacaoController.editar);
 routes.delete('/transacoes/:id', isAuth, transacaoController.deletar);
 
 // plano & assinatura

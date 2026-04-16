@@ -6,6 +6,7 @@ export class TransacaoService {
         const transacoes = await prisma.transacao.findMany({
             include: {
                 tipo: true,
+                metodoPagamento: true,
                 profissional: { select: { id: true, nome: true } },
                 cliente: { select: { id: true, nome: true } },
                 itens: {
@@ -20,14 +21,16 @@ export class TransacaoService {
         return transacoes;
     }
 
-    async create(data: {
+    async create(dataParams: {
         descricao?: string,
         tipoTransacaoId: number,
         profissionalId: number,
+        formaPagamentoId?: number,
+        data?: Date,
         clienteId?: number,
         itens: { itemId: number, quantidade: number, usouCreditoAssinatura?: boolean } []
     }){
-        const { descricao, tipoTransacaoId, profissionalId, clienteId, itens } = data;
+        const { descricao, tipoTransacaoId, profissionalId, clienteId, itens, formaPagamentoId } = dataParams;
 
         const itensId = itens.map(item => item.itemId);
 
@@ -114,9 +117,11 @@ export class TransacaoService {
                 data: {
                     valorTotal: totalVenda,
                     descricao,
+                    data: dataParams.data ? new Date(dataParams.data) : new Date(),
                     tipo: { connect: { id: tipoTransacaoId } },
                     profissional: { connect: { id: profissionalId } },
                     ...(clienteId && { cliente: { connect: { id: clienteId } } }),
+                    ...(formaPagamentoId && { metodoPagamento: { connect: { id: formaPagamentoId } } }),
                     itens: {
                         create: itensSelecionados
                     }
@@ -137,13 +142,14 @@ export class TransacaoService {
         return transacao;
     }
 
-    async edit(id: number, data: {
+    async edit(id: number, dataParams: {
         descricao?: string,
-        valorTotal: number,
-        tipoTransacaoId: number,
-        profissionalId: number,
+        valorTotal?: number,
+        tipoTransacaoId?: number,
+        profissionalId?: number,
+        formaPagamentoId?: number,
         clienteId?: number,
-        itens: { itemId: number, quantidade: number, precoUnitario: number } []
+        data?: Date
     }){
         const transacao = await prisma.transacao.findUnique({
             where: { id }
@@ -155,11 +161,13 @@ export class TransacaoService {
         const result = await prisma.transacao.update({
             where: { id },
             data: {
-                descricao: data.descricao,
-                valorTotal: data.valorTotal,
-                tipoTransacaoId: data.tipoTransacaoId,
-                profissionalId: data.profissionalId,
-                clienteId: data.clienteId
+                ...(dataParams.descricao && { descricao: dataParams.descricao }),
+                ...(dataParams.valorTotal !== undefined && { valorTotal: dataParams.valorTotal }),
+                ...(dataParams.tipoTransacaoId && { tipoTransacaoId: dataParams.tipoTransacaoId }),
+                ...(dataParams.profissionalId && { profissionalId: dataParams.profissionalId }),
+                ...(dataParams.clienteId && { clienteId: dataParams.clienteId }),
+                ...(dataParams.formaPagamentoId && { formaPagamentoId: dataParams.formaPagamentoId }),
+                ...(dataParams.data && { data: new Date(dataParams.data) })
             },
             select: {
                 descricao: true,

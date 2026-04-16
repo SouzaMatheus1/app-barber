@@ -12,6 +12,7 @@ interface AssinaturaAtiva {
   id: number;
   planoId: number;
   status: 'ATIVA' | 'INATIVA';
+  valorProporcional?: number;
   plano: { 
     id: number; 
     nome: string; 
@@ -30,7 +31,6 @@ interface CatalogItem {
   id: number;
   name: string;
   price: number;
-  tipo: 'corte' | 'barba' | 'outro';
 }
 
 interface CartItem {
@@ -43,13 +43,6 @@ interface CartItem {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function resolveItemTipo(name: string): CatalogItem['tipo'] {
-  const n = name.toLowerCase();
-  if (n.includes('barba') || n.includes('bigode')) return 'barba';
-  if (n.includes('corte') || n.includes('cabelo') || n.includes('degrad')) return 'corte';
-  return 'outro';
-}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -113,8 +106,7 @@ const Transacoes: React.FC = () => {
           catData.map((c: any) => ({
             id: c.id,
             name: c.nome,
-            price: Number(c.preco),
-            tipo: resolveItemTipo(c.nome),
+            price: Number(c.preco)
           }))
         );
         setProfissionais(profData);
@@ -206,11 +198,8 @@ const Transacoes: React.FC = () => {
     );
   };
 
-  const getValorProporcional = useCallback((): number => {
-    if (!assinaturaAtiva || !assinaturaAtiva.plano) return 0;
-    const totalItens = assinaturaAtiva.plano.itens.reduce((acc, i) => acc + i.quantidade, 0);
-    if (totalItens === 0) return 0;
-    return (assinaturaAtiva.plano.valorMensal || 0) / totalItens;
+  const getValorProporcional = useCallback((): number => { 
+    return assinaturaAtiva?.valorProporcional ?? 0;
   }, [assinaturaAtiva]);
 
   const totalAPagar = cartItems.reduce((acc, item) => {

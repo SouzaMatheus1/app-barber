@@ -1,5 +1,6 @@
 import { prisma } from '../database/prisma';
 import { ItemTransacao, statusAssinatura } from '@prisma/client';
+import { AppError } from '../utils/AppError';
 
 export class TransacaoService {
     async listAll(){
@@ -39,7 +40,7 @@ export class TransacaoService {
         });
 
         if (itens.length !== itensBd.length)
-            throw new Error("Um ou mais itens não estão cadastrados no catálogo.");
+            throw new AppError("Um ou mais itens não estão cadastrados no catálogo.", 400);
 
         let totalVenda = 0;
         let requiresCredits = false;
@@ -66,17 +67,17 @@ export class TransacaoService {
             if (usouCredito) {
                requiresCredits = true;
                if (!assinaturaAtiva) {
-                   throw new Error("O cliente marcou o uso de crédito mas não possui assinatura ativa no momento.");
+                   throw new AppError("O cliente marcou o uso de crédito mas não possui assinatura ativa no momento.", 400);
                }
                
                const creditoEncontrado = assinaturaAtiva.creditos.find(c => c.itemId === itemRegistrado.itemId);
                
                if (!creditoEncontrado) {
-                   throw new Error(`O plano do cliente não inclui o serviço: ${itemSalvo?.nome}`);
+                   throw new AppError(`O plano do cliente não inclui o serviço: ${itemSalvo?.nome}`, 400);
                }
 
                if (creditoEncontrado.quantidadeRestante < itemRegistrado.quantidade) {
-                   throw new Error(`Saldo insuficiente para o serviço: ${itemSalvo?.nome}. Restante: ${creditoEncontrado.quantidadeRestante}`);
+                   throw new AppError(`Saldo insuficiente para o serviço: ${itemSalvo?.nome}. Restante: ${creditoEncontrado.quantidadeRestante}`, 400);
                }
 
                // Registrar para atualização posterior (dentro da transaction)
@@ -112,6 +113,12 @@ export class TransacaoService {
             }
         });
 
+        /**
+         * @function Execução do Fluxo Contábil (Transaction)
+         * - Esta transação garante integridade (ACID). Se falhar durante a criação, o saldo do cliente não é retirado de forma fantasma.
+         * - Se existirem créditos para serem descontados, atualizamos a entidade 'CreditoAssinatura' para não permitir dupla redução do saldo limitando o total para os próximos pedidos.
+         * - Utilizamos valores proporcionais para o item quando `usouCredito` for preenchido a fim de estipularmos no Demonstrativo Financeiro (Caixa) que o serviço teve um custo fixado da mensalidade embutido, em vez de ser estritamente 'R$ 0.00'.
+         */
         const transacao = await prisma.$transaction(async (tx) => {
             const trx = await tx.transacao.create({
                 data: {
@@ -156,7 +163,7 @@ export class TransacaoService {
         });
 
         if(!transacao)
-            throw new Error('Registro não encontrado');
+            throw new AppError('Registro não encontrado', 404);
 
         const result = await prisma.transacao.update({
             where: { id },
@@ -187,7 +194,7 @@ export class TransacaoService {
         });
 
         if (!transacao)
-            throw new Error('Transação não encontrada');
+            throw new AppError('Transação não encontrada', 404);
 
         await prisma.$transaction([
             prisma.itemTransacao.deleteMany({ where: { transacaoId: id } }),

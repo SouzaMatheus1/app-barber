@@ -93,10 +93,19 @@ const Transacoes: React.FC = () => {
 
   // History State
   const [transacoes, setTransacoes] = useState<any[]>([]);
+  const [historyStartDate, setHistoryStartDate] = useState<string>('');
+  const [historyEndDate, setHistoryEndDate] = useState<string>('');
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editData, setEditData] = useState<any>(null);
   const [loadingEdit, setLoadingEdit] = useState(false);
+
+  const filteredTransacoes = transacoes.filter(t => {
+    const d = new Date(t.data).toLocaleDateString('en-CA');
+    if (historyStartDate && d < historyStartDate) return false;
+    if (historyEndDate && d > historyEndDate) return false;
+    return true;
+  });
 
   // ── Load static data ──
   useEffect(() => {
@@ -574,9 +583,46 @@ const Transacoes: React.FC = () => {
       )}
 
       {activeTab === 'historico' && (
-        <div className="bg-[#1a1a1a] rounded-xl border border-[#D4AF37]/20 overflow-hidden shadow-lg animate-in slide-in-from-bottom-4">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
+        <div className="space-y-4 animate-in slide-in-from-bottom-4">
+          <div className="flex flex-col sm:flex-row bg-[#1a1a1a] rounded-xl border border-[#D4AF37]/20 p-4 shadow-lg sm:items-center gap-4">
+            <h2 className="text-sm font-bold text-[#D4AF37] uppercase tracking-widest hidden md:block">Filtros:</h2>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-semibold text-[#E5E5E5]/60 uppercase tracking-wider">Início:</label>
+                <input 
+                  type="date"
+                  value={historyStartDate}
+                  onChange={(e) => setHistoryStartDate(e.target.value)}
+                  style={{ colorScheme: 'dark' }}
+                  className="bg-[#121212] text-[#E5E5E5] px-3 py-1.5 rounded-lg border border-[#D4AF37]/30 focus:border-[#D4AF37] outline-none text-sm cursor-pointer"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-semibold text-[#E5E5E5]/60 uppercase tracking-wider">Fim:</label>
+                <input 
+                  type="date"
+                  value={historyEndDate}
+                  onChange={(e) => setHistoryEndDate(e.target.value)}
+                  style={{ colorScheme: 'dark' }}
+                  className="bg-[#121212] text-[#E5E5E5] px-3 py-1.5 rounded-lg border border-[#D4AF37]/30 focus:border-[#D4AF37] outline-none text-sm cursor-pointer"
+                />
+              </div>
+              {(historyStartDate || historyEndDate) && (
+                <button 
+                  onClick={() => {
+                    setHistoryStartDate('');
+                    setHistoryEndDate('');
+                  }}
+                  className="text-[10px] bg-[#121212] border border-[#D4AF37]/30 text-[#D4AF37] px-2 py-1.5 rounded-md hover:bg-[#D4AF37]/10 transition-colors uppercase font-bold tracking-wider"
+                >
+                  Limpar
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="bg-[#1a1a1a] rounded-xl border border-[#D4AF37]/20 overflow-hidden shadow-lg">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
               <thead>
                 <tr className="bg-[#121212]">
                   <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Data</th>
@@ -588,10 +634,10 @@ const Transacoes: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-[#D4AF37]/10">
                 {loadingHistory ? (
-                  <tr><td colSpan={4} className="py-8 text-center text-[#D4AF37]"><Loader2 className="animate-spin inline" /></td></tr>
-                ) : transacoes.length === 0 ? (
-                  <tr><td colSpan={4} className="py-8 text-center text-[#E5E5E5]/50">Nenhuma transação encontrada.</td></tr>
-                ) : transacoes.map(t => (
+                  <tr><td colSpan={5} className="py-8 text-center text-[#D4AF37]"><Loader2 className="animate-spin inline" /></td></tr>
+                ) : filteredTransacoes.length === 0 ? (
+                  <tr><td colSpan={5} className="py-8 text-center text-[#E5E5E5]/50">Nenhuma transação encontrada.</td></tr>
+                ) : filteredTransacoes.map(t => (
                   <tr key={t.id} className="hover:bg-[#D4AF37]/5">
                     <td className="py-4 px-6 text-[#E5E5E5] font-medium">{new Date(t.data).toLocaleString('pt-BR')}</td>
                     <td className="py-4 px-6 text-[#E5E5E5]/80">{t.descricao || 'Sem descrição'}</td>
@@ -606,6 +652,7 @@ const Transacoes: React.FC = () => {
               </tbody>
             </table>
           </div>
+        </div>
         </div>
       )}
 

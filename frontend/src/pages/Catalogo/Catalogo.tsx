@@ -162,19 +162,22 @@ export function Catalogo() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-[#E5E5E5]/80 uppercase tracking-wider">Quantidade em Estoque</label>
-              <input
-                type="number"
-                min="0"
-                step="1"
-                required
-                value={quantidade}
-                onChange={e => setQuantidade(e.target.value === '' ? '' : Number(e.target.value))}
-                className="w-full px-4 py-3 bg-[#121212] text-[#E5E5E5] rounded-lg border border-[#D4AF37]/20 focus:outline-none focus:border-[#D4AF37] transition-colors"
-                placeholder="0"
-              />
-            </div>
+            {/* Campo de Quantidade (aparece apenas para Produto) */}
+            {tipoItemId === 2 && (
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-[#E5E5E5]/80 uppercase tracking-wider">Quantidade em Estoque</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  required
+                  value={quantidade}
+                  onChange={e => setQuantidade(e.target.value === '' ? '' : Number(e.target.value))}
+                  className="w-full px-4 py-3 bg-[#121212] text-[#E5E5E5] rounded-lg border border-[#D4AF37]/20 focus:outline-none focus:border-[#D4AF37] transition-colors"
+                  placeholder="0"
+                />
+              </div>
+            )}
 
             <div className="space-y-2">
               <label className="text-xs font-semibold text-[#E5E5E5]/80 uppercase tracking-wider">Preço (R$)</label>
@@ -260,9 +263,13 @@ export function Catalogo() {
                       </span>
                     </td>
                     <td className="py-4 px-6 text-[#E5E5E5]/80 text-center">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${item.quantidade > 5 ? 'bg-green-500/10 text-green-400 border-green-500/20' : item.quantidade > 0 ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
-                         {item.quantidade} un
-                      </span>
+                      {item.tipo?.descricao === 'SERVICO' ? (
+                        <span className="text-[#E5E5E5]/40">-</span>
+                      ) : (
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${item.quantidade > 5 ? 'bg-green-500/10 text-green-400 border-green-500/20' : item.quantidade > 0 ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
+                           {item.quantidade} un
+                        </span>
+                      )}
                     </td>
                     <td className="py-4 px-6 text-[#E5E5E5]/80">
                       {item.comissao ? `${Number(item.comissao).toFixed(2)}%` : '-'}

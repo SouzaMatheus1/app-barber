@@ -42,6 +42,17 @@ async function main() {
     create: { descricao: 'SAIDA' },
   });
 
+  console.log('Populando Métodos de Pagamento...');
+  await prisma.metodoPagamento.createMany({
+    data: [
+      { id: 1, descricao: 'PIX' },
+      { id: 2, descricao: 'Cartão de Crédito' },
+      { id: 3, descricao: 'Cartão de Débito' },
+      { id: 4, descricao: 'Dinheiro' }
+    ],
+    skipDuplicates: true
+  });
+
   // --- TABELAS NÍVEL 1 ---
   console.log('Criando Profissionais e Clientes...');
   const senhaHash = await bcrypt.hash('admin123', 10);

@@ -9,6 +9,7 @@ export class ItemCatalogoService {
                 nome: true,
                 preco: true,
                 comissao: true,
+                quantidade: true,
                 tipo: true
             }
         });
@@ -17,7 +18,7 @@ export class ItemCatalogoService {
     }
 
     async create(data: any) {
-        const { nome, preco, comissao, tipoItemId } = data;
+        const { nome, preco, comissao, quantidade, tipoItemId } = data;
 
         const exists = await prisma.itemCatalogo.findFirst({
             where: { nome }
@@ -32,6 +33,7 @@ export class ItemCatalogoService {
                 nome,
                 preco,
                 comissao,
+                quantidade: quantidade ? Number(quantidade) : 0,
                 tipo: { connect: { id: tipoItemId }}
             },
             select: {
@@ -39,6 +41,7 @@ export class ItemCatalogoService {
                 nome: true,
                 preco: true,
                 comissao: true,
+                quantidade: true,
                 tipo: true
             }
         });
@@ -46,7 +49,7 @@ export class ItemCatalogoService {
         return item;
     }
 
-    async edit(id: number, data: { nome?: string, preco?: number, comissao?: number, tipoItemId?: number }) {
+    async edit(id: number, data: { nome?: string, preco?: number, comissao?: number, quantidade?: number, tipoItemId?: number }) {
         const item = await prisma.itemCatalogo.findUnique({
             where: { id }
         });
@@ -57,16 +60,18 @@ export class ItemCatalogoService {
         const result = await prisma.itemCatalogo.update({
             where: { id },
             data: {
-                nome: data.nome,
-                preco: data.preco,
-                comissao: data.comissao,
-                tipoItemId: data.tipoItemId
+                ...(data.nome && { nome: data.nome }),
+                ...(data.preco !== undefined && { preco: data.preco }),
+                ...(data.comissao !== undefined && { comissao: data.comissao }),
+                ...(data.quantidade !== undefined && { quantidade: data.quantidade }),
+                ...(data.tipoItemId && { tipoItemId: data.tipoItemId }),
             },
             select: {
                 id: true,
                 nome: true,
                 preco: true,
                 comissao: true,
+                quantidade: true,
                 tipo: true
             }
         });

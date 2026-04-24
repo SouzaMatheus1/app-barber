@@ -14,13 +14,14 @@ export class ItemCatalogoController {
     }
 
     criar = async (req: Request, res: Response) => {
-        const { nome, preco, comissao, tipoItemId } = req.body;
+        const { nome, preco, comissao, quantidade, tipoItemId } = req.body;
 
         try {
             const result = await this.itemCatalogoService.create({
                 nome,
                 preco,
                 comissao,
+                quantidade,
                 tipoItemId
             });
 
@@ -32,7 +33,7 @@ export class ItemCatalogoController {
 
     editar = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
-        const { nome, preco, comissao, tipoItemId } = req.body;
+        const { nome, preco, comissao, quantidade, tipoItemId } = req.body;
 
         try {
             const result = await this.itemCatalogoService.edit(
@@ -41,6 +42,7 @@ export class ItemCatalogoController {
                     nome,
                     preco,
                     comissao,
+                    quantidade,
                     tipoItemId
                 }
             );

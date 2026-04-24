@@ -105,6 +105,7 @@ export function Comissoes() {
               required
               value={dataInicio}
               onChange={e => setDataInicio(e.target.value)}
+              style={{ colorScheme: 'light' }}
               className="w-full px-4 py-3 bg-[#121212] text-[#E5E5E5] rounded-lg border border-[#D4AF37]/20 focus:outline-none focus:border-[#D4AF37]"
             />
           </div>
@@ -116,6 +117,7 @@ export function Comissoes() {
               required
               value={dataFim}
               onChange={e => setDataFim(e.target.value)}
+              style={{ colorScheme: 'light' }}
               className="w-full px-4 py-3 bg-[#121212] text-[#E5E5E5] rounded-lg border border-[#D4AF37]/20 focus:outline-none focus:border-[#D4AF37]"
             />
           </div>
@@ -184,7 +186,7 @@ export function Comissoes() {
                     <tr key={tx.id} className="hover:bg-[#D4AF37]/5 transition-colors group">
                       <td className="py-4 px-6 text-[#D4AF37] font-bold text-xs uppercase tracking-widest">{tx.profissional}</td>
                       <td className="py-4 px-6 text-[#E5E5E5] font-medium">{tx.cliente}</td>
-                      <td className="py-4 px-6 text-[#E5E5E5]/80 max-w-[200px] truncate" title={tx.servicos}>{tx.servicos}</td>
+                      <td className="py-4 px-6 text-[#E5E5E5]/80 max-w-[400px] whitespace-normal leading-relaxed">{tx.servicos}</td>
                       <td className="py-4 px-6 text-[#E5E5E5]/60 text-sm">
                         {new Date(tx.dataHora).toLocaleTimeString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </td>

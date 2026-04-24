@@ -118,7 +118,7 @@ export class AssinaturaService {
     }
 
     async getAssinaturaAtivaByClienteId(clienteId: number) {
-        return prisma.assinatura.findFirst({
+        const assinatura = await prisma.assinatura.findFirst({
             where: { clienteId, status: statusAssinatura.ATIVA },
             orderBy: { id: 'desc' },
             include: { 
@@ -126,6 +126,18 @@ export class AssinaturaService {
                 creditos: { include: { item: true } }
             }
         });
+
+        if (!assinatura) return null;
+
+        const totalItensNoPlano = assinatura.plano.itens.reduce((acc, i) => acc + i.quantidade, 0);
+        const valorProporcional = totalItensNoPlano > 0 
+            ? Number(assinatura.plano.valorMensal) / totalItensNoPlano 
+            : 0;
+
+        return {
+            ...assinatura,
+            valorProporcional
+        };
     }
 
     async getAssinaturas() {

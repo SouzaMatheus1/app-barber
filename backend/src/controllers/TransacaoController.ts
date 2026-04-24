@@ -5,58 +5,44 @@ export class TransacaoController {
     private transacaoService = new TransacaoService();
     
     listar = async (req: Request, res: Response) => {
-        try {
-            const result = await this.transacaoService.listAll();
-
-            return res.status(200).json(result);
-        } catch (error: any) {
-            return res.status(500).json({ error: 'Erro ao buscar transações' });
-        }
+        const result = await this.transacaoService.listAll();
+        return res.status(200).json(result);
     }
 
     criar = async (req: Request, res: Response) => {
-        const { tipoTransacaoId, descricao, profissionalId, clienteId, itens } = req.body;
+        const { tipoTransacaoId, descricao, profissionalId, clienteId, itens, formaPagamentoId, data } = req.body;
 
-        try {
-            const result = await this.transacaoService.create({
-                tipoTransacaoId,
-                descricao,
-                profissionalId,
-                clienteId,
-                itens
-            });
+        const result = await this.transacaoService.create({
+            tipoTransacaoId,
+            descricao,
+            profissionalId,
+            clienteId,
+            formaPagamentoId,
+            data,
+            itens
+        });
 
-            return res.status(201).json(result);
-        } catch (error: any) {
-            return res.status(400).json({ error: error.message });
-        }
+        return res.status(201).json(result);
     }
 
-    // async editar(req: Request, res: Response) {
-    //     const id = Number(req.params.id);
-    //     const { tipoTransacaoId, descricao, valorTotal, profissionalId, clienteId, itens } = req.body;
+    editar = async (req: Request, res: Response) => {
+        const id = Number(req.params.id);
+        const { descricao, valorTotal, formaPagamentoId, data } = req.body;
 
-    //     try {
-    //         const result = await this.transacaoService.edit(
-    //             id,
-    //             {
-                    
-    //             }
-    //         )
-    //     } catch (error: any) {
-    //         return res.status(400).json({ error: error.message });
-    //     }
-    // }
+        const result = await this.transacaoService.edit(id, {
+            descricao,
+            valorTotal,
+            formaPagamentoId,
+            data
+        });
+        return res.status(200).json(result);
+    }
 
     deletar = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
 
-        try {
-            const result = await this.transacaoService.delete(id);
+        const result = await this.transacaoService.delete(id);
 
-            return res.status(200).json(result);
-        } catch (error: any) {
-            return res.status(400).json({ error: error.message });
-        }
+        return res.status(200).json(result);
     }
 }

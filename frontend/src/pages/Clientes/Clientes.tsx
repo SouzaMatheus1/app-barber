@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit2, Loader2, User } from 'lucide-react';
+import { Plus, Trash2, Edit2, Loader2, User, Users } from 'lucide-react';
 import { ClienteService } from '../../services/ClienteService';
 import { assinaturaService } from '../../services/AssinaturaService';
 import type { Cliente } from '../../services/ClienteService';
@@ -119,7 +119,13 @@ export function Clientes() {
     <div className="space-y-8 animate-in fade-in duration-500 max-w-6xl mx-auto">
       <header className="flex justify-between items-end border-b border-[#D4AF37]/20 pb-4">
         <div>
-          <h1 className="text-3xl font-serif font-bold text-[#D4AF37]">Clientes</h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-3xl font-serif font-bold text-[#D4AF37]">Clientes</h1>
+            <span className="bg-[#121212]/10 text-[#D4AF37] px-4 py-1.5 rounded-full text-lg font-bold border border-[#D4AF37]/30 shadow-sm flex items-center gap-2">
+              <Users size={20} />
+              {clientes.length} Cadastrados
+            </span>
+          </div>
           <p className="text-[#E5E5E5]/60 mt-1">Gerencie a base de clientes da barbearia.</p>
         </div>
         {!isEditing && (

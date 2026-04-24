@@ -1,9 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 import { verify } from 'jsonwebtoken';
+import { tenantStorage } from '../database/tenantContext';
 
 interface Payload {
     id: number;
     perfil: string;
+    empresaId: number;
 }
 
 export function isAuth(req: Request, res: Response, next: NextFunction) {
@@ -17,10 +19,15 @@ export function isAuth(req: Request, res: Response, next: NextFunction) {
     if (!token) {
         return res.status(401).json({ error: 'Token mal formatado' });
     }
+    
     try {
         const payload = verify(token, process.env.JWT_SECRET as string) as Payload;
         res.locals.user = payload;
-        return next();
+        
+        // Setup Tenant Context for the current request
+        tenantStorage.run({ empresaId: payload.empresaId }, () => {
+            next();
+        });
     } catch (err: any) {
         console.error("Erro JWT Verify:", err);
         return res.status(401).json({ error: 'Token inválido', detalhes: err?.message || 'Erro desconhecido' });

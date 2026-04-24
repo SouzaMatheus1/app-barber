@@ -4,10 +4,15 @@ import { sign } from 'jsonwebtoken';
 
 export class AuthService {
     async login(email: string, senhaPlana: string) {
-        // Traz o profissional e o perfil dele junto
+        // Traz o profissional, perfil e empresa (com tipo) junto
         const profissional = await prisma.profissional.findFirst({
             where: { email, ativo: true },
-            include: { perfil: true }
+            include: { 
+                perfil: true, 
+                empresa: {
+                    include: { tipo: true }
+                } 
+            }
         });
 
         if (!profissional)
@@ -22,7 +27,8 @@ export class AuthService {
         const token = sign(
             { 
                 id: profissional.id, 
-                perfil: perfilProfissional 
+                perfil: perfilProfissional,
+                empresaId: profissional.empresaId
             },
             process.env.JWT_SECRET as string,
             { expiresIn: '1d' }
@@ -33,7 +39,11 @@ export class AuthService {
             profissional: {
                 id: profissional.id,
                 nome: profissional.nome,
-                perfil: perfilProfissional
+                perfil: perfilProfissional,
+                empresaId: profissional.empresaId,
+                nomeFantasia: profissional.empresa?.nomeFantasia || 'λ MAT',
+                slug: profissional.empresa?.slug,
+                tipoEmpresa: profissional.empresa?.tipo?.descricao || 'empresa'
             }
         };
     }

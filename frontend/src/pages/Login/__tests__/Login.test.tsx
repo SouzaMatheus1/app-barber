@@ -29,7 +29,7 @@ describe('Página de Login', () => {
 
   it('deve renderizar a tela de login corretamente', () => {
     render(<Login />);
-    expect(screen.getByText(/WS Barber Shop/i)).toBeInTheDocument();
+    expect(screen.getByText(/barbearia X/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/exemplo@email.com/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/••••••••/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Entrar na Plataforma/i })).toBeInTheDocument();
@@ -40,7 +40,7 @@ describe('Página de Login', () => {
     (authService.login as jest.Mock).mockRejectedValueOnce(new Error('Credenciais inválidas'));
 
     render(<Login />);
-    
+
     fireEvent.change(screen.getByPlaceholderText(/exemplo@email.com/i), { target: { value: 'teste@email.com' } });
     fireEvent.change(screen.getByPlaceholderText(/••••••••/i), { target: { value: 'senha123' } });
     fireEvent.click(screen.getByRole('button', { name: /Entrar na Plataforma/i }));

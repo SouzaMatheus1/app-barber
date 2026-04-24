@@ -6,151 +6,224 @@ datasource db {
   provider = "mysql"
 }
 
+model TipoEmpresa {
+  id        Int       @id @default(autoincrement())
+  descricao String    @unique
+  empresas  Empresa[]
+
+  @@map("TipoEmpresa")
+}
+
+model Empresa {
+  id            Int      @id @default(autoincrement())
+  nomeFantasia  String
+  slug          String   @unique
+  tipoEmpresaId Int      @default(1)
+  criadoEm      DateTime @default(now())
+
+  tipo          TipoEmpresa    @relation(fields: [tipoEmpresaId], references: [id])
+  profissionais Profissional[]
+  clientes      Cliente[]
+  itensCatalogo ItemCatalogo[]
+  transacoes    Transacao[]
+  planos        Plano[]
+  assinaturas   Assinatura[]
+
+  @@index([tipoEmpresaId])
+  @@map("Empresa")
+}
+
 model Profissional {
-  id         Int         @id @default(autoincrement())
-  nome       String
-  email      String      @unique
-  senha      String
-  criadoEm   DateTime    @default(now())
-  ativo      Boolean     @default(true)
-  perfilId   Int         @default(1)
+  id        Int      @id @default(autoincrement())
+  empresaId Int      @default(1)
+  nome      String
+  email     String   @unique
+  senha     String
+  criadoEm  DateTime @default(now())
+  ativo     Boolean  @default(true)
+  perfilId  Int      @default(1)
+
+  empresa    Empresa     @relation(fields: [empresaId], references: [id])
   perfil     Perfil      @relation(fields: [perfilId], references: [id])
   transacoes Transacao[]
 
-  @@index([perfilId], map: "Profissional_perfilId_fkey")
+  @@index([perfilId])
+  @@index([empresaId])
+  @@map("Profissional")
 }
 
 model Perfil {
   id            Int            @id @default(autoincrement())
   descricao     String         @unique
   profissionais Profissional[]
+
+  @@map("Perfil")
 }
 
 model Cliente {
-  id          Int          @id @default(autoincrement())
-  nome        String
-  telefone    String?
-  criadoEm    DateTime     @default(now())
-  ativo       Boolean      @default(true)
+  id        Int      @id @default(autoincrement())
+  empresaId Int      @default(1)
+  nome      String
+  telefone  String?
+  criadoEm  DateTime @default(now())
+  ativo     Boolean  @default(true)
+
+  empresa     Empresa      @relation(fields: [empresaId], references: [id])
   assinaturas Assinatura[]
   transacoes  Transacao[]
+
+  @@index([empresaId])
+  @@map("Cliente")
 }
 
 model ItemCatalogo {
-  id                 Int                 @id @default(autoincrement())
-  nome               String
-  preco              Decimal             @db.Decimal(10, 2)
-  comissao           Decimal?            @db.Decimal(5, 2)
-  quantidade         Int                 @default(0)
-  ativo              Boolean             @default(true)
-  tipoItemId         Int
-  creditosAssinatura CreditoAssinatura[]
+  id         Int      @id @default(autoincrement())
+  empresaId  Int      @default(1)
+  nome       String
+  preco      Decimal  @db.Decimal(10, 2)
+  comissao   Decimal? @db.Decimal(5, 2)
+  quantidade Int      @default(0)
+  ativo      Boolean  @default(true)
+  tipoItemId Int
+
+  empresa            Empresa             @relation(fields: [empresaId], references: [id])
   tipo               TipoItem            @relation(fields: [tipoItemId], references: [id])
+  creditosAssinatura CreditoAssinatura[]
   itensNoPlano       ItemPlano[]
   itensTransacao     ItemTransacao[]
 
-  @@index([tipoItemId], map: "ItemCatalogo_tipoItemId_fkey")
+  @@index([tipoItemId])
+  @@index([empresaId])
+  @@map("ItemCatalogo")
 }
 
 model TipoItem {
   id        Int            @id @default(autoincrement())
   descricao String         @unique
   itens     ItemCatalogo[]
+
+  @@map("TipoItem")
 }
 
 model MetodoPagamento {
   id         Int         @id @default(autoincrement())
   descricao  String      @unique
   transacoes Transacao[]
+
+  @@map("MetodoPagamento")
 }
 
 model Transacao {
-  id               Int              @id @default(autoincrement())
+  id               Int      @id @default(autoincrement())
+  empresaId        Int      @default(1)
   descricao        String?
-  valorTotal       Decimal          @db.Decimal(10, 2)
-  data             DateTime         @default(now())
+  valorTotal       Decimal  @db.Decimal(10, 2)
+  data             DateTime @default(now())
   profissionalId   Int
   clienteId        Int?
   tipoTransacaoId  Int
   formaPagamentoId Int?
-  itens            ItemTransacao[]
-  cliente          Cliente?         @relation(fields: [clienteId], references: [id])
-  profissional     Profissional     @relation(fields: [profissionalId], references: [id])
-  tipo             TipoTransacao    @relation(fields: [tipoTransacaoId], references: [id])
-  metodoPagamento  MetodoPagamento? @relation(fields: [formaPagamentoId], references: [id])
 
-  @@index([clienteId], map: "Transacao_clienteId_fkey")
-  @@index([profissionalId], map: "Transacao_profissionalId_fkey")
-  @@index([tipoTransacaoId], map: "Transacao_tipoTransacaoId_fkey")
-  @@index([formaPagamentoId], map: "Transacao_formaPagamentoId_fkey")
+  empresa         Empresa          @relation(fields: [empresaId], references: [id])
+  itens           ItemTransacao[]
+  cliente         Cliente?         @relation(fields: [clienteId], references: [id])
+  profissional    Profissional     @relation(fields: [profissionalId], references: [id])
+  tipo            TipoTransacao    @relation(fields: [tipoTransacaoId], references: [id])
+  metodoPagamento MetodoPagamento? @relation(fields: [formaPagamentoId], references: [id])
+
+  @@index([clienteId])
+  @@index([profissionalId])
+  @@index([tipoTransacaoId])
+  @@index([formaPagamentoId])
+  @@index([empresaId])
+  @@map("Transacao")
 }
 
 model TipoTransacao {
   id         Int         @id @default(autoincrement())
   descricao  String      @unique
   transacoes Transacao[]
+
+  @@map("TipoTransacao")
 }
 
 model ItemTransacao {
-  id                    Int          @id @default(autoincrement())
+  id                    Int     @id @default(autoincrement())
   transacaoId           Int
   itemId                Int
-  quantidade            Int          @default(1)
-  precoUnitario         Decimal      @db.Decimal(10, 2)
-  usouCreditoAssinatura Boolean      @default(false)
-  item                  ItemCatalogo @relation(fields: [itemId], references: [id])
-  transacao             Transacao    @relation(fields: [transacaoId], references: [id])
+  quantidade            Int     @default(1)
+  precoUnitario         Decimal @db.Decimal(10, 2)
+  usouCreditoAssinatura Boolean @default(false)
 
-  @@index([itemId], map: "ItemTransacao_itemId_fkey")
-  @@index([transacaoId], map: "ItemTransacao_transacaoId_fkey")
+  item      ItemCatalogo @relation(fields: [itemId], references: [id])
+  transacao Transacao    @relation(fields: [transacaoId], references: [id])
+
+  @@index([itemId])
+  @@index([transacaoId])
+  @@map("ItemTransacao")
 }
 
 model Plano {
-  id          Int          @id @default(autoincrement())
+  id          Int     @id @default(autoincrement())
+  empresaId   Int     @default(1)
   nome        String
-  valorMensal Decimal      @db.Decimal(10, 2)
-  ativo       Boolean      @default(true)
+  valorMensal Decimal @db.Decimal(10, 2)
+  ativo       Boolean @default(true)
+
+  empresa     Empresa      @relation(fields: [empresaId], references: [id])
   assinaturas Assinatura[]
   itens       ItemPlano[]
+
+  @@index([empresaId])
+  @@map("Plano")
 }
 
 model ItemPlano {
-  id         Int          @id @default(autoincrement())
+  id         Int @id @default(autoincrement())
   planoId    Int
   itemId     Int
   quantidade Int
-  item       ItemCatalogo @relation(fields: [itemId], references: [id])
-  plano      Plano        @relation(fields: [planoId], references: [id])
 
-  @@index([itemId], map: "ItemPlano_itemId_fkey")
-  @@index([planoId], map: "ItemPlano_planoId_fkey")
+  item  ItemCatalogo @relation(fields: [itemId], references: [id])
+  plano Plano        @relation(fields: [planoId], references: [id])
+
+  @@index([itemId])
+  @@index([planoId])
+  @@map("ItemPlano")
 }
 
 model Assinatura {
-  id            Int                 @id @default(autoincrement())
-  status        statusAssinatura    @default(ATIVA)
+  id            Int              @id @default(autoincrement())
+  empresaId     Int              @default(1)
+  status        statusAssinatura @default(ATIVA)
   diaVencimento Int?
-  criadoEm      DateTime            @default(now())
+  criadoEm      DateTime         @default(now())
   clienteId     Int
   planoId       Int
-  cliente       Cliente             @relation(fields: [clienteId], references: [id])
-  plano         Plano               @relation(fields: [planoId], references: [id])
-  creditos      CreditoAssinatura[]
 
-  @@index([clienteId], map: "Assinatura_clienteId_fkey")
-  @@index([planoId], map: "Assinatura_planoId_fkey")
+  empresa  Empresa             @relation(fields: [empresaId], references: [id])
+  cliente  Cliente             @relation(fields: [clienteId], references: [id])
+  plano    Plano               @relation(fields: [planoId], references: [id])
+  creditos CreditoAssinatura[]
+
+  @@index([clienteId])
+  @@index([planoId])
+  @@index([empresaId])
+  @@map("Assinatura")
 }
 
 model CreditoAssinatura {
-  id                 Int          @id @default(autoincrement())
+  id                 Int @id @default(autoincrement())
   assinaturaId       Int
   itemId             Int
   quantidadeRestante Int
-  assinatura         Assinatura   @relation(fields: [assinaturaId], references: [id])
-  item               ItemCatalogo @relation(fields: [itemId], references: [id])
 
-  @@index([assinaturaId], map: "CreditoAssinatura_assinaturaId_fkey")
-  @@index([itemId], map: "CreditoAssinatura_itemId_fkey")
+  assinatura Assinatura   @relation(fields: [assinaturaId], references: [id])
+  item       ItemCatalogo @relation(fields: [itemId], references: [id])
+
+  @@index([assinaturaId])
+  @@index([itemId])
+  @@map("CreditoAssinatura")
 }
 
 enum statusAssinatura {

@@ -30,7 +30,7 @@ describe('Caixa API', () => {
     );
 
     tokenBarbeiro = jwt.sign(
-      { id: 2, perfil: 'BARBEIRO' },
+      { id: 2, perfil: 'ATENDENTE' },
       process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
@@ -74,12 +74,13 @@ describe('Caixa API', () => {
       expect(res.status).toBe(200);
       expect(res.body.saldoInicial).toBe(60.0);
       expect(res.body.movimentoDia.faturamentoTotal).toBe(50.0);
+      expect(res.body.movimentoDia).toHaveProperty('parteEmpresa');
+      expect(res.body.movimentoDia.parteEmpresa).toBe(25.0);
       expect(res.body.movimentoDia.comissoesAPagar).toBe(25.0);
-      expect(res.body.movimentoDia.parteBarbearia).toBe(25.0);
       expect(res.body.saldoFinal).toBe(85.0); // 60 + 25 = 85
     });
 
-    it('deve bloquear acesso para perfil que não seja ADMIN (BARBEIRO)', async () => {
+    it('deve bloquear acesso para perfil que não seja ADMIN (ATENDENTE)', async () => {
       const res = await request(app)
         .get('/caixa/diario')
         .set('Authorization', `Bearer ${tokenBarbeiro}`);

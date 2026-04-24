@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TrendingUp, Users, Scissors, DollarSign, Loader2 } from 'lucide-react';
 import { dashboardService } from '../../services/dashboardService';
+import { useAuth } from '../../contexts/AuthContext';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState<any[]>([]);
   const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
@@ -67,14 +69,14 @@ const Dashboard: React.FC = () => {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <header>
-        <h1 className="text-3xl font-serif font-bold text-[#D4AF37]">WS Barber Shop</h1>
+        <h1 className="text-3xl font-serif font-bold text-[#D4AF37]">{ user?.nomeFantasia || 'Seja bem-vindo' }</h1>
         <p className="text-[#000000]/60 mt-1">Resumo das atividades métricas de hoje.</p>
       </header>
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {metrics.map((metric) => (
-          <div 
+          <div
             key={metric.id}
             className="bg-[#1a1a1a] rounded-xl p-6 border-l-4 border-[#D4AF37] border-y border-r border-y-[#D4AF37]/10 border-r-[#D4AF37]/10 shadow-lg relative overflow-hidden group hover:border-y-[#D4AF37]/30 hover:border-r-[#D4AF37]/30 transition-colors"
           >
@@ -82,7 +84,7 @@ const Dashboard: React.FC = () => {
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-[#D4AF37]">
               {metric.icon}
             </div>
-            
+
             <div className="relative z-10 w-12 h-12 bg-[#D4AF37]/10 rounded-lg flex items-center justify-center text-[#D4AF37] mb-4">
               {metric.icon}
             </div>
@@ -99,7 +101,7 @@ const Dashboard: React.FC = () => {
       <div className="bg-[#1a1a1a] rounded-xl border border-[#D4AF37]/20 overflow-hidden shadow-lg">
         <div className="p-6 border-b border-[#D4AF37]/20 flex justify-between items-center bg-[#1a1a1a]">
           <h2 className="text-xl font-bold text-[#D4AF37]">Últimas Transações</h2>
-          <button 
+          <button
             onClick={() => navigate('/transacoes', { state: { tab: 'historico' } })}
             className="text-sm text-[#E5E5E5]/70 hover:text-[#D4AF37] transition-colors uppercase tracking-wider font-semibold"
           >

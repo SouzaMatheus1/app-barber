@@ -11,7 +11,7 @@ app.use(express.json());
 app.use(routes);
 
 app.get('/ping', (req, res) => {
-  return res.json({ message: 'Servidor da Barbearia rodando perfeitamente! ✂️' });
+  return res.json({ message: 'Servidor da Empresa (B2B) rodando perfeitamente! ✂️' });
 });
 
 // Middleware Global de Tratamento de Erros

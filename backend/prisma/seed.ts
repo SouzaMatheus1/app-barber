@@ -12,10 +12,10 @@ async function main() {
     create: { descricao: 'ADMIN' },
   });
 
-  const perfilBarbeiro = await prisma.perfil.upsert({
-    where: { descricao: 'BARBEIRO' },
+  const perfilProfissional = await prisma.perfil.upsert({
+    where: { descricao: 'ATENDENTE' },
     update: {},
-    create: { descricao: 'BARBEIRO' },
+    create: { descricao: 'ATENDENTE' },
   });
 
   const tipoServico = await prisma.tipoItem.upsert({
@@ -58,24 +58,24 @@ async function main() {
   const senhaHash = await bcrypt.hash('admin123', 10);
 
   const admin = await prisma.profissional.upsert({
-    where: { email: 'admin@barbearia.com' },
+    where: { email: 'admin@empresa.com' },
     update: { senha: senhaHash }, // Forçamos reset de senha pra ambiente demo
     create: {
       nome: 'Administrador Master',
-      email: 'admin@barbearia.com',
+      email: 'admin@empresa.com',
       senha: senhaHash,
       perfilId: perfilAdmin.id,
     },
   });
 
-  const barbeiro1 = await prisma.profissional.upsert({
-    where: { email: 'barbeiro1@barbearia.com' },
+  const profissional1 = await prisma.profissional.upsert({
+    where: { email: 'profissional1@empresa.com' },
     update: { senha: senhaHash },
     create: {
-      nome: 'João Barbeiro',
-      email: 'barbeiro1@barbearia.com',
+      nome: 'João Silva',
+      email: 'profissional1@empresa.com',
       senha: senhaHash,
-      perfilId: perfilBarbeiro.id,
+      perfilId: perfilProfissional.id,
     },
   });
 
@@ -130,7 +130,7 @@ async function main() {
       descricao: 'Serviço de Corte + Barba',
       valorTotal: 80.00,
       tipoTransacaoId: tipoEntrada.id,
-      profissionalId: barbeiro1.id,
+      profissionalId: profissional1.id,
       clienteId: cliente1.id,
       itens: {
         create: [
@@ -171,7 +171,7 @@ async function main() {
   console.log('\n✅ Seeding concluído com sucesso!');
   console.log('-------------------------------------------');
   console.log(' Credenciais de Teste Geradas (Profissional)');
-  console.log(' Login: admin@barbearia.com');
+  console.log(' Login: admin@empresa.com');
   console.log(' Senha: admin123');
   console.log('-------------------------------------------');
 }

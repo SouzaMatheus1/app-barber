@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit2, Loader2, User, Users } from 'lucide-react';
 import { ClienteService } from '../../services/ClienteService';
 import { assinaturaService } from '../../services/AssinaturaService';
+import { useAuth } from '../../contexts/AuthContext';
 import type { Cliente } from '../../services/ClienteService';
 
 const clienteService = new ClienteService();
 
 export function Clientes() {
+  const { user } = useAuth();
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingAction, setLoadingAction] = useState(false);
@@ -126,7 +128,7 @@ export function Clientes() {
               {clientes.length} Cadastrados
             </span>
           </div>
-          <p className="text-[#E5E5E5]/60 mt-1">Gerencie a base de clientes da barbearia.</p>
+          <p className="text-[#E5E5E5]/60 mt-1">Gerencie a base de clientes da {user?.tipoEmpresa?.toLowerCase() || 'empresa'}.</p>
         </div>
         {!isEditing && (
           <button 

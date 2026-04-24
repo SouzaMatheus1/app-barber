@@ -36,7 +36,7 @@ export class CaixaService {
         });
 
         let faturamentoDia = 0;
-        let parteBarbeariaDia = 0;
+        let parteEmpresaDia = 0;
         let comissoesDia = 0;
 
         const clientesUnicos = new Set();
@@ -56,7 +56,7 @@ export class CaixaService {
 
                 faturamentoDia += totalItem;
                 comissoesDia += valorComissao;
-                parteBarbeariaDia += (totalItem - valorComissao);
+                parteEmpresaDia += (totalItem - valorComissao);
             });
         });
 
@@ -65,10 +65,10 @@ export class CaixaService {
             saldoInicial,
             movimentoDia: {
                 faturamentoTotal: faturamentoDia,
-                parteBarbearia: parteBarbeariaDia,
+                parteEmpresa: parteEmpresaDia,
                 comissoesAPagar: comissoesDia
             },
-            saldoFinal: saldoInicial + parteBarbeariaDia,
+            saldoFinal: saldoInicial + parteEmpresaDia,
             quantidadeTransacoes: transacoesHoje.length,
             atendimentosRealizados: clientesUnicos.size + avulsosCount,
             detalhesTransacoes: transacoesHoje.map((transacao : any) => ({

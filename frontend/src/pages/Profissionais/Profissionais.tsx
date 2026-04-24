@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit2, Loader2, UserCog } from 'lucide-react';
+import { Trash2, Edit2, Loader2, UserCog, Plus } from 'lucide-react';
 import { profissionalService } from '../../services/ProfissionalService';
+import { useAuth } from '../../contexts/AuthContext';
 
 export function Profissionais() {
+  const { user } = useAuth();
   const [profissionais, setProfissionais] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingAction, setLoadingAction] = useState(false);
@@ -14,7 +16,7 @@ export function Profissionais() {
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
-  const [perfilId, setPerfilId] = useState<number>(2); // 1 = ADMIN, 2 = BARBEIRO
+  const [perfilId, setPerfilId] = useState<number>(2); // 1 = ADMIN, 2 = ATENDENTE
 
   useEffect(() => {
     loadProfissionais();
@@ -138,7 +140,7 @@ export function Profissionais() {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 className="w-full px-4 py-3 bg-[#121212] text-[#E5E5E5] rounded-lg border border-[#D4AF37]/20 focus:outline-none focus:border-[#D4AF37] transition-colors"
-                placeholder="exemplo@barbearia.com"
+                placeholder={`exemplo@${user?.tipoEmpresa?.toLowerCase().replace(' ', '') || 'empresa'}.com`}
               />
             </div>
             <div className="space-y-2">
@@ -163,7 +165,7 @@ export function Profissionais() {
                   onChange={e => setPerfilId(Number(e.target.value))}
                   className="w-full px-4 py-3 bg-[#121212] text-[#E5E5E5] rounded-lg border border-[#D4AF37]/20 focus:outline-none focus:border-[#D4AF37] transition-colors appearance-none cursor-pointer"
                 >
-                  <option value={2}>Barbeiro</option>
+                  <option value={2}>Atendente</option>
                   <option value={1}>Administrador</option>
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-[#D4AF37]">

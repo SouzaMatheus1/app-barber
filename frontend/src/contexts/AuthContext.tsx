@@ -6,6 +6,9 @@ interface User {
   id: number
   nome: string
   perfil: string
+  nomeFantasia?: string
+  slug?: string
+  tipoEmpresa?: string
 }
 
 interface AuthContextData {
@@ -30,6 +33,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(JSON.parse(savedUser))
     }
   }, [])
+
+  // Atualiza o <title> do navegador baseado na Empresa
+  useEffect(() => {
+    if (user?.nomeFantasia) {
+      document.title = `${user.nomeFantasia} | λ MAT`;
+    } else {
+      document.title = 'λ MAT';
+    }
+  }, [user]);
 
   function login(token: string, user: User) {
     localStorage.setItem('token', token)

@@ -37,14 +37,14 @@ describe('Auth API /login', () => {
     (prisma.profissional.findUnique as jest.Mock).mockResolvedValueOnce({
       id: 'mock-id-123',
       nome: 'Profissional Teste',
-      email: 'teste@barbearia.com',
+      email: 'teste@empresa.com',
       senha: mockHash,
       perfil: { descricao: 'ADMIN' },
     });
 
     const res = await request(app)
       .post('/login')
-      .send({ email: 'teste@barbearia.com', senha: 'senha_secreta' });
+      .send({ email: 'teste@empresa.com', senha: 'senha_secreta' });
 
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty('token');
@@ -58,7 +58,7 @@ describe('Auth API /login', () => {
 
     const res = await request(app)
       .post('/login')
-      .send({ email: 'errado@barbearia.com', senha: '123' });
+      .send({ email: 'errado@empresa.com', senha: '123' });
 
     expect(res.status).toBe(401);
     expect(res.body.error).toBe('Email ou senha incorretos');
@@ -74,7 +74,7 @@ describe('Auth API /login', () => {
 
     const res = await request(app)
       .post('/login')
-      .send({ email: 'teste@barbearia.com', senha: 'senha_incorreta' });
+      .send({ email: 'teste@empresa.com', senha: 'senha_incorreta' });
 
     expect(res.status).toBe(401);
     expect(res.body.error).toBe('Email ou senha incorretos');

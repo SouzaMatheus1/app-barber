@@ -13,8 +13,9 @@ const Dashboard: React.FC = () => {
     async function loadData() {
       try {
         setLoading(true);
-        // Chama resumo diario usando a data de hoje para o parametro
-        const today = new Date().toISOString().split('T')[0];
+        // Fix: generate local YYYY-MM-DD string without UTC offset issues
+        const d = new Date();
+        const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         const [resumo, transacoes, clientes] = await Promise.all([
           dashboardService.getResumoDiario(today),
           dashboardService.getTransacoes(),

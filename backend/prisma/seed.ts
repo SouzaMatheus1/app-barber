@@ -43,28 +43,14 @@ async function main() {
   });
 
   console.log('Populando Métodos de Pagamento...');
-  const pix = await prisma.metodoPagamento.upsert({
-    where: { descricao: 'PIX' },
-    update: {},
-    create: { descricao: 'PIX' }
-  });
-
-  const cartaoCredito = await prisma.metodoPagamento.upsert({
-    where: { descricao: 'Cartão de Crédito' },
-    update: {},
-    create: { descricao: 'Cartão de Crédito' }
-  });
-
-  const cartaoDebito = await prisma.metodoPagamento.upsert({
-    where: { descricao: 'Cartão de Débito' },
-    update: {},
-    create: { descricao: 'Cartão de Débito' }
-  });
-
-  const dinheiro = await prisma.metodoPagamento.upsert({
-    where: { descricao: 'Dinheiro' },
-    update: {},
-    create: { descricao: 'Dinheiro' }
+  await prisma.metodoPagamento.createMany({
+    data: [
+      { id: 1, descricao: 'PIX' },
+      { id: 2, descricao: 'Cartão de Crédito' },
+      { id: 3, descricao: 'Cartão de Débito' },
+      { id: 4, descricao: 'Dinheiro' }
+    ],
+    skipDuplicates: true
   });
 
   // --- TABELAS NÍVEL 1 ---

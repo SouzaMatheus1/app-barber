@@ -1,8 +1,8 @@
 -- AlterTable
-ALTER TABLE `itemcatalogo` ADD COLUMN `quantidade` INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE `ItemCatalogo` ADD COLUMN `quantidade` INTEGER NOT NULL DEFAULT 0;
 
 -- AlterTable
-ALTER TABLE `transacao` ADD COLUMN `formaPagamentoId` INTEGER NULL;
+ALTER TABLE `Transacao` ADD COLUMN `formaPagamentoId` INTEGER NULL;
 
 -- CreateTable
 CREATE TABLE `MetodoPagamento` (

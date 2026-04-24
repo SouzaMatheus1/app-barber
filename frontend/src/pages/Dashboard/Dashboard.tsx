@@ -99,7 +99,7 @@ const Dashboard: React.FC = () => {
         <div className="p-6 border-b border-[#D4AF37]/20 flex justify-between items-center bg-[#1a1a1a]">
           <h2 className="text-xl font-bold text-[#D4AF37]">Últimas Transações</h2>
           <button 
-            onClick={() => navigate('/transacoes')}
+            onClick={() => navigate('/transacoes', { state: { tab: 'historico' } })}
             className="text-sm text-[#E5E5E5]/70 hover:text-[#D4AF37] transition-colors uppercase tracking-wider font-semibold"
           >
             Ver todas

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Plus, Trash2, CheckCircle2, Loader2, Crown, User, Edit2, History } from 'lucide-react';
 import { transacaoService } from '../../services/TransacaoService';
 import { assinaturaService } from '../../services/AssinaturaService';
@@ -47,8 +48,11 @@ interface CartItem {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const Transacoes: React.FC = () => {
+  const location = useLocation();
   // Tabs
-  const [activeTab, setActiveTab] = useState<'nova' | 'historico'>('nova');
+  const [activeTab, setActiveTab] = useState<'nova' | 'historico'>(
+    (location.state as any)?.tab === 'historico' ? 'historico' : 'nova'
+  );
 
   // Form state
   const getFormatDataAtual = () => {

@@ -44,10 +44,12 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
   },
+  "include": ["src/**/*"],
   "exclude": [
     "node_modules",
     "dist",
     "prisma",
-    "prisma.config.ts"
+    "prisma.config.ts",
+    "scripts"
   ]
 }

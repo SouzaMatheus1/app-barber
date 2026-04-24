@@ -136,7 +136,7 @@ const Transacoes: React.FC = () => {
         if (URLClienteId) {
           setSelectedClientId(Number(URLClienteId));
           setClientName(URLClienteNome || 'Cliente Vinculado');
-          fetchAssinaturaRef(Number(URLClienteId)); // A reference to the fetched signature
+          fetchAssinatura(Number(URLClienteId));
         } else if (URLClienteNome) {
           setClientName(URLClienteNome);
         }
@@ -187,36 +187,7 @@ const Transacoes: React.FC = () => {
     }
   }, []);
 
-  // Use this internal function ref so useEffect can invoke it safely
-  const fetchAssinaturaRef = (id: number) => fetchAssinatura(id);
 
-  // ── Client search with debounce ──
-  const handleClientNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setClientName(value);
-    setSelectedClientId(null);
-    setAssinaturaAtiva(null);
-    setShowSuggestions(true);
-
-    if (searchTimeout.current) clearTimeout(searchTimeout.current);
-
-    if (value.length >= 2) {
-      setIsSearchingClient(true);
-      searchTimeout.current = setTimeout(async () => {
-        try {
-          const results = await clienteService.search(value);
-          setClientSuggestions(results);
-        } catch {
-          console.error('Erro na busca de clientes');
-        } finally {
-          setIsSearchingClient(false);
-        }
-      }, 400);
-    } else {
-      setClientSuggestions([]);
-      setIsSearchingClient(false);
-    }
-  };
 
   const selectClient = (cliente: any) => {
     setClientName(cliente.nome);

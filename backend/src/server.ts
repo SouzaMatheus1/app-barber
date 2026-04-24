@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import { routes } from './routes/routes';
 import { portalRoutes } from './routes/portal.routes';
+import { errorHandler } from './middleware/errorHandler';
 
 const app = express();
 
@@ -15,6 +16,9 @@ app.use(portalRoutes);
 app.get('/ping', (req, res) => {
   return res.json({ message: 'Servidor da Barbearia rodando perfeitamente! ✂️' });
 });
+
+// Middleware Global de Tratamento de Erros
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 8080;
 

@@ -1,11 +1,13 @@
 import { prisma } from '../database/prisma';
 import { ItemTransacao, statusAssinatura } from '@prisma/client';
+import { AppError } from '../utils/AppError';
 
 export class TransacaoService {
     async listAll(){
         const transacoes = await prisma.transacao.findMany({
             include: {
                 tipo: true,
+                metodoPagamento: true,
                 profissional: { select: { id: true, nome: true } },
                 cliente: { select: { id: true, nome: true } },
                 itens: {
@@ -20,14 +22,16 @@ export class TransacaoService {
         return transacoes;
     }
 
-    async create(data: {
+    async create(dataParams: {
         descricao?: string,
         tipoTransacaoId: number,
         profissionalId: number,
+        formaPagamentoId?: number,
+        data?: Date,
         clienteId?: number,
         itens: { itemId: number, quantidade: number, usouCreditoAssinatura?: boolean } []
     }){
-        const { descricao, tipoTransacaoId, profissionalId, clienteId, itens } = data;
+        const { descricao, tipoTransacaoId, profissionalId, clienteId, itens, formaPagamentoId } = dataParams;
 
         const itensId = itens.map(item => item.itemId);
 
@@ -36,7 +40,7 @@ export class TransacaoService {
         });
 
         if (itens.length !== itensBd.length)
-            throw new Error("Um ou mais itens não estão cadastrados no catálogo.");
+            throw new AppError("Um ou mais itens não estão cadastrados no catálogo.", 400);
 
         let totalVenda = 0;
         let requiresCredits = false;
@@ -63,17 +67,17 @@ export class TransacaoService {
             if (usouCredito) {
                requiresCredits = true;
                if (!assinaturaAtiva) {
-                   throw new Error("O cliente marcou o uso de crédito mas não possui assinatura ativa no momento.");
+                   throw new AppError("O cliente marcou o uso de crédito mas não possui assinatura ativa no momento.", 400);
                }
                
                const creditoEncontrado = assinaturaAtiva.creditos.find(c => c.itemId === itemRegistrado.itemId);
                
                if (!creditoEncontrado) {
-                   throw new Error(`O plano do cliente não inclui o serviço: ${itemSalvo?.nome}`);
+                   throw new AppError(`O plano do cliente não inclui o serviço: ${itemSalvo?.nome}`, 400);
                }
 
                if (creditoEncontrado.quantidadeRestante < itemRegistrado.quantidade) {
-                   throw new Error(`Saldo insuficiente para o serviço: ${itemSalvo?.nome}. Restante: ${creditoEncontrado.quantidadeRestante}`);
+                   throw new AppError(`Saldo insuficiente para o serviço: ${itemSalvo?.nome}. Restante: ${creditoEncontrado.quantidadeRestante}`, 400);
                }
 
                // Registrar para atualização posterior (dentro da transaction)
@@ -109,14 +113,22 @@ export class TransacaoService {
             }
         });
 
+        /**
+         * @function Execução do Fluxo Contábil (Transaction)
+         * - Esta transação garante integridade (ACID). Se falhar durante a criação, o saldo do cliente não é retirado de forma fantasma.
+         * - Se existirem créditos para serem descontados, atualizamos a entidade 'CreditoAssinatura' para não permitir dupla redução do saldo limitando o total para os próximos pedidos.
+         * - Utilizamos valores proporcionais para o item quando `usouCredito` for preenchido a fim de estipularmos no Demonstrativo Financeiro (Caixa) que o serviço teve um custo fixado da mensalidade embutido, em vez de ser estritamente 'R$ 0.00'.
+         */
         const transacao = await prisma.$transaction(async (tx) => {
             const trx = await tx.transacao.create({
                 data: {
                     valorTotal: totalVenda,
                     descricao,
+                    data: dataParams.data ? new Date(dataParams.data) : new Date(),
                     tipo: { connect: { id: tipoTransacaoId } },
                     profissional: { connect: { id: profissionalId } },
                     ...(clienteId && { cliente: { connect: { id: clienteId } } }),
+                    ...(formaPagamentoId && { metodoPagamento: { connect: { id: formaPagamentoId } } }),
                     itens: {
                         create: itensSelecionados
                     }
@@ -137,29 +149,32 @@ export class TransacaoService {
         return transacao;
     }
 
-    async edit(id: number, data: {
+    async edit(id: number, dataParams: {
         descricao?: string,
-        valorTotal: number,
-        tipoTransacaoId: number,
-        profissionalId: number,
+        valorTotal?: number,
+        tipoTransacaoId?: number,
+        profissionalId?: number,
+        formaPagamentoId?: number,
         clienteId?: number,
-        itens: { itemId: number, quantidade: number, precoUnitario: number } []
+        data?: Date
     }){
         const transacao = await prisma.transacao.findUnique({
             where: { id }
         });
 
         if(!transacao)
-            throw new Error('Registro não encontrado');
+            throw new AppError('Registro não encontrado', 404);
 
         const result = await prisma.transacao.update({
             where: { id },
             data: {
-                descricao: data.descricao,
-                valorTotal: data.valorTotal,
-                tipoTransacaoId: data.tipoTransacaoId,
-                profissionalId: data.profissionalId,
-                clienteId: data.clienteId
+                ...(dataParams.descricao && { descricao: dataParams.descricao }),
+                ...(dataParams.valorTotal !== undefined && { valorTotal: dataParams.valorTotal }),
+                ...(dataParams.tipoTransacaoId && { tipoTransacaoId: dataParams.tipoTransacaoId }),
+                ...(dataParams.profissionalId && { profissionalId: dataParams.profissionalId }),
+                ...(dataParams.clienteId && { clienteId: dataParams.clienteId }),
+                ...(dataParams.formaPagamentoId && { formaPagamentoId: dataParams.formaPagamentoId }),
+                ...(dataParams.data && { data: new Date(dataParams.data) })
             },
             select: {
                 descricao: true,
@@ -179,7 +194,7 @@ export class TransacaoService {
         });
 
         if (!transacao)
-            throw new Error('Transação não encontrada');
+            throw new AppError('Transação não encontrada', 404);
 
         await prisma.$transaction([
             prisma.itemTransacao.deleteMany({ where: { transacaoId: id } }),

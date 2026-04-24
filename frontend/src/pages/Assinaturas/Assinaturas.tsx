@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Crown, Package, Users, Plus, Edit2, Trash2, Loader2, Save, BarChart3, TrendingUp } from 'lucide-react';
 import { assinaturaService } from '../../services/AssinaturaService';
 import { itemCatalogoService } from '../../services/ItemCatalogoService';
+import { transacaoService } from '../../services/TransacaoService';
 
 const Assinaturas: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'planos' | 'assinantes' | 'relatorios'>('planos');
@@ -18,6 +19,10 @@ const Assinaturas: React.FC = () => {
   const [itensPlanoSelected, setItensPlanoSelected] = useState<{ itemId: number, quantidade: number }[]>([]);
   const [catalogo, setCatalogo] = useState<any[]>([]);
 
+  // Modal State
+  const [transacoes, setTransacoes] = useState<any[]>([]);
+  const [modalClienteOpen, setModalClienteOpen] = useState<{nome: string, clienteId: number} | null>(null);
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -28,8 +33,10 @@ const Assinaturas: React.FC = () => {
       const p = await assinaturaService.getPlanos();
       const a = await assinaturaService.getAssinaturas();
       const c = await itemCatalogoService.listar();
+      const t = await transacaoService.listar();
       setPlanos(p);
       setAssinaturas(a);
+      setTransacoes(t);
       setCatalogo(c.filter((i: any) => i.tipo?.descricao === 'SERVICO'));
     } catch (err) {
       console.error(err);
@@ -312,6 +319,7 @@ const Assinaturas: React.FC = () => {
                   <th className="pb-3 px-4">Plano</th>
                   <th className="pb-3 px-4 text-center">Status</th>
                   <th className="pb-3 px-4 text-right">Saldo de Créditos</th>
+                  <th className="pb-3 px-4 text-right">Ação</th>
                 </tr>
               </thead>
               <tbody className="text-sm font-medium">
@@ -334,6 +342,9 @@ const Assinaturas: React.FC = () => {
                           </div>
                         ))}
                       </div>
+                    </td>
+                    <td className="py-4 px-4 text-right">
+                       <button onClick={() => setModalClienteOpen({nome: ass.cliente?.nome, clienteId: ass.clienteId})} className="text-xs bg-[#D4AF37]/10 text-[#D4AF37] px-3 py-1.5 rounded hover:bg-[#D4AF37]/20 border border-[#D4AF37]/20 font-bold uppercase tracking-wider">Histórico</button>
                     </td>
                   </tr>
                 ))}
@@ -393,6 +404,38 @@ const Assinaturas: React.FC = () => {
               {planos.length === 0 && <p className="text-center text-[#E5E5E5]/50 py-4">Nenhum plano cadastrado.</p>}
             </div>
           </div>
+        </div>
+      )}
+      {modalClienteOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+           <div className="bg-[#1a1a1a] rounded-xl p-6 w-full max-w-2xl border border-[#D4AF37]/30 shadow-2xl relative max-h-[80vh] flex flex-col">
+              <h2 className="text-xl font-bold text-[#D4AF37] mb-2">{modalClienteOpen.nome}</h2>
+              <p className="text-xs text-[#E5E5E5]/50 uppercase tracking-widest mb-4 border-b border-[#D4AF37]/20 pb-4">Histórico de Transações</p>
+
+              <div className="overflow-y-auto flex-1 pr-2">
+                 {transacoes.filter(t => t.clienteId === modalClienteOpen.clienteId).length === 0 ? (
+                    <p className="text-center text-[#E5E5E5]/50 py-8">Nenhuma transação registrada para este assinante.</p>
+                 ) : (
+                    <div className="space-y-3">
+                       {transacoes.filter(t => t.clienteId === modalClienteOpen.clienteId).map(t => (
+                          <div key={t.id} className="bg-[#121212] p-4 rounded-lg border border-[#D4AF37]/10 flex justify-between items-center">
+                             <div>
+                                <p className="font-bold text-[#E5E5E5] text-sm">{new Date(t.data).toLocaleString('pt-BR')}</p>
+                                <p className="text-xs text-[#E5E5E5]/60 mt-1">{t.descricao || 'Atendimento'}</p>
+                             </div>
+                             <div className="text-right">
+                                <p className="text-[#D4AF37] font-bold">R$ {Number(t.valorTotal).toFixed(2)}</p>
+                             </div>
+                          </div>
+                       ))}
+                    </div>
+                 )}
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-[#D4AF37]/20 flex justify-end">
+                 <button onClick={() => setModalClienteOpen(null)} className="px-6 py-2 bg-[#121212] border border-[#D4AF37]/30 text-[#E5E5E5] rounded hover:bg-[#D4AF37]/10 hover:text-[#D4AF37] transition-colors uppercase text-xs font-bold font-sans">Fechar</button>
+              </div>
+           </div>
         </div>
       )}
     </div>

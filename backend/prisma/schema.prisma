@@ -45,6 +45,7 @@ model ItemCatalogo {
   nome               String
   preco              Decimal             @db.Decimal(10, 2)
   comissao           Decimal?            @db.Decimal(5, 2)
+  quantidade         Int                 @default(0)
   ativo              Boolean             @default(true)
   tipoItemId         Int
   duracaoMinutos     Int                 @default(30)
@@ -63,22 +64,31 @@ model TipoItem {
   itens     ItemCatalogo[]
 }
 
+model MetodoPagamento {
+  id         Int         @id @default(autoincrement())
+  descricao  String      @unique
+  transacoes Transacao[]
+}
+
 model Transacao {
-  id              Int             @id @default(autoincrement())
-  descricao       String?
-  valorTotal      Decimal         @db.Decimal(10, 2)
-  data            DateTime        @default(now())
-  profissionalId  Int
-  clienteId       Int?
-  tipoTransacaoId Int
-  itens           ItemTransacao[]
-  cliente         Cliente?        @relation(fields: [clienteId], references: [id])
-  profissional    Profissional    @relation(fields: [profissionalId], references: [id])
-  tipo            TipoTransacao   @relation(fields: [tipoTransacaoId], references: [id])
+  id               Int              @id @default(autoincrement())
+  descricao        String?
+  valorTotal       Decimal          @db.Decimal(10, 2)
+  data             DateTime         @default(now())
+  profissionalId   Int
+  clienteId        Int?
+  tipoTransacaoId  Int
+  formaPagamentoId Int?
+  itens            ItemTransacao[]
+  cliente          Cliente?         @relation(fields: [clienteId], references: [id])
+  profissional     Profissional     @relation(fields: [profissionalId], references: [id])
+  tipo             TipoTransacao    @relation(fields: [tipoTransacaoId], references: [id])
+  metodoPagamento  MetodoPagamento? @relation(fields: [formaPagamentoId], references: [id])
 
   @@index([clienteId], map: "Transacao_clienteId_fkey")
   @@index([profissionalId], map: "Transacao_profissionalId_fkey")
   @@index([tipoTransacaoId], map: "Transacao_tipoTransacaoId_fkey")
+  @@index([formaPagamentoId], map: "Transacao_formaPagamentoId_fkey")
 }
 
 model TipoTransacao {

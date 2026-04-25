@@ -57,7 +57,7 @@ export function Comissoes() {
   if (loadingProfissionais) {
     return (
       <div className="flex justify-center items-center h-full min-h-[50vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-[#D4AF37]" />
+        <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)]" />
       </div>
     );
   }
@@ -65,26 +65,26 @@ export function Comissoes() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500 max-w-5xl mx-auto">
       <header>
-        <h1 className="text-3xl font-serif font-bold text-[#D4AF37]">Relatório de Comissões</h1>
-        <p className="text-[#E5E5E5]/60 mt-1">Gere extratos de repasses financeiros para os profissionais.</p>
+        <h1 className="text-3xl font-serif font-bold text-[var(--color-primary)]">Relatório de Comissões</h1>
+        <p className="text-[var(--color-text)]/60 mt-1">Gere extratos de repasses financeiros para os profissionais.</p>
       </header>
 
       {/* Bloco de Filtros */}
-      <form onSubmit={handleBuscar} className="bg-[#1a1a1a] rounded-xl border border-[#D4AF37]/20 p-6 md:p-8 shadow-lg space-y-6">
-        <h2 className="text-xl font-bold text-[#D4AF37] flex items-center gap-2 border-b border-[#D4AF37]/10 pb-3">
+      <form onSubmit={handleBuscar} className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-primary)]/20 p-6 md:p-8 shadow-lg space-y-6">
+        <h2 className="text-xl font-bold text-[var(--color-primary)] flex items-center gap-2 border-b border-[var(--color-primary)]/10 pb-3">
           <Calendar size={20} />
           Filtros de Período
         </h2>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-[#E5E5E5]/80 uppercase tracking-wider">Profissional</label>
+            <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase tracking-wider">Profissional</label>
             <div className="relative">
               <select
                 required
                 value={profissionalId}
                 onChange={e => setProfissionalId(e.target.value)}
-                className="w-full px-4 py-3 bg-[#121212] text-[#E5E5E5] rounded-lg border border-[#D4AF37]/20 focus:outline-none focus:border-[#D4AF37] transition-colors appearance-none cursor-pointer"
+                className="w-full px-4 py-3 bg-[var(--color-background)] text-[var(--color-text)] rounded-lg border border-[var(--color-primary)]/20 focus:outline-none focus:border-[var(--color-primary)] transition-colors appearance-none cursor-pointer"
               >
                 <option value="" disabled>Selecione um barbeiro</option>
                 <option value="0">Todos os profissionais</option>
@@ -92,33 +92,33 @@ export function Comissoes() {
                   <option key={p.id} value={p.id}>{p.nome}</option>
                 ))}
               </select>
-              <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-[#D4AF37]">
+              <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-[var(--color-primary)]">
                 <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
               </div>
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-[#E5E5E5]/80 uppercase tracking-wider">De:</label>
+            <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase tracking-wider">De:</label>
             <input
               type="date"
               required
               value={dataInicio}
               onChange={e => setDataInicio(e.target.value)}
               style={{ colorScheme: 'light' }}
-              className="w-full px-4 py-3 bg-[#121212] text-[#E5E5E5] rounded-lg border border-[#D4AF37]/20 focus:outline-none focus:border-[#D4AF37]"
+              className="w-full px-4 py-3 bg-[var(--color-background)] text-[var(--color-text)] rounded-lg border border-[var(--color-primary)]/20 focus:outline-none focus:border-[var(--color-primary)]"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-[#E5E5E5]/80 uppercase tracking-wider">Até:</label>
+            <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase tracking-wider">Até:</label>
             <input
               type="date"
               required
               value={dataFim}
               onChange={e => setDataFim(e.target.value)}
               style={{ colorScheme: 'light' }}
-              className="w-full px-4 py-3 bg-[#121212] text-[#E5E5E5] rounded-lg border border-[#D4AF37]/20 focus:outline-none focus:border-[#D4AF37]"
+              className="w-full px-4 py-3 bg-[var(--color-background)] text-[var(--color-text)] rounded-lg border border-[var(--color-primary)]/20 focus:outline-none focus:border-[var(--color-primary)]"
             />
           </div>
         </div>
@@ -127,7 +127,7 @@ export function Comissoes() {
           <button 
             type="submit" 
             disabled={loadingRelatorio}
-            className="px-8 py-3 bg-[#D4AF37] text-[#121212] font-bold rounded-lg uppercase tracking-wider hover:bg-[#E5C158] transition-colors text-sm disabled:opacity-50 flex items-center gap-2 w-full md:w-auto justify-center"
+            className="px-8 py-3 bg-[var(--color-primary)] text-[var(--color-background)] font-bold rounded-lg uppercase tracking-wider hover:bg-[var(--color-secondary)] transition-colors text-sm disabled:opacity-50 flex items-center gap-2 w-full md:w-auto justify-center"
           >
             {loadingRelatorio ? <Loader2 size={16} className="animate-spin" /> : 'Gerar Relatório'}
           </button>
@@ -137,63 +137,63 @@ export function Comissoes() {
       {/* Resultados do Relatório */}
       {relatorio && (
         <div className="animate-in slide-in-from-bottom flex flex-col gap-6">
-          <div className="bg-[#D4AF37]/10 border border-[#D4AF37]/30 rounded-xl p-6 shadow-[0_0_20px_rgba(212,175,55,0.05)] text-center">
-             <h3 className="text-[#D4AF37] font-semibold text-lg">{relatorio.profissional}</h3>
-             <p className="text-[#E5E5E5]/60 text-sm">Resumo da performance no período fornecido</p>
+          <div className="bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/30 rounded-xl p-6 shadow-[0_0_20px_rgba(212,175,55,0.05)] text-center">
+             <h3 className="text-[var(--color-primary)] font-semibold text-lg">{relatorio.profissional}</h3>
+             <p className="text-[var(--color-text)]/60 text-sm">Resumo da performance no período fornecido</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-[#1a1a1a] rounded-xl p-6 border-l-4 border-[#D4AF37] shadow-lg relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-4 opacity-10 text-[#D4AF37]">
+            <div className="bg-[var(--color-surface)] rounded-xl p-6 border-l-4 border-[var(--color-primary)] shadow-lg relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-4 opacity-10 text-[var(--color-primary)]">
                 <DollarSign size={80} />
               </div>
-              <h3 className="text-[#E5E5E5]/70 text-sm font-medium uppercase tracking-wider mb-2">Total Vendido</h3>
-              <p className="text-4xl font-bold text-[#E5E5E5]">
+              <h3 className="text-[var(--color-text)]/70 text-sm font-medium uppercase tracking-wider mb-2">Total Vendido</h3>
+              <p className="text-4xl font-bold text-[var(--color-text)]">
                 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(relatorio.totalMovimentado)}
               </p>
             </div>
 
-            <div className="bg-[#121212] rounded-xl p-6 border-l-4 border-emerald-500 shadow-lg relative overflow-hidden group">
+            <div className="bg-[var(--color-background)] rounded-xl p-6 border-l-4 border-emerald-500 shadow-lg relative overflow-hidden group">
               <div className="absolute top-0 right-0 p-4 opacity-10 text-emerald-500">
                 <WalletCards size={80} />
               </div>
-              <h3 className="text-[#E5E5E5]/70 text-sm font-medium uppercase tracking-wider mb-2">Comissão Agregada (A Receber)</h3>
+              <h3 className="text-[var(--color-text)]/70 text-sm font-medium uppercase tracking-wider mb-2">Comissão Agregada (A Receber)</h3>
               <p className="text-4xl font-bold text-emerald-400">
                 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(relatorio.totalComissao)}
               </p>
             </div>
           </div>
 
-          <div className="bg-[#1a1a1a] rounded-xl border border-[#D4AF37]/20 overflow-hidden shadow-lg mt-8">
-            <div className="p-6 border-b border-[#D4AF37]/20 flex justify-between items-center bg-[#1a1a1a]">
-              <h2 className="text-xl font-bold text-[#D4AF37]">Descrição das Vendas e Serviços</h2>
+          <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-primary)]/20 overflow-hidden shadow-lg mt-8">
+            <div className="p-6 border-b border-[var(--color-primary)]/20 flex justify-between items-center bg-[var(--color-surface)]">
+              <h2 className="text-xl font-bold text-[var(--color-primary)]">Descrição das Vendas e Serviços</h2>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-[#121212]">
-                    <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Profissional</th>
-                    <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Cliente</th>
-                    <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Serviço/Produto</th>
-                    <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Data/Hora</th>
-                    <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Volume Venda</th>
-                    <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Recebido (Caixa)</th>
-                    <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider text-right">Comissão R$</th>
+                  <tr className="bg-[var(--color-background)]">
+                    <th className="py-4 px-6 text-[var(--color-text)]/70 font-semibold text-sm uppercase tracking-wider">Profissional</th>
+                    <th className="py-4 px-6 text-[var(--color-text)]/70 font-semibold text-sm uppercase tracking-wider">Cliente</th>
+                    <th className="py-4 px-6 text-[var(--color-text)]/70 font-semibold text-sm uppercase tracking-wider">Serviço/Produto</th>
+                    <th className="py-4 px-6 text-[var(--color-text)]/70 font-semibold text-sm uppercase tracking-wider">Data/Hora</th>
+                    <th className="py-4 px-6 text-[var(--color-text)]/70 font-semibold text-sm uppercase tracking-wider">Volume Venda</th>
+                    <th className="py-4 px-6 text-[var(--color-text)]/70 font-semibold text-sm uppercase tracking-wider">Recebido (Caixa)</th>
+                    <th className="py-4 px-6 text-[var(--color-text)]/70 font-semibold text-sm uppercase tracking-wider text-right">Comissão R$</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#D4AF37]/10">
+                <tbody className="divide-y divide-[var(--color-primary)]/10">
                   {relatorio.transacoes && relatorio.transacoes.map((tx: any) => (
-                    <tr key={tx.id} className="hover:bg-[#D4AF37]/5 transition-colors group">
-                      <td className="py-4 px-6 text-[#D4AF37] font-bold text-xs uppercase tracking-widest">{tx.profissional}</td>
-                      <td className="py-4 px-6 text-[#E5E5E5] font-medium">{tx.cliente}</td>
-                      <td className="py-4 px-6 text-[#E5E5E5]/80 max-w-[400px] whitespace-normal leading-relaxed">{tx.servicos}</td>
-                      <td className="py-4 px-6 text-[#E5E5E5]/60 text-sm">
+                    <tr key={tx.id} className="hover:bg-[var(--color-primary)]/5 transition-colors group">
+                      <td className="py-4 px-6 text-[var(--color-primary)] font-bold text-xs uppercase tracking-widest">{tx.profissional}</td>
+                      <td className="py-4 px-6 text-[var(--color-text)] font-medium">{tx.cliente}</td>
+                      <td className="py-4 px-6 text-[var(--color-text)]/80 max-w-[400px] whitespace-normal leading-relaxed">{tx.servicos}</td>
+                      <td className="py-4 px-6 text-[var(--color-text)]/60 text-sm">
                         {new Date(tx.dataHora).toLocaleTimeString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </td>
-                      <td className="py-4 px-6 text-[#E5E5E5]/80 font-medium whitespace-nowrap" title={String(tx.valorTotalVendaReal)}>
+                      <td className="py-4 px-6 text-[var(--color-text)]/80 font-medium whitespace-nowrap" title={String(tx.valorTotalVendaReal)}>
                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(tx.valorTotalVendaReal)}
                       </td>
-                      <td className="py-4 px-6 text-[#E5E5E5]/40 text-xs italic whitespace-nowrap">
+                      <td className="py-4 px-6 text-[var(--color-text)]/40 text-xs italic whitespace-nowrap">
                         {tx.valorRecebidoCaixa > 0 
                           ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(tx.valorRecebidoCaixa)
                           : 'Plano (R$ 0,00)'}
@@ -205,7 +205,7 @@ export function Comissoes() {
                   ))}
                   {(!relatorio.transacoes || relatorio.transacoes.length === 0) && (
                     <tr>
-                      <td colSpan={4} className="py-8 text-center text-[#E5E5E5]/50">Nenhuma transação encontrada no período.</td>
+                      <td colSpan={4} className="py-8 text-center text-[var(--color-text)]/50">Nenhuma transação encontrada no período.</td>
                     </tr>
                   )}
                 </tbody>

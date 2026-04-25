@@ -61,7 +61,7 @@ const Dashboard: React.FC = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-full min-h-[50vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-[#D4AF37]" />
+        <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)]" />
       </div>
     )
   }
@@ -69,7 +69,7 @@ const Dashboard: React.FC = () => {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <header>
-        <h1 className="text-3xl font-serif font-bold text-[#D4AF37]">{ user?.nomeFantasia || 'Seja bem-vindo' }</h1>
+        <h1 className="text-3xl font-serif font-bold text-[var(--color-primary)]">{ user?.nomeFantasia || 'Seja bem-vindo' }</h1>
         <p className="text-[#000000]/60 mt-1">Resumo das atividades métricas de hoje.</p>
       </header>
 
@@ -78,32 +78,32 @@ const Dashboard: React.FC = () => {
         {metrics.map((metric) => (
           <div
             key={metric.id}
-            className="bg-[#1a1a1a] rounded-xl p-6 border-l-4 border-[#D4AF37] border-y border-r border-y-[#D4AF37]/10 border-r-[#D4AF37]/10 shadow-lg relative overflow-hidden group hover:border-y-[#D4AF37]/30 hover:border-r-[#D4AF37]/30 transition-colors"
+            className="bg-[var(--color-surface)] rounded-xl p-6 border-l-4 border-[var(--color-primary)] border-y border-r border-y-[var(--color-primary)]/10 border-r-[var(--color-primary)]/10 shadow-lg relative overflow-hidden group hover:border-y-[var(--color-primary)]/30 hover:border-r-[var(--color-primary)]/30 transition-colors"
           >
             {/* Efeito Glow subtil */}
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-[#D4AF37]">
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-[var(--color-primary)]">
               {metric.icon}
             </div>
 
-            <div className="relative z-10 w-12 h-12 bg-[#D4AF37]/10 rounded-lg flex items-center justify-center text-[#D4AF37] mb-4">
+            <div className="relative z-10 w-12 h-12 bg-[var(--color-primary)]/10 rounded-lg flex items-center justify-center text-[var(--color-primary)] mb-4">
               {metric.icon}
             </div>
-            <h3 className="text-[#E5E5E5]/70 text-sm font-medium uppercase tracking-wider mb-1">{metric.title}</h3>
+            <h3 className="text-[var(--color-text)]/70 text-sm font-medium uppercase tracking-wider mb-1">{metric.title}</h3>
             <div className="flex items-end gap-3">
-              <p className="text-3xl font-bold text-[#E5E5E5]">{metric.value}</p>
-              <span className="text-[#D4AF37] text-sm font-medium mb-1">{metric.trend}</span>
+              <p className="text-3xl font-bold text-[var(--color-text)]">{metric.value}</p>
+              <span className="text-[var(--color-primary)] text-sm font-medium mb-1">{metric.trend}</span>
             </div>
           </div>
         ))}
       </div>
 
       {/* Recents Table */}
-      <div className="bg-[#1a1a1a] rounded-xl border border-[#D4AF37]/20 overflow-hidden shadow-lg">
-        <div className="p-6 border-b border-[#D4AF37]/20 flex justify-between items-center bg-[#1a1a1a]">
-          <h2 className="text-xl font-bold text-[#D4AF37]">Últimas Transações</h2>
+      <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-primary)]/20 overflow-hidden shadow-lg">
+        <div className="p-6 border-b border-[var(--color-primary)]/20 flex justify-between items-center bg-[var(--color-surface)]">
+          <h2 className="text-xl font-bold text-[var(--color-primary)]">Últimas Transações</h2>
           <button
             onClick={() => navigate('/transacoes', { state: { tab: 'historico' } })}
-            className="text-sm text-[#E5E5E5]/70 hover:text-[#D4AF37] transition-colors uppercase tracking-wider font-semibold"
+            className="text-sm text-[var(--color-text)]/70 hover:text-[var(--color-primary)] transition-colors uppercase tracking-wider font-semibold"
           >
             Ver todas
           </button>
@@ -111,26 +111,26 @@ const Dashboard: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-[#121212]">
-                <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Cliente</th>
-                <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Serviço/Produto</th>
-                <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Profissional</th>
-                <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Data/Hora</th>
-                <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider text-right">Valor</th>
+              <tr className="bg-[var(--color-background)]">
+                <th className="py-4 px-6 text-[var(--color-text)]/70 font-semibold text-sm uppercase tracking-wider">Cliente</th>
+                <th className="py-4 px-6 text-[var(--color-text)]/70 font-semibold text-sm uppercase tracking-wider">Serviço/Produto</th>
+                <th className="py-4 px-6 text-[var(--color-text)]/70 font-semibold text-sm uppercase tracking-wider">Profissional</th>
+                <th className="py-4 px-6 text-[var(--color-text)]/70 font-semibold text-sm uppercase tracking-wider">Data/Hora</th>
+                <th className="py-4 px-6 text-[var(--color-text)]/70 font-semibold text-sm uppercase tracking-wider text-right">Valor</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#D4AF37]/10">
+            <tbody className="divide-y divide-[var(--color-primary)]/10">
               {recentTransactions.map((tx) => (
-                <tr key={tx.id} className="hover:bg-[#D4AF37]/5 transition-colors group">
-                  <td className="py-4 px-6 text-[#E5E5E5] font-medium">{tx.client}</td>
-                  <td className="py-4 px-6 text-[#E5E5E5]/80 max-w-[200px] truncate" title={tx.service}>{tx.service}</td>
-                  <td className="py-4 px-6 text-[#E5E5E5]/80">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#121212] border border-[#D4AF37]/30 text-[#D4AF37]">
+                <tr key={tx.id} className="hover:bg-[var(--color-primary)]/5 transition-colors group">
+                  <td className="py-4 px-6 text-[var(--color-text)] font-medium">{tx.client}</td>
+                  <td className="py-4 px-6 text-[var(--color-text)]/80 max-w-[200px] truncate" title={tx.service}>{tx.service}</td>
+                  <td className="py-4 px-6 text-[var(--color-text)]/80">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[var(--color-background)] border border-[var(--color-primary)]/30 text-[var(--color-primary)]">
                       {tx.professional}
                     </span>
                   </td>
-                  <td className="py-4 px-6 text-[#E5E5E5]/60 text-sm">{tx.time}</td>
-                  <td className="py-4 px-6 text-[#D4AF37] font-bold text-right">{tx.value}</td>
+                  <td className="py-4 px-6 text-[var(--color-text)]/60 text-sm">{tx.time}</td>
+                  <td className="py-4 px-6 text-[var(--color-primary)] font-bold text-right">{tx.value}</td>
                 </tr>
               ))}
             </tbody>

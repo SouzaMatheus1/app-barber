@@ -38,14 +38,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
 
       {/* Sidebar */}
       <aside className={`
-        fixed inset-y-0 left-0 z-30 w-64 bg-[#1a1a1a] border-r border-[#D4AF37]/30 transform transition-transform duration-300 ease-in-out flex flex-col
+        fixed inset-y-0 left-0 z-30 w-64 bg-[var(--color-surface)] border-r border-[var(--color-primary)]/30 transform transition-transform duration-300 ease-in-out flex flex-col
         ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0 md:static'}
       `}>
-        <div className="flex items-center justify-between p-6 border-b border-[#D4AF37]/30">
+        <div className="flex items-center justify-between p-6 border-b border-[var(--color-primary)]/30">
           <div className="flex items-center gap-2">
-            <span className="text-2xl font-serif font-bold text-[#D4AF37] tracking-wider uppercase">{ user?.nomeFantasia || 'LambdaBarber' }</span>
+            <span className="text-2xl font-serif font-bold text-[var(--color-primary)] tracking-wider uppercase">{ user?.nomeFantasia || 'LambdaBarber' }</span>
           </div>
-          <button className="md:hidden text-[#E5E5E5]" onClick={() => setIsOpen(false)}>
+          <button className="md:hidden text-[var(--color-text)]" onClick={() => setIsOpen(false)}>
             <X size={24} />
           </button>
         </div>
@@ -58,8 +58,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
               className={({ isActive }) => `
                 flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200
                 ${isActive
-                  ? 'bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/30 shadow-[0_0_10px_rgba(212,175,55,0.1)]'
-                  : 'text-[#E5E5E5] hover:bg-[#121212] hover:text-[#D4AF37]'}
+                  ? 'bg-[var(--color-primary)]/10 text-[var(--color-primary)] border border-[var(--color-primary)]/30 shadow-[0_0_10px_rgba(212,175,55,0.1)]'
+                  : 'text-[var(--color-text)] hover:bg-[var(--color-background)] hover:text-[var(--color-primary)]'}
               `}
               onClick={() => setIsOpen(false)}
             >
@@ -69,10 +69,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
           ))}
         </nav>
 
-        <div className="p-4 border-t border-[#D4AF37]/30">
+        <div className="p-4 border-t border-[var(--color-primary)]/30">
           <button
             onClick={logout}
-            className="flex items-center w-full gap-3 px-4 py-3 text-[#E5E5E5] transition-colors rounded-lg hover:bg-red-500/10 hover:text-red-500 group border border-transparent hover:border-red-500/30"
+            className="flex items-center w-full gap-3 px-4 py-3 text-[var(--color-text)] transition-colors rounded-lg hover:bg-red-500/10 hover:text-red-500 group border border-transparent hover:border-red-500/30"
           >
             <LogOut size={20} className="group-hover:text-red-500 transition-colors" />
             <span className="font-medium">Sair</span>

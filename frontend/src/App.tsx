@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { PrivateRoute } from './components/PrivateRoute'
+import { useTheme } from './hooks/useTheme'
 
 import Login from './pages/Login/Login'
 import Dashboard from './pages/Dashboard/Dashboard'
@@ -13,6 +14,9 @@ import Assinaturas from './pages/Assinaturas/Assinaturas'
 import Layout from './components/Layout/Layout'
 
 export default function App() {
+  // Inicializa a injeção do tema dinâmico baseado no slug (URL)
+  useTheme();
+
   return (
     <AuthProvider>
       <BrowserRouter>

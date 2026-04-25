@@ -322,23 +322,23 @@ const Transacoes: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#D4AF37]/20 pb-4">
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[var(--color-primary)]/20 pb-4">
         <div>
-          <h1 className="text-3xl font-serif font-bold text-[#D4AF37]">Transações</h1>
-          <p className="text-[#E5E5E5]/60 mt-1">Registre ou visualize o histórico financeiro.</p>
+          <h1 className="text-3xl font-serif font-bold text-[var(--color-primary)]">Transações</h1>
+          <p className="text-[var(--color-text)]/60 mt-1">Registre ou visualize o histórico financeiro.</p>
         </div>
-        <div className="flex bg-[#1a1a1a] rounded-lg p-1 border border-[#D4AF37]/20">
+        <div className="flex bg-[var(--color-surface)] rounded-lg p-1 border border-[var(--color-primary)]/20">
           <button 
             type="button"
             onClick={() => setActiveTab('nova')}
-            className={`px-4 py-2 rounded-md font-bold text-sm tracking-wider uppercase transition-all duration-300 flex items-center gap-2 ${activeTab === 'nova' ? 'bg-[#D4AF37] text-[#121212]' : 'text-[#E5E5E5]/60 hover:text-[#D4AF37]'}`}
+            className={`px-4 py-2 rounded-md font-bold text-sm tracking-wider uppercase transition-all duration-300 flex items-center gap-2 ${activeTab === 'nova' ? 'bg-[var(--color-primary)] text-[var(--color-background)]' : 'text-[var(--color-text)]/60 hover:text-[var(--color-primary)]'}`}
           >
             <Plus size={16} /> Nova
           </button>
           <button 
             type="button"
             onClick={() => setActiveTab('historico')}
-            className={`px-4 py-2 rounded-md font-bold text-sm tracking-wider uppercase transition-all duration-300 flex items-center gap-2 ${activeTab === 'historico' ? 'bg-[#D4AF37] text-[#121212]' : 'text-[#E5E5E5]/60 hover:text-[#D4AF37]'}`}
+            className={`px-4 py-2 rounded-md font-bold text-sm tracking-wider uppercase transition-all duration-300 flex items-center gap-2 ${activeTab === 'historico' ? 'bg-[var(--color-primary)] text-[var(--color-background)]' : 'text-[var(--color-text)]/60 hover:text-[var(--color-primary)]'}`}
           >
             <History size={16} /> Histórico
           </button>
@@ -348,13 +348,13 @@ const Transacoes: React.FC = () => {
       {activeTab === 'nova' && (
         <form
           onSubmit={handleSubmit}
-          className="bg-[#1a1a1a] rounded-2xl border border-[#D4AF37]/20 shadow-lg p-6 md:p-8 space-y-8 relative overflow-hidden"
+          className="bg-[var(--color-surface)] rounded-2xl border border-[var(--color-primary)]/20 shadow-lg p-6 md:p-8 space-y-8 relative overflow-hidden"
         >
           {success && (
-            <div className="absolute inset-0 bg-[#121212]/90 backdrop-blur-sm z-20 flex flex-col items-center justify-center animate-in fade-in zoom-in duration-300">
-              <CheckCircle2 size={64} className="text-[#D4AF37] mb-4" />
-              <h2 className="text-2xl font-bold text-[#E5E5E5]">Transação Registrada!</h2>
-              <p className="text-[#D4AF37] mt-2 text-lg">Sucesso na operação.</p>
+            <div className="absolute inset-0 bg-[var(--color-background)]/90 backdrop-blur-sm z-20 flex flex-col items-center justify-center animate-in fade-in zoom-in duration-300">
+              <CheckCircle2 size={64} className="text-[var(--color-primary)] mb-4" />
+              <h2 className="text-2xl font-bold text-[var(--color-text)]">Transação Registrada!</h2>
+              <p className="text-[var(--color-primary)] mt-2 text-lg">Sucesso na operação.</p>
             </div>
           )}
 
@@ -362,7 +362,7 @@ const Transacoes: React.FC = () => {
 
             {/* Cliente */}
             <div className="space-y-2 z-10 relative">
-              <label className="text-xs font-semibold text-[#E5E5E5]/80 uppercase tracking-wider">
+              <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase tracking-wider">
                 Nome do Cliente
               </label>
               <div className="relative">
@@ -377,23 +377,23 @@ const Transacoes: React.FC = () => {
                   }}
                   onFocus={() => setShowSuggestions(true)}
                   onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                  className={`w-full px-4 py-3 bg-[#121212] rounded-lg border border-[#D4AF37]/30 outline-none transition-colors ${selectedClientId ? 'text-[#D4AF37] font-bold' : 'text-[#E5E5E5]'}`}
+                  className={`w-full px-4 py-3 bg-[var(--color-background)] rounded-lg border border-[var(--color-primary)]/30 outline-none transition-colors ${selectedClientId ? 'text-[var(--color-primary)] font-bold' : 'text-[var(--color-text)]'}`}
                   placeholder="Ex: João Silva ou Avulso"
                   autoComplete="off"
                 />
                 
                 {showSuggestions && (
-                  <div className="absolute z-50 w-full bg-[#1a1a1a] border border-t-0 border-[#D4AF37]/30 rounded-b-lg max-h-48 overflow-y-auto shadow-2xl">
+                  <div className="absolute z-50 w-full bg-[var(--color-surface)] border border-t-0 border-[var(--color-primary)]/30 rounded-b-lg max-h-48 overflow-y-auto shadow-2xl">
                     {allClientes.filter(c => c.nome.toLowerCase().includes(clientName.toLowerCase())).map(cliente => (
                       <div
                         key={cliente.id}
                         onClick={() => selectClient(cliente)}
-                        className="px-4 py-3 cursor-pointer hover:bg-[#D4AF37]/10 text-[#E5E5E5] border-b border-[#D4AF37]/10 last:border-0 transition-colors flex items-center gap-3"
+                        className="px-4 py-3 cursor-pointer hover:bg-[var(--color-primary)]/10 text-[var(--color-text)] border-b border-[var(--color-primary)]/10 last:border-0 transition-colors flex items-center gap-3"
                       >
-                        <User size={16} className="text-[#D4AF37]" />
+                        <User size={16} className="text-[var(--color-primary)]" />
                         <div>
                           <div className="font-bold text-sm tracking-wide">{cliente.nome}</div>
-                          <div className="text-[10px] text-[#E5E5E5]/40 mt-0.5">{cliente.telefone || 'Sem telefone'}</div>
+                          <div className="text-[10px] text-[var(--color-text)]/40 mt-0.5">{cliente.telefone || 'Sem telefone'}</div>
                         </div>
                       </div>
                     ))}
@@ -402,7 +402,7 @@ const Transacoes: React.FC = () => {
               </div>
 
               {loadingAssinatura && (
-                <div className="flex items-center gap-2 mt-2 text-[#D4AF37]/60 text-xs">
+                <div className="flex items-center gap-2 mt-2 text-[var(--color-primary)]/60 text-xs">
                   <Loader2 size={12} className="animate-spin" /> Verificando assinatura...
                 </div>
               )}
@@ -410,18 +410,18 @@ const Transacoes: React.FC = () => {
                 <div className="mt-2 animate-in fade-in slide-in-from-top-1 duration-300">
                   {assinaturaAtiva.status === 'ATIVA' ? (
                     <>
-                      <div className="inline-flex items-center gap-2 bg-[#D4AF37] text-[#121212] text-[11px] font-black uppercase tracking-widest px-3 py-1.5 rounded-md shadow-[0_0_12px_rgba(212,175,55,0.4)]">
+                      <div className="inline-flex items-center gap-2 bg-[var(--color-primary)] text-[var(--color-background)] text-[11px] font-black uppercase tracking-widest px-3 py-1.5 rounded-md shadow-[0_0_12px_rgba(212,175,55,0.4)]">
                         <Crown size={13} />
                         Assinante Ativo — {assinaturaAtiva.plano.nome}
                       </div>
                       <div className="flex flex-wrap gap-2 mt-2">
                          {assinaturaAtiva.creditos?.map(cred => (
-                           <span key={cred.id} className={`flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded border ${cred.quantidadeRestante > 0 ? 'text-[#D4AF37] bg-[#D4AF37]/10 border-[#D4AF37]/20' : 'text-red-500/50 bg-red-500/5 border-red-500/10'}`}>
+                           <span key={cred.id} className={`flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded border ${cred.quantidadeRestante > 0 ? 'text-[var(--color-primary)] bg-[var(--color-primary)]/10 border-[var(--color-primary)]/20' : 'text-red-500/50 bg-red-500/5 border-red-500/10'}`}>
                              {cred.item?.nome}: {cred.quantidadeRestante}
                            </span>
                          ))}
                          {(!assinaturaAtiva.creditos || assinaturaAtiva.creditos.length === 0) && (
-                           <span className="text-[11px] text-[#E5E5E5]/40 italic">Sem créditos associados a este plano.</span>
+                           <span className="text-[11px] text-[var(--color-text)]/40 italic">Sem créditos associados a este plano.</span>
                          )}
                       </div>
                     </>
@@ -436,13 +436,13 @@ const Transacoes: React.FC = () => {
 
             {/* Profissional */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-[#E5E5E5]/80 uppercase tracking-wider">
+              <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase tracking-wider">
                 Profissional
               </label>
               <select
                 value={professional}
                 onChange={e => setProfessional(e.target.value)}
-                className="w-full px-4 py-3 bg-[#121212] text-[#E5E5E5] rounded-lg border border-[#D4AF37]/20 focus:border-[#D4AF37] outline-none"
+                className="w-full px-4 py-3 bg-[var(--color-background)] text-[var(--color-text)] rounded-lg border border-[var(--color-primary)]/20 focus:border-[var(--color-primary)] outline-none"
                 required
               >
                 <option value="" disabled>Selecione o barbeiro</option>
@@ -453,13 +453,13 @@ const Transacoes: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-[#E5E5E5]/80 uppercase tracking-wider">
+              <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase tracking-wider">
                 Forma de Pagamento
               </label>
               <select
                 value={formaPagamentoId}
                 onChange={e => setFormaPagamentoId(Number(e.target.value))}
-                className="w-full px-4 py-3 bg-[#121212] text-[#E5E5E5] rounded-lg border border-[#D4AF37]/20 focus:border-[#D4AF37] outline-none"
+                className="w-full px-4 py-3 bg-[var(--color-background)] text-[var(--color-text)] rounded-lg border border-[var(--color-primary)]/20 focus:border-[var(--color-primary)] outline-none"
               >
                 <option value={1}>PIX</option>
                 <option value={2}>Cartão de Crédito</option>
@@ -469,7 +469,7 @@ const Transacoes: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-[#E5E5E5]/80 uppercase tracking-wider">
+              <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase tracking-wider">
                 Data
               </label>
               <input
@@ -477,13 +477,13 @@ const Transacoes: React.FC = () => {
                 value={dataPersonalizada}
                 style={{ colorScheme: 'light' }}
                 onChange={e => setDataPersonalizada(e.target.value)}
-                className="w-full px-4 py-3 bg-[#121212] text-[#E5E5E5] rounded-lg border border-[#D4AF37]/20 focus:border-[#D4AF37] outline-none"
+                className="w-full px-4 py-3 bg-[var(--color-background)] text-[var(--color-text)] rounded-lg border border-[var(--color-primary)]/20 focus:border-[var(--color-primary)] outline-none"
               />
             </div>
 
             {/* Descrição */}
             <div className="space-y-2 col-span-1 md:col-span-2">
-              <label className="text-xs font-semibold text-[#E5E5E5]/80 uppercase tracking-wider">
+              <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase tracking-wider">
                 Descrição
               </label>
               <input
@@ -493,7 +493,7 @@ const Transacoes: React.FC = () => {
                   setDescricao(e.target.value);
                   setDescricaoDirty(true);
                 }}
-                className="w-full px-4 py-3 bg-[#121212] text-[#E5E5E5] rounded-lg border border-[#D4AF37]/20 focus:border-[#D4AF37] outline-none"
+                className="w-full px-4 py-3 bg-[var(--color-background)] text-[var(--color-text)] rounded-lg border border-[var(--color-primary)]/20 focus:border-[var(--color-primary)] outline-none"
                 placeholder="Ex: Atendimento: João Silva"
               />
             </div>
@@ -501,12 +501,12 @@ const Transacoes: React.FC = () => {
           </div>
 
           <div className="space-y-4">
-            <div className="flex justify-between items-end border-b border-[#D4AF37]/20 pb-2">
-              <h3 className="text-lg font-bold text-[#D4AF37]">Itens</h3>
+            <div className="flex justify-between items-end border-b border-[var(--color-primary)]/20 pb-2">
+              <h3 className="text-lg font-bold text-[var(--color-primary)]">Itens</h3>
               <button
                 type="button"
                 onClick={addItem}
-                className="text-xs flex items-center gap-1 text-[#E5E5E5] bg-[#121212] px-3 py-1.5 rounded-md border border-[#D4AF37]/30 hover:bg-[#D4AF37]/10 hover:text-[#D4AF37] transition-colors uppercase font-medium tracking-wider"
+                className="text-xs flex items-center gap-1 text-[var(--color-text)] bg-[var(--color-background)] px-3 py-1.5 rounded-md border border-[var(--color-primary)]/30 hover:bg-[var(--color-primary)]/10 hover:text-[var(--color-primary)] transition-colors uppercase font-medium tracking-wider"
               >
                 <Plus size={14} /> Adicionar Item
               </button>
@@ -518,16 +518,16 @@ const Transacoes: React.FC = () => {
                 const displayPrice = item.usouCredito ? getValorProporcional() : item.originalPrice;
 
                 return (
-                  <div key={item.uuid} className="flex flex-col md:flex-row gap-4 bg-[#121212] p-4 rounded-lg border border-[#D4AF37]/10">
+                  <div key={item.uuid} className="flex flex-col md:flex-row gap-4 bg-[var(--color-background)] p-4 rounded-lg border border-[var(--color-primary)]/10">
                     <div className="flex-1">
                       <select
                         value={item.name}
                         onChange={e => handleItemSelect(item.uuid, e.target.value)}
-                        className="w-full bg-transparent appearance-none text-[#E5E5E5] border-b border-[#D4AF37]/30 focus:outline-none focus:border-[#D4AF37] px-2 py-1"
+                        className="w-full bg-transparent appearance-none text-[var(--color-text)] border-b border-[var(--color-primary)]/30 focus:outline-none focus:border-[var(--color-primary)] px-2 py-1"
                         required
                       >
-                        <option value="" disabled className="bg-[#1a1a1a]">Selecione...</option>
-                        {catalog.map(c => <option key={c.id} value={c.name} className="bg-[#1a1a1a]">{c.name}</option>)}
+                        <option value="" disabled className="bg-[var(--color-surface)]">Selecione...</option>
+                        {catalog.map(c => <option key={c.id} value={c.name} className="bg-[var(--color-surface)]">{c.name}</option>)}
                       </select>
                     </div>
 
@@ -535,31 +535,31 @@ const Transacoes: React.FC = () => {
                       <input
                         type="number" min="1" value={item.quantity}
                         onChange={e => handleQtyChange(item.uuid, Number(e.target.value))}
-                        className="w-full bg-transparent text-[#E5E5E5] border-b border-[#D4AF37]/30 focus:outline-none focus:border-[#D4AF37] px-2 py-1 text-center"
+                        className="w-full bg-transparent text-[var(--color-text)] border-b border-[var(--color-primary)]/30 focus:outline-none focus:border-[var(--color-primary)] px-2 py-1 text-center"
                         required
                       />
                     </div>
 
                     <div className="w-32">
                       <div className="relative">
-                        <span className="absolute left-1 top-1 text-[#E5E5E5]/50 text-sm">R$</span>
+                        <span className="absolute left-1 top-1 text-[var(--color-text)]/50 text-sm">R$</span>
                         <input
                           readOnly value={displayPrice.toFixed(2)}
-                          className={`w-full bg-transparent border-b border-[#D4AF37]/30 py-1 pl-8 font-bold ${item.usouCredito ? 'text-[#D4AF37]/80' : 'text-[#D4AF37]'}`}
+                          className={`w-full bg-transparent border-b border-[var(--color-primary)]/30 py-1 pl-8 font-bold ${item.usouCredito ? 'text-[var(--color-primary)]/80' : 'text-[var(--color-primary)]'}`}
                         />
                       </div>
                     </div>
 
                     {assinaturaAtiva && (
                       <div className="flex items-center">
-                        <label className={`flex gap-2 text-[11px] font-bold uppercase px-2 py-2 rounded-lg border cursor-pointer ${creditEnabled ? 'text-[#D4AF37] border-[#D4AF37]/30 hover:bg-[#D4AF37]/10' : 'opacity-50 pointer-events-none'}`}>
-                          <input type="checkbox" disabled={!creditEnabled} checked={item.usouCredito} onChange={e => handleCreditToggle(item.uuid, e.target.checked)} className="accent-[#D4AF37]" />
+                        <label className={`flex gap-2 text-[11px] font-bold uppercase px-2 py-2 rounded-lg border cursor-pointer ${creditEnabled ? 'text-[var(--color-primary)] border-[var(--color-primary)]/30 hover:bg-[var(--color-primary)]/10' : 'opacity-50 pointer-events-none'}`}>
+                          <input type="checkbox" disabled={!creditEnabled} checked={item.usouCredito} onChange={e => handleCreditToggle(item.uuid, e.target.checked)} className="accent-[var(--color-primary)]" />
                           {creditEnabled ? getCreditLabel(item) : 'Sem Crédito'}
                         </label>
                       </div>
                     )}
 
-                    <button type="button" onClick={() => removeItem(item.uuid)} disabled={cartItems.length === 1} className="p-2 text-[#E5E5E5]/40 hover:text-red-500">
+                    <button type="button" onClick={() => removeItem(item.uuid)} disabled={cartItems.length === 1} className="p-2 text-[var(--color-text)]/40 hover:text-red-500">
                       <Trash2 size={18} />
                     </button>
                   </div>
@@ -568,14 +568,14 @@ const Transacoes: React.FC = () => {
             </div>
           </div>
 
-          <div className="border-t border-[#D4AF37]/20 pt-6 flex flex-col justify-end items-end gap-6">
-            <div className="bg-[#121212] border border-[#D4AF37]/20 rounded-xl p-6 w-full md:w-80">
-              <div className="flex items-center justify-between text-[#D4AF37]">
+          <div className="border-t border-[var(--color-primary)]/20 pt-6 flex flex-col justify-end items-end gap-6">
+            <div className="bg-[var(--color-background)] border border-[var(--color-primary)]/20 rounded-xl p-6 w-full md:w-80">
+              <div className="flex items-center justify-between text-[var(--color-primary)]">
                 <span className="font-bold uppercase tracking-wider text-sm">Total a Pagar</span>
                 <span className="text-3xl font-black">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalAPagar)}</span>
               </div>
             </div>
-            <button type="submit" disabled={loading} className="px-10 py-4 bg-[#D4AF37] text-[#121212] font-bold rounded-lg uppercase tracking-wider hover:bg-[#E5C158] transition-all text-sm w-full md:w-auto">
+            <button type="submit" disabled={loading} className="px-10 py-4 bg-[var(--color-primary)] text-[var(--color-background)] font-bold rounded-lg uppercase tracking-wider hover:bg-[var(--color-secondary)] transition-all text-sm w-full md:w-auto">
               Finalizar Transação
             </button>
           </div>
@@ -584,27 +584,27 @@ const Transacoes: React.FC = () => {
 
       {activeTab === 'historico' && (
         <div className="space-y-4 animate-in slide-in-from-bottom-4">
-          <div className="flex flex-col sm:flex-row bg-[#1a1a1a] rounded-xl border border-[#D4AF37]/20 p-4 shadow-lg sm:items-center gap-4">
-            <h2 className="text-sm font-bold text-[#D4AF37] uppercase tracking-widest hidden md:block">Filtros:</h2>
+          <div className="flex flex-col sm:flex-row bg-[var(--color-surface)] rounded-xl border border-[var(--color-primary)]/20 p-4 shadow-lg sm:items-center gap-4">
+            <h2 className="text-sm font-bold text-[var(--color-primary)] uppercase tracking-widest hidden md:block">Filtros:</h2>
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-2">
-                <label className="text-xs font-semibold text-[#E5E5E5]/60 uppercase tracking-wider">Início:</label>
+                <label className="text-xs font-semibold text-[var(--color-text)]/60 uppercase tracking-wider">Início:</label>
                 <input 
                   type="date"
                   value={historyStartDate}
                   onChange={(e) => setHistoryStartDate(e.target.value)}
                   style={{ colorScheme: 'dark' }}
-                  className="bg-[#121212] text-[#E5E5E5] px-3 py-1.5 rounded-lg border border-[#D4AF37]/30 focus:border-[#D4AF37] outline-none text-sm cursor-pointer"
+                  className="bg-[var(--color-background)] text-[var(--color-text)] px-3 py-1.5 rounded-lg border border-[var(--color-primary)]/30 focus:border-[var(--color-primary)] outline-none text-sm cursor-pointer"
                 />
               </div>
               <div className="flex items-center gap-2">
-                <label className="text-xs font-semibold text-[#E5E5E5]/60 uppercase tracking-wider">Fim:</label>
+                <label className="text-xs font-semibold text-[var(--color-text)]/60 uppercase tracking-wider">Fim:</label>
                 <input 
                   type="date"
                   value={historyEndDate}
                   onChange={(e) => setHistoryEndDate(e.target.value)}
                   style={{ colorScheme: 'dark' }}
-                  className="bg-[#121212] text-[#E5E5E5] px-3 py-1.5 rounded-lg border border-[#D4AF37]/30 focus:border-[#D4AF37] outline-none text-sm cursor-pointer"
+                  className="bg-[var(--color-background)] text-[var(--color-text)] px-3 py-1.5 rounded-lg border border-[var(--color-primary)]/30 focus:border-[var(--color-primary)] outline-none text-sm cursor-pointer"
                 />
               </div>
               {(historyStartDate || historyEndDate) && (
@@ -613,39 +613,39 @@ const Transacoes: React.FC = () => {
                     setHistoryStartDate('');
                     setHistoryEndDate('');
                   }}
-                  className="text-[10px] bg-[#121212] border border-[#D4AF37]/30 text-[#D4AF37] px-2 py-1.5 rounded-md hover:bg-[#D4AF37]/10 transition-colors uppercase font-bold tracking-wider"
+                  className="text-[10px] bg-[var(--color-background)] border border-[var(--color-primary)]/30 text-[var(--color-primary)] px-2 py-1.5 rounded-md hover:bg-[var(--color-primary)]/10 transition-colors uppercase font-bold tracking-wider"
                 >
                   Limpar
                 </button>
               )}
             </div>
           </div>
-          <div className="bg-[#1a1a1a] rounded-xl border border-[#D4AF37]/20 overflow-hidden shadow-lg">
+          <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-primary)]/20 overflow-hidden shadow-lg">
             <div className="overflow-x-auto">
               <table className="w-full text-left">
               <thead>
-                <tr className="bg-[#121212]">
-                  <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Data</th>
-                  <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Descrição / Cliente</th>
-                  <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Pagamento</th>
-                  <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Valor</th>
-                  <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider text-right">Ações</th>
+                <tr className="bg-[var(--color-background)]">
+                  <th className="py-4 px-6 text-[var(--color-text)]/70 font-semibold text-sm uppercase tracking-wider">Data</th>
+                  <th className="py-4 px-6 text-[var(--color-text)]/70 font-semibold text-sm uppercase tracking-wider">Descrição / Cliente</th>
+                  <th className="py-4 px-6 text-[var(--color-text)]/70 font-semibold text-sm uppercase tracking-wider">Pagamento</th>
+                  <th className="py-4 px-6 text-[var(--color-text)]/70 font-semibold text-sm uppercase tracking-wider">Valor</th>
+                  <th className="py-4 px-6 text-[var(--color-text)]/70 font-semibold text-sm uppercase tracking-wider text-right">Ações</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#D4AF37]/10">
+              <tbody className="divide-y divide-[var(--color-primary)]/10">
                 {loadingHistory ? (
-                  <tr><td colSpan={5} className="py-8 text-center text-[#D4AF37]"><Loader2 className="animate-spin inline" /></td></tr>
+                  <tr><td colSpan={5} className="py-8 text-center text-[var(--color-primary)]"><Loader2 className="animate-spin inline" /></td></tr>
                 ) : filteredTransacoes.length === 0 ? (
-                  <tr><td colSpan={5} className="py-8 text-center text-[#E5E5E5]/50">Nenhuma transação encontrada.</td></tr>
+                  <tr><td colSpan={5} className="py-8 text-center text-[var(--color-text)]/50">Nenhuma transação encontrada.</td></tr>
                 ) : filteredTransacoes.map(t => (
-                  <tr key={t.id} className="hover:bg-[#D4AF37]/5">
-                    <td className="py-4 px-6 text-[#E5E5E5] font-medium">{new Date(t.data).toLocaleString('pt-BR')}</td>
-                    <td className="py-4 px-6 text-[#E5E5E5]/80">{t.descricao || 'Sem descrição'}</td>
-                    <td className="py-4 px-6 text-[#D4AF37] font-bold text-xs uppercase tracking-widest">{t.metodoPagamento?.descricao || '-'}</td>
-                    <td className="py-4 px-6 text-[#D4AF37] font-bold">R$ {Number(t.valorTotal).toFixed(2)}</td>
+                  <tr key={t.id} className="hover:bg-[var(--color-primary)]/5">
+                    <td className="py-4 px-6 text-[var(--color-text)] font-medium">{new Date(t.data).toLocaleString('pt-BR')}</td>
+                    <td className="py-4 px-6 text-[var(--color-text)]/80">{t.descricao || 'Sem descrição'}</td>
+                    <td className="py-4 px-6 text-[var(--color-primary)] font-bold text-xs uppercase tracking-widest">{t.metodoPagamento?.descricao || '-'}</td>
+                    <td className="py-4 px-6 text-[var(--color-primary)] font-bold">R$ {Number(t.valorTotal).toFixed(2)}</td>
                     <td className="py-4 px-6 text-right space-x-3">
-                      <button onClick={() => openEditModal(t)} className="text-[#E5E5E5]/50 hover:text-[#D4AF37]"><Edit2 size={18} /></button>
-                      <button onClick={() => handleDelete(t.id)} className="text-[#E5E5E5]/50 hover:text-red-500"><Trash2 size={18} /></button>
+                      <button onClick={() => openEditModal(t)} className="text-[var(--color-text)]/50 hover:text-[var(--color-primary)]"><Edit2 size={18} /></button>
+                      <button onClick={() => handleDelete(t.id)} className="text-[var(--color-text)]/50 hover:text-red-500"><Trash2 size={18} /></button>
                     </td>
                   </tr>
                 ))}
@@ -658,23 +658,23 @@ const Transacoes: React.FC = () => {
 
       {editModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <form onSubmit={handleEditSubmit} className="bg-[#1a1a1a] rounded-xl p-6 w-full max-w-md border border-[#D4AF37]/30 shadow-2xl relative">
-            <h2 className="text-xl font-bold text-[#D4AF37] mb-6 border-b border-[#D4AF37]/20 pb-4">Editar Transação</h2>
+          <form onSubmit={handleEditSubmit} className="bg-[var(--color-surface)] rounded-xl p-6 w-full max-w-md border border-[var(--color-primary)]/30 shadow-2xl relative">
+            <h2 className="text-xl font-bold text-[var(--color-primary)] mb-6 border-b border-[var(--color-primary)]/20 pb-4">Editar Transação</h2>
             
             <div className="space-y-4">
               <div>
-                <label className="text-xs font-semibold text-[#E5E5E5]/80 uppercase">Data/Hora</label>
-                <input type="datetime-local" required value={editData.data} style={{ colorScheme: 'light' }} onChange={e => setEditData({...editData, data: e.target.value})} className="w-full mt-1 p-3 bg-[#121212] text-white rounded border border-[#D4AF37]/20" />
+                <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase">Data/Hora</label>
+                <input type="datetime-local" required value={editData.data} style={{ colorScheme: 'light' }} onChange={e => setEditData({...editData, data: e.target.value})} className="w-full mt-1 p-3 bg-[var(--color-background)] text-white rounded border border-[var(--color-primary)]/20" />
               </div>
               
               <div>
-                <label className="text-xs font-semibold text-[#E5E5E5]/80 uppercase">Valor (R$)</label>
-                <input type="number" step="0.01" required value={editData.valorTotal} onChange={e => setEditData({...editData, valorTotal: e.target.value})} className="w-full mt-1 p-3 bg-[#121212] text-white rounded border border-[#D4AF37]/20" />
+                <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase">Valor (R$)</label>
+                <input type="number" step="0.01" required value={editData.valorTotal} onChange={e => setEditData({...editData, valorTotal: e.target.value})} className="w-full mt-1 p-3 bg-[var(--color-background)] text-white rounded border border-[var(--color-primary)]/20" />
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-[#E5E5E5]/80 uppercase">Pagamento</label>
-                <select value={editData.formaPagamentoId} onChange={e => setEditData({...editData, formaPagamentoId: e.target.value})} className="w-full mt-1 p-3 bg-[#121212] text-white rounded border border-[#D4AF37]/20">
+                <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase">Pagamento</label>
+                <select value={editData.formaPagamentoId} onChange={e => setEditData({...editData, formaPagamentoId: e.target.value})} className="w-full mt-1 p-3 bg-[var(--color-background)] text-white rounded border border-[var(--color-primary)]/20">
                   <option value={1}>PIX</option>
                   <option value={2}>Cartão de Crédito</option>
                   <option value={3}>Cartão de Débito</option>
@@ -683,14 +683,14 @@ const Transacoes: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-[#E5E5E5]/80 uppercase">Descrição</label>
-                <input type="text" value={editData.descricao} onChange={e => setEditData({...editData, descricao: e.target.value})} className="w-full mt-1 p-3 bg-[#121212] text-white rounded border border-[#D4AF37]/20" />
+                <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase">Descrição</label>
+                <input type="text" value={editData.descricao} onChange={e => setEditData({...editData, descricao: e.target.value})} className="w-full mt-1 p-3 bg-[var(--color-background)] text-white rounded border border-[var(--color-primary)]/20" />
               </div>
             </div>
 
             <div className="mt-8 flex justify-end gap-3">
-              <button type="button" onClick={() => setEditModalOpen(false)} className="px-4 py-2 text-[#E5E5E5]/60 hover:text-white uppercase text-xs font-bold transition-colors">Cancelar</button>
-              <button type="submit" disabled={loadingEdit} className="px-6 py-2 bg-[#D4AF37] text-black font-bold uppercase text-xs rounded hover:bg-[#E5C158] transition-colors">{loadingEdit ? 'Salvando...' : 'Salvar'}</button>
+              <button type="button" onClick={() => setEditModalOpen(false)} className="px-4 py-2 text-[var(--color-text)]/60 hover:text-white uppercase text-xs font-bold transition-colors">Cancelar</button>
+              <button type="submit" disabled={loadingEdit} className="px-6 py-2 bg-[var(--color-primary)] text-black font-bold uppercase text-xs rounded hover:bg-[var(--color-secondary)] transition-colors">{loadingEdit ? 'Salvando...' : 'Salvar'}</button>
             </div>
           </form>
         </div>

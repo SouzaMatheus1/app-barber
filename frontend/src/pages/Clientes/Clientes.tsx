@@ -112,28 +112,28 @@ export function Clientes() {
   if (loading && clientes.length === 0) {
     return (
       <div className="flex justify-center items-center h-full min-h-[50vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-[#D4AF37]" />
+        <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)]" />
       </div>
     );
   }
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 max-w-6xl mx-auto">
-      <header className="flex justify-between items-end border-b border-[#D4AF37]/20 pb-4">
+      <header className="flex justify-between items-end border-b border-[var(--color-primary)]/20 pb-4">
         <div>
           <div className="flex items-center gap-4">
-            <h1 className="text-3xl font-serif font-bold text-[#D4AF37]">Clientes</h1>
-            <span className="bg-[#121212]/10 text-[#D4AF37] px-4 py-1.5 rounded-full text-lg font-bold border border-[#D4AF37]/30 shadow-sm flex items-center gap-2">
+            <h1 className="text-3xl font-serif font-bold text-[var(--color-primary)]">Clientes</h1>
+            <span className="bg-[var(--color-background)]/10 text-[var(--color-primary)] px-4 py-1.5 rounded-full text-lg font-bold border border-[var(--color-primary)]/30 shadow-sm flex items-center gap-2">
               <Users size={20} />
               {clientes.length} Cadastrados
             </span>
           </div>
-          <p className="text-[#E5E5E5]/60 mt-1">Gerencie a base de clientes da {user?.tipoEmpresa?.toLowerCase() || 'empresa'}.</p>
+          <p className="text-[var(--color-text)]/60 mt-1">Gerencie a base de clientes da {user?.tipoEmpresa?.toLowerCase() || 'empresa'}.</p>
         </div>
         {!isEditing && (
           <button 
             onClick={() => setIsEditing(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-[#D4AF37] text-[#121212] font-bold rounded-lg uppercase tracking-wider hover:bg-[#E5C158] transition-colors text-sm"
+            className="flex items-center gap-2 px-4 py-2 bg-[var(--color-primary)] text-[var(--color-background)] font-bold rounded-lg uppercase tracking-wider hover:bg-[var(--color-secondary)] transition-colors text-sm"
           >
             <Plus size={18} /> Novo Cliente
           </button>
@@ -142,50 +142,50 @@ export function Clientes() {
 
       {/* Formulário de Criação/Edição */}
       {isEditing && (
-        <form onSubmit={handleCreateOrUpdate} className="bg-[#1a1a1a] rounded-xl p-6 border border-[#D4AF37]/30 shadow-lg space-y-6">
-          <h2 className="text-xl font-bold text-[#E5E5E5] flex items-center gap-2">
-            <User className="text-[#D4AF37]" size={20} />
+        <form onSubmit={handleCreateOrUpdate} className="bg-[var(--color-surface)] rounded-xl p-6 border border-[var(--color-primary)]/30 shadow-lg space-y-6">
+          <h2 className="text-xl font-bold text-[var(--color-text)] flex items-center gap-2">
+            <User className="text-[var(--color-primary)]" size={20} />
             {editingId ? 'Editar Cliente' : 'Novo Cliente'}
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-[#E5E5E5]/80 uppercase tracking-wider">Nome</label>
+              <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase tracking-wider">Nome</label>
               <input
                 type="text"
                 required
                 value={nome}
                 onChange={e => setNome(e.target.value)}
-                className="w-full px-4 py-3 bg-[#121212] text-[#E5E5E5] rounded-lg border border-[#D4AF37]/20 focus:outline-none focus:border-[#D4AF37] transition-colors"
+                className="w-full px-4 py-3 bg-[var(--color-background)] text-[var(--color-text)] rounded-lg border border-[var(--color-primary)]/20 focus:outline-none focus:border-[var(--color-primary)] transition-colors"
                 placeholder="Ex: Carlos Silva"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-[#E5E5E5]/80 uppercase tracking-wider">Telefone</label>
+              <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase tracking-wider">Telefone</label>
               <input
                 type="text"
                 value={telefone}
                 onChange={e => setTelefone(e.target.value)}
-                className="w-full px-4 py-3 bg-[#121212] text-[#E5E5E5] rounded-lg border border-[#D4AF37]/20 focus:outline-none focus:border-[#D4AF37] transition-colors"
+                className="w-full px-4 py-3 bg-[var(--color-background)] text-[var(--color-text)] rounded-lg border border-[var(--color-primary)]/20 focus:outline-none focus:border-[var(--color-primary)] transition-colors"
                 placeholder="Ex: 11999999999"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-[#E5E5E5]/80 uppercase tracking-wider">
-                Vincular Plano VIP <span className="text-[#E5E5E5]/40 text-[10px] ml-1">(Opcional)</span>
+              <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase tracking-wider">
+                Vincular Plano VIP <span className="text-[var(--color-text)]/40 text-[10px] ml-1">(Opcional)</span>
               </label>
               <div className="relative">
                 <select
                   value={planoId}
                   onChange={e => setPlanoId(e.target.value ? Number(e.target.value) : '')}
-                  className="w-full px-4 py-3 bg-[#121212] text-[#E5E5E5] rounded-lg border border-[#D4AF37]/20 focus:outline-none focus:border-[#D4AF37] transition-colors appearance-none cursor-pointer"
+                  className="w-full px-4 py-3 bg-[var(--color-background)] text-[var(--color-text)] rounded-lg border border-[var(--color-primary)]/20 focus:outline-none focus:border-[var(--color-primary)] transition-colors appearance-none cursor-pointer"
                 >
                   <option value="">Sem plano ativo</option>
                   {planos.map(p => (
                     <option key={p.id} value={p.id}>{p.nome} - R$ {Number(p.valorMensal).toFixed(2)}</option>
                   ))}
                 </select>
-                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-[#D4AF37]">
+                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-[var(--color-primary)]">
                   <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
                 </div>
               </div>
@@ -196,14 +196,14 @@ export function Clientes() {
             <button 
               type="button" 
               onClick={resetForm}
-              className="px-6 py-2 text-[#E5E5E5]/60 hover:text-[#E5E5E5] transition-colors uppercase text-sm font-semibold"
+              className="px-6 py-2 text-[var(--color-text)]/60 hover:text-[var(--color-text)] transition-colors uppercase text-sm font-semibold"
             >
               Cancelar
             </button>
             <button 
               type="submit" 
               disabled={loadingAction}
-              className="px-8 py-2 bg-[#D4AF37] text-[#121212] font-bold rounded-lg uppercase tracking-wider hover:bg-[#E5C158] transition-colors text-sm disabled:opacity-50 flex items-center gap-2"
+              className="px-8 py-2 bg-[var(--color-primary)] text-[var(--color-background)] font-bold rounded-lg uppercase tracking-wider hover:bg-[var(--color-secondary)] transition-colors text-sm disabled:opacity-50 flex items-center gap-2"
             >
               {loadingAction && <Loader2 size={16} className="animate-spin" />}
               {editingId ? 'Salvar' : 'Cadastrar'}
@@ -213,43 +213,43 @@ export function Clientes() {
       )}
 
       {/* Tabela de Clientes */}
-      <div className="bg-[#1a1a1a] rounded-xl border border-[#D4AF37]/20 overflow-hidden shadow-lg">
+      <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-primary)]/20 overflow-hidden shadow-lg">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-[#121212]">
-                <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Nome</th>
-                <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Telefone</th>
-                <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Data de Cadastro</th>
-                <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider">Plano selecionado</th>
-                <th className="py-4 px-6 text-[#E5E5E5]/70 font-semibold text-sm uppercase tracking-wider text-right">Ações</th>
+              <tr className="bg-[var(--color-background)]">
+                <th className="py-4 px-6 text-[var(--color-text)]/70 font-semibold text-sm uppercase tracking-wider">Nome</th>
+                <th className="py-4 px-6 text-[var(--color-text)]/70 font-semibold text-sm uppercase tracking-wider">Telefone</th>
+                <th className="py-4 px-6 text-[var(--color-text)]/70 font-semibold text-sm uppercase tracking-wider">Data de Cadastro</th>
+                <th className="py-4 px-6 text-[var(--color-text)]/70 font-semibold text-sm uppercase tracking-wider">Plano selecionado</th>
+                <th className="py-4 px-6 text-[var(--color-text)]/70 font-semibold text-sm uppercase tracking-wider text-right">Ações</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#D4AF37]/10">
+            <tbody className="divide-y divide-[var(--color-primary)]/10">
               {clientes.length === 0 && !loading ? (
                 <tr>
-                  <td colSpan={4} className="py-8 text-center text-[#E5E5E5]/50">Nenhum cliente encontrado.</td>
+                  <td colSpan={4} className="py-8 text-center text-[var(--color-text)]/50">Nenhum cliente encontrado.</td>
                 </tr>
               ) : (
                 clientes.map((cliente) => (
-                  <tr key={cliente.id.toString()} className="hover:bg-[#D4AF37]/5 transition-colors group">
-                    <td className="py-4 px-6 text-[#E5E5E5] font-medium">{cliente.nome}</td>
-                    <td className="py-4 px-6 text-[#E5E5E5]/80">{cliente.telefone || '-'}</td>
-                    <td className="py-4 px-6 text-[#E5E5E5]/60 text-sm">
+                  <tr key={cliente.id.toString()} className="hover:bg-[var(--color-primary)]/5 transition-colors group">
+                    <td className="py-4 px-6 text-[var(--color-text)] font-medium">{cliente.nome}</td>
+                    <td className="py-4 px-6 text-[var(--color-text)]/80">{cliente.telefone || '-'}</td>
+                    <td className="py-4 px-6 text-[var(--color-text)]/60 text-sm">
                       {new Date(cliente.criadoEm).toLocaleDateString('pt-BR')}
                     </td>
-                    <td className="py-4 px-6 text-[#E5E5E5]/80">{cliente.assinaturas?.[0]?.plano.nome || '-'}</td>
+                    <td className="py-4 px-6 text-[var(--color-text)]/80">{cliente.assinaturas?.[0]?.plano.nome || '-'}</td>
                     <td className="py-4 px-6 text-right space-x-3">
                       <button 
                         onClick={() => editClient(cliente)}
-                        className="text-[#E5E5E5]/50 hover:text-[#D4AF37] transition-colors p-1"
+                        className="text-[var(--color-text)]/50 hover:text-[var(--color-primary)] transition-colors p-1"
                         title="Editar"
                       >
                         <Edit2 size={18} />
                       </button>
                       <button 
                         onClick={() => handleDelete(Number(cliente.id))}
-                        className="text-[#E5E5E5]/50 hover:text-red-500 transition-colors p-1"
+                        className="text-[var(--color-text)]/50 hover:text-red-500 transition-colors p-1"
                         title="Excluir"
                       >
                         <Trash2 size={18} />

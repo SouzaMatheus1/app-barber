@@ -30,4 +30,11 @@ A conversão dos antigos bancos isolados baseados no ambiente antigo para a Nuve
 - O Robô lê a Fonte de Dados original (ex: Banco da Empresa 2 isolado) e chuta pacotes de cópia para o banco Master. No meio do trajeto, ele faz `ID + 100.000` em toda chave primária e Foreign Key do relacionamento forçando eles a assumirem o vínculo de `empresaId = 2`.
 - Isso garante 0.00% de perda ou intersecção na integridade do histórico contábil herdado dos clientes.
 
+## 5. Tema Dinâmico (White-label)
+
+Para suportar o atendimento a diferentes nichos e identidades corporativas, foi implementada uma estrutura de **Tema Dinâmico** baseada no conceito White-label:
+- **Banco de Dados**: Criado o model `Tema` atrelado em relação 1:1 com a `Empresa`. Ele armazena as escolhas estéticas como `corPrimaria`, `corFundo` e `logoUrl`.
+- **Backend (API)**: O sistema expõe as configurações visuais de uma empresa a partir de seu `slug` através de endpoints públicos. Isso garante que a customização carregue _antes_ mesmo de existir uma sessão de login (útil para portais de clientes).
+- **Frontend (Injeção de CSS)**: As cores fixas foram substituídas por variáveis semânticas CSS (`var(--color-primary)`, etc.). Um Hook customizado (`useTheme.ts`) intercepta o ciclo de vida inicial do React, busca a paleta baseada no domínio/slug e injeta os valores na folha de estilos (DOM Root).
+
 *(Documentação técnica arquivada no controle de versões sob a branch `feature/multi-tenant`)*

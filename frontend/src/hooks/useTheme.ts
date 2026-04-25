@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { api } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 interface Tema {
   corPrimaria: string;
@@ -11,36 +13,36 @@ interface Tema {
   faviconUrl: string | null;
 }
 
-export function useTheme(slug?: string) {
+export function useTheme(slugProp?: string) {
+  const { user } = useAuth();
+  const location = useLocation();
   const [tema, setTema] = useState<Tema | null>(null);
   const [loadingTheme, setLoadingTheme] = useState(true);
-  const [errorTheme, setErrorTheme] = useState('');
 
   useEffect(() => {
     async function loadTheme() {
       try {
         setLoadingTheme(true);
-        // Se não for passado um slug explicito, tentamos inferir da URL (útil se usarmos app.com/slug/login ou slug.app.com)
-        // Para simplificar, neste MVP se não tiver slug, não carrega (fica com o padrão do index.css)
-        let targetSlug = slug;
+
+        const queryParams = new URLSearchParams(window.location.search);
+        const slugQuery = queryParams.get('slug') || queryParams.get('company');
         
+        const pathParts = location.pathname.split('/').filter(Boolean);
+        const slugPath = pathParts.length > 0 && !['login', 'dashboard', 'clientes', 'profissionais', 'transacoes', 'catalogo', 'assinaturas', 'comissoes'].includes(pathParts[0]) 
+          ? pathParts[0] 
+          : null;
+
+        const targetSlug = slugProp || slugQuery || user?.slug || slugPath;
+
         if (!targetSlug) {
-           // Lógica provisória: Pega o primeiro segmento do path se existir (ex: /barbearia-do-ze/login -> barbearia-do-ze)
-           const pathParts = window.location.pathname.split('/').filter(Boolean);
-           if (pathParts.length > 0 && pathParts[0] !== 'login' && pathParts[0] !== 'dashboard') {
-             targetSlug = pathParts[0];
-           } else {
-             // Retorna silenciosamente, deixando o css root padrão
-             setLoadingTheme(false);
-             return;
-           }
+          setLoadingTheme(false);
+          return;
         }
 
         const response = await api.get(`/temas/empresa/${targetSlug}`);
         const data = response.data;
         setTema(data);
 
-        // Aplica o tema na raiz do documento
         const root = document.documentElement;
         if (data.corPrimaria) root.style.setProperty('--color-primary', data.corPrimaria);
         if (data.corSecundaria) root.style.setProperty('--color-secondary', data.corSecundaria);
@@ -48,7 +50,6 @@ export function useTheme(slug?: string) {
         if (data.corSuperficie) root.style.setProperty('--color-surface', data.corSuperficie);
         if (data.corTexto) root.style.setProperty('--color-text', data.corTexto);
 
-        // Altera o favicon se houver
         if (data.faviconUrl) {
           let link: HTMLLinkElement | null = document.querySelector("link[rel~='icon']");
           if (!link) {
@@ -60,15 +61,14 @@ export function useTheme(slug?: string) {
         }
 
       } catch (err) {
-        console.error('Erro ao carregar tema:', err);
-        setErrorTheme('Erro ao carregar tema');
+        console.error('Erro ao carregar tema dinâmico:', err);
       } finally {
         setLoadingTheme(false);
       }
     }
 
     loadTheme();
-  }, [slug]);
+  }, [slugProp, user?.slug, location.pathname]);
 
-  return { tema, loadingTheme, errorTheme };
+  return { tema, loadingTheme };
 }

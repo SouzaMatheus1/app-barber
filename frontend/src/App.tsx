@@ -13,17 +13,20 @@ import { Comissoes } from './pages/Comissoes/Comissoes'
 import Assinaturas from './pages/Assinaturas/Assinaturas'
 import Layout from './components/Layout/Layout'
 
-export default function App() {
-  // Inicializa a injeção do tema dinâmico baseado no slug (URL)
+function ThemeLoader() {
   useTheme();
+  return null;
+}
 
+export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <ThemeLoader />
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
-
+          
           <Route element={<PrivateRoute />}>
             <Route element={<Layout />}>
               <Route path="/dashboard" element={<Dashboard />} />

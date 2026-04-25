@@ -28,6 +28,7 @@ model Empresa {
   transacoes    Transacao[]
   planos        Plano[]
   assinaturas   Assinatura[]
+  tema          Tema?
 
   @@index([tipoEmpresaId])
   @@map("Empresa")
@@ -229,4 +230,20 @@ model CreditoAssinatura {
 enum statusAssinatura {
   ATIVA
   INATIVA
+}
+
+model Tema {
+  id            Int     @id @default(autoincrement())
+  empresaId     Int     @unique
+  corPrimaria   String? @default("#C9A84C")
+  corSecundaria String? @default("#E2C175")
+  corFundo      String? @default("#0A0A0A")
+  corSuperficie String? @default("#111111")
+  corTexto      String? @default("#F5F5F5")
+  logoUrl       String?
+  faviconUrl    String?
+
+  empresa Empresa @relation(fields: [empresaId], references: [id])
+
+  @@map("Tema")
 }

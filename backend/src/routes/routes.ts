@@ -8,6 +8,7 @@ import { CaixaController } from '../controllers/CaixaController';
 import { isAuth, isAdmin } from '../middleware/auth';
 import { AuthController } from '../controllers/authController';
 import { AssinaturaController } from '../controllers/AssinaturaController';
+import { TemaController } from '../controllers/TemaController';
 
 const routes = Router();
 const profissionalController = new ProfissionalController();
@@ -61,5 +62,12 @@ routes.get('/comissoes/profissional/:id', isAuth, comissaoController.relatorio);
 routes.get('/caixa/diario', isAuth, isAdmin, caixaController.resumo);
 
 routes.post('/login', authController.login)
+
+// temas
+// Rota pública: Frontend chama na hora do login ou agendamento para pegar as cores/logo da empresa
+routes.get('/temas/empresa/:slug', TemaController.getBySlug);
+
+// Rota privada: Painel administrativo altera as cores (precisa de token)
+routes.put('/temas', isAuth, TemaController.update);
 
 export { routes };

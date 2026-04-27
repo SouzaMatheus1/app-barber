@@ -10,7 +10,7 @@ export class TransacaoController {
     }
 
     criar = async (req: Request, res: Response) => {
-        const { tipoTransacaoId, descricao, profissionalId, clienteId, itens, formaPagamentoId, data } = req.body;
+        const { tipoTransacaoId, descricao, profissionalId, clienteId, itens, formaPagamentoId, data, valorTotal, categoriaCustoId } = req.body;
 
         const result = await this.transacaoService.create({
             tipoTransacaoId,
@@ -19,7 +19,9 @@ export class TransacaoController {
             clienteId,
             formaPagamentoId,
             data,
-            itens
+            itens,
+            valorTotal,
+            categoriaCustoId
         });
 
         return res.status(201).json(result);

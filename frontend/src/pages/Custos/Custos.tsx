@@ -191,25 +191,19 @@ const Custos: React.FC = () => {
                   <ArrowDownCircle className="text-red-500" />
                   Registrar Nova Despesa
                 </h2>
-<div className="space-y-2">
-              <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase tracking-wider">Preço (R$)</label>
-              <input
-                
-              />
-            </div>
+
                 <form onSubmit={handleSalvarCusto} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-gray-400 ml-1">Valor da Saída (R$)</label>
                       <div className="relative group">
+                        <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-red-500 group-focus-within:scale-110 transition-transform" size={20} />
                         <input
                           type="number"
-                          step="0.01"
-                          min="0"
                           required
                           value={valor}
-                          onChange={e => setValor(e.target.value)}
-                          className="w-full px-4 py-3 bg-[var(--color-background)] text-[var(--color-text)] rounded-lg border border-[var(--color-primary)]/20 focus:outline-none focus:border-[var(--color-primary)] transition-colors"
+                          onChange={(e) => setValor(e.target.value)}
+                          className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 transition-all placeholder:text-gray-600"
                           placeholder="35.00"
                         />
                       </div>

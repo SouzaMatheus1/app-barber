@@ -16,11 +16,13 @@ export const transacaoService = {
   create: async (data: {
     descricao?: string;
     tipoTransacaoId: number;
-    profissionalId: number;
+    profissionalId?: number | null;
     clienteId?: number | null;
     formaPagamentoId?: number;
     data?: string;
-    itens: { itemId: number; quantidade: number; usouCreditoAssinatura: boolean }[];
+    valorTotal?: number;
+    categoriaCustoId?: number | null;
+    itens?: { itemId: number; quantidade: number; usouCreditoAssinatura: boolean }[];
   }) => {
     const response = await api.post('/transacoes', data);
     return response.data;

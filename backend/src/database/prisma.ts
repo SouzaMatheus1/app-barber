@@ -40,14 +40,14 @@ export const prisma = basePrisma.$extends({
           }
           
           if (operation === 'create') {
-            a.data = { ...a.data, empresa: { connect: { id: bId } } };
+            a.data = { ...a.data, empresaId: bId };
           }
           
           if (operation === 'createMany') {
             if (Array.isArray(a.data)) {
               a.data = a.data.map((d: any) => ({ ...d, empresaId: bId }));
             } else {
-              a.data = { ...a.data, empresa: { connect: { id: bId } } };
+              a.data = { ...a.data, empresaId: bId };
             }
           }
           

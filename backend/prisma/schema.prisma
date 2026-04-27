@@ -26,9 +26,10 @@ model Empresa {
   clientes      Cliente[]
   itensCatalogo ItemCatalogo[]
   transacoes    Transacao[]
-  planos        Plano[]
-  assinaturas   Assinatura[]
-  tema          Tema?
+  planos          Plano[]
+  assinaturas     Assinatura[]
+  categoriasCusto CategoriaCusto[]
+  tema            Tema?
 
   @@index([tipoEmpresaId])
   @@map("Empresa")
@@ -120,24 +121,38 @@ model Transacao {
   descricao        String?
   valorTotal       Decimal  @db.Decimal(10, 2)
   data             DateTime @default(now())
-  profissionalId   Int
+  profissionalId   Int?
   clienteId        Int?
   tipoTransacaoId  Int
   formaPagamentoId Int?
+  categoriaCustoId Int?
 
   empresa         Empresa          @relation(fields: [empresaId], references: [id])
   itens           ItemTransacao[]
   cliente         Cliente?         @relation(fields: [clienteId], references: [id])
-  profissional    Profissional     @relation(fields: [profissionalId], references: [id])
+  profissional    Profissional?    @relation(fields: [profissionalId], references: [id])
   tipo            TipoTransacao    @relation(fields: [tipoTransacaoId], references: [id])
   metodoPagamento MetodoPagamento? @relation(fields: [formaPagamentoId], references: [id])
+  categoriaCusto  CategoriaCusto?  @relation(fields: [categoriaCustoId], references: [id])
 
   @@index([clienteId])
   @@index([profissionalId])
   @@index([tipoTransacaoId])
   @@index([formaPagamentoId])
   @@index([empresaId])
+  @@index([categoriaCustoId])
   @@map("Transacao")
+}
+
+model CategoriaCusto {
+  id         Int         @id @default(autoincrement())
+  empresaId  Int         @default(1)
+  descricao  String
+  transacoes Transacao[]
+  empresa    Empresa     @relation(fields: [empresaId], references: [id])
+
+  @@index([empresaId])
+  @@map("CategoriaCusto")
 }
 
 model TipoTransacao {

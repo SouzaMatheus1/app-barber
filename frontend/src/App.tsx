@@ -11,6 +11,7 @@ import { Catalogo } from './pages/Catalogo/Catalogo'
 import Transacoes from './pages/Transacoes/Transacoes'
 import { Comissoes } from './pages/Comissoes/Comissoes'
 import Assinaturas from './pages/Assinaturas/Assinaturas'
+import Custos from './pages/Custos/Custos'
 import Layout from './components/Layout/Layout'
 
 function ThemeLoader() {
@@ -41,6 +42,7 @@ export default function App() {
               <Route path="/catalogo" element={<Catalogo />} />
               <Route path="/comissoes" element={<Comissoes />} />
               <Route path="/assinaturas" element={<Assinaturas />} />
+              <Route path="/custos" element={<Custos />} />
             </Route>
           </Route>
         </Routes>

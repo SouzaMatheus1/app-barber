@@ -9,6 +9,7 @@ import { isAuth, isAdmin } from '../middleware/auth';
 import { AuthController } from '../controllers/authController';
 import { AssinaturaController } from '../controllers/AssinaturaController';
 import { TemaController } from '../controllers/TemaController';
+import { CategoriaCustoController } from '../controllers/CategoriaCustoController';
 
 const routes = Router();
 const profissionalController = new ProfissionalController();
@@ -19,6 +20,7 @@ const comissaoController = new ComissaoController();
 const caixaController = new CaixaController();
 const authController = new AuthController();
 const assinaturaController = new AssinaturaController();
+const categoriaCustoController = new CategoriaCustoController();
 
 // profissional
 routes.get('/profissionais', isAuth, profissionalController.listar);
@@ -44,6 +46,12 @@ routes.get('/transacoes', isAuth, transacaoController.listar);
 routes.post('/transacoes', isAuth, transacaoController.criar);
 routes.put('/transacoes/:id', isAuth, transacaoController.editar);
 routes.delete('/transacoes/:id', isAuth, transacaoController.deletar);
+
+// categorias de custo
+routes.get('/categorias-custo', isAuth, categoriaCustoController.listar);
+routes.post('/categorias-custo', isAuth, categoriaCustoController.criar);
+routes.put('/categorias-custo/:id', isAuth, categoriaCustoController.editar);
+routes.delete('/categorias-custo/:id', isAuth, categoriaCustoController.deletar);
 
 // plano & assinatura
 routes.get('/planos', isAuth, assinaturaController.listarPlanos);

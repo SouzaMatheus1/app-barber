@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Scissors, Users, BookOpen, DollarSign, LogOut, X, Crown, UserCog } from 'lucide-react';
+import { LayoutDashboard, Scissors, Users, BookOpen, DollarSign, LogOut, X, Crown, UserCog, TrendingDown } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface SidebarProps {
@@ -24,6 +24,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
     { to: '/catalogo', label: 'Catálogo', icon: <BookOpen size={20} /> },
     { to: '/comissoes', label: 'Comissões', icon: <DollarSign size={20} /> },
     { to: '/assinaturas', label: 'Assinaturas', icon: <Crown size={20} /> },
+    { to: '/custos', label: 'Custos', icon: <TrendingDown size={20} /> },
   ];
 
   return (

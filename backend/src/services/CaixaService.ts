@@ -20,11 +20,15 @@ export class CaixaService {
 
         let saldoInicial = 0;
         transacoesPassadas.forEach((transacao: any) => {
-            transacao.itens.forEach((itemTransacao: any) => {
-                const totalItem = itemTransacao.quantidade * Number(itemTransacao.precoUnitario);
-                const percentualComissao = itemTransacao.item.comissao ? Number(itemTransacao.item.comissao) : 0;
-                saldoInicial += totalItem - ((totalItem * percentualComissao) / 100);
-            });
+            if (transacao.tipoTransacaoId === 2) { // SAIDA
+                saldoInicial -= Number(transacao.valorTotal);
+            } else { // ENTRADA (Calcula comissão se houver itens)
+                transacao.itens.forEach((itemTransacao: any) => {
+                    const totalItem = itemTransacao.quantidade * Number(itemTransacao.precoUnitario);
+                    const percentualComissao = itemTransacao.item.comissao ? Number(itemTransacao.item.comissao) : 0;
+                    saldoInicial += totalItem - ((totalItem * percentualComissao) / 100);
+                });
+            }
         });
 
         const transacoesHoje = await prisma.transacao.findMany({
@@ -38,26 +42,33 @@ export class CaixaService {
         let faturamentoDia = 0;
         let parteEmpresaDia = 0;
         let comissoesDia = 0;
+        let despesasDia = 0;
 
         const clientesUnicos = new Set();
         let avulsosCount = 0;
 
         transacoesHoje.forEach((transacao: any) => {
-            if (transacao.clienteId) {
-                clientesUnicos.add(transacao.clienteId);
-            } else {
-                avulsosCount++;
+            if (transacao.tipoTransacaoId === 2) { // SAIDA (Custo/Despesa)
+                const valorSaida = Number(transacao.valorTotal);
+                despesasDia += valorSaida;
+                parteEmpresaDia -= valorSaida;
+            } else { // ENTRADA (Venda/Serviço)
+                if (transacao.clienteId) {
+                    clientesUnicos.add(transacao.clienteId);
+                } else {
+                    avulsosCount++;
+                }
+
+                transacao.itens.forEach((itemTransacao: any) => {
+                    const totalItem = itemTransacao.quantidade * Number(itemTransacao.precoUnitario);
+                    const percentualComissao = itemTransacao.item.comissao ? Number(itemTransacao.item.comissao) : 0;
+                    const valorComissao = (totalItem * percentualComissao) / 100;
+
+                    faturamentoDia += totalItem;
+                    comissoesDia += valorComissao;
+                    parteEmpresaDia += (totalItem - valorComissao);
+                });
             }
-
-            transacao.itens.forEach((itemTransacao: any) => {
-                const totalItem = itemTransacao.quantidade * Number(itemTransacao.precoUnitario);
-                const percentualComissao = itemTransacao.item.comissao ? Number(itemTransacao.item.comissao) : 0;
-                const valorComissao = (totalItem * percentualComissao) / 100;
-
-                faturamentoDia += totalItem;
-                comissoesDia += valorComissao;
-                parteEmpresaDia += (totalItem - valorComissao);
-            });
         });
 
         return {
@@ -65,6 +76,7 @@ export class CaixaService {
             saldoInicial,
             movimentoDia: {
                 faturamentoTotal: faturamentoDia,
+                despesas: despesasDia,
                 parteEmpresa: parteEmpresaDia,
                 comissoesAPagar: comissoesDia
             },

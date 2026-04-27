@@ -29,20 +29,27 @@ export class TransacaoService {
         formaPagamentoId?: number,
         data?: Date,
         clienteId?: number,
-        itens: { itemId: number, quantidade: number, usouCreditoAssinatura?: boolean } []
+        categoriaCustoId?: number,
+        valorTotal?: number, // Para despesas diretas
+        itens?: { itemId: number, quantidade: number, usouCreditoAssinatura?: boolean } []
     }){
-        const { descricao, tipoTransacaoId, profissionalId, clienteId, itens, formaPagamentoId } = dataParams;
+        const { descricao, tipoTransacaoId, profissionalId, clienteId, itens, formaPagamentoId, categoriaCustoId, valorTotal } = dataParams;
 
-        const itensId = itens.map(item => item.itemId);
+        // Validação: profissional é obrigatório para ENTRADAS (atendimento)
+        if (tipoTransacaoId === 1 && !profissionalId) {
+            throw new AppError("O profissional é obrigatório para registros de atendimento.", 400);
+        }
 
-        const itensBd = await prisma.itemCatalogo.findMany({
-            where: { id: { in: itensId } }
-        });
+        const itensId = (itens || []).map(item => item.itemId);
 
-        if (itens.length !== itensBd.length)
+        const itensBd = itensId.length > 0 
+            ? await prisma.itemCatalogo.findMany({ where: { id: { in: itensId } } })
+            : [];
+
+        if (itens && itens.length !== itensBd.length)
             throw new AppError("Um ou mais itens não estão cadastrados no catálogo.", 400);
 
-        let totalVenda = 0;
+        let totalVenda = valorTotal || 0;
         let requiresCredits = false;
         
         let assinaturaAtiva = null;
@@ -58,7 +65,7 @@ export class TransacaoService {
 
         const creditosParaAtualizar: { id: number, novaQuantidade: number }[] = [];
 
-        const itensSelecionados = itens.map(itemRegistrado => {
+        const itensSelecionados = (itens || []).map(itemRegistrado => {
             const itemSalvo = itensBd.find((itemBd: any) => itemBd.id == itemRegistrado.itemId);
             let valorItem = Number(itemSalvo?.preco);
             
@@ -125,10 +132,11 @@ export class TransacaoService {
                     valorTotal: totalVenda,
                     descricao,
                     data: dataParams.data ? new Date(dataParams.data) : new Date(),
-                    tipo: { connect: { id: tipoTransacaoId } },
-                    profissional: { connect: { id: profissionalId } },
-                    ...(clienteId && { cliente: { connect: { id: clienteId } } }),
-                    ...(formaPagamentoId && { metodoPagamento: { connect: { id: formaPagamentoId } } }),
+                    tipoTransacaoId,
+                    profissionalId: profissionalId || null,
+                    clienteId: clienteId || null,
+                    formaPagamentoId: formaPagamentoId || null,
+                    categoriaCustoId: categoriaCustoId || null,
                     itens: {
                         create: itensSelecionados
                     }

@@ -75,4 +75,19 @@ export class AssinaturaController {
             res.status(500).json({ error: error.message });
         }
     }
+
+    async renovar(req: Request, res: Response) {
+        try {
+            const id = Number(req.params.id);
+            const { profissionalIdParaTransacao } = req.body;
+            if (!profissionalIdParaTransacao) {
+                res.status(400).json({ error: "profissionalIdParaTransacao é obrigatório." });
+                return;
+            }
+            const assinatura = await assinaturaService.renewSubscription(id, Number(profissionalIdParaTransacao));
+            res.status(200).json(assinatura);
+        } catch (error: any) {
+            res.status(400).json({ error: error.message });
+        }
+    }
 }

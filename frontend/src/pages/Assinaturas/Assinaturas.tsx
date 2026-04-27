@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Crown, Package, Users, Plus, Edit2, Trash2, Loader2, Save, BarChart3, TrendingUp } from 'lucide-react';
 import { assinaturaService } from '../../services/AssinaturaService';
 import { itemCatalogoService } from '../../services/ItemCatalogoService';
 import { transacaoService } from '../../services/TransacaoService';
+import { useAuth } from '../../contexts/AuthContext';
+import { RotateCw, Calendar, Crown, Package, Users, Plus, Edit2, Trash2, Loader2, Save, BarChart3, TrendingUp } from 'lucide-react';
 
 const Assinaturas: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'planos' | 'assinantes' | 'relatorios'>('planos');
@@ -16,8 +17,10 @@ const Assinaturas: React.FC = () => {
   const [planoEditingId, setPlanoEditingId] = useState<number | null>(null);
   const [planoNome, setPlanoNome] = useState('');
   const [planoValor, setPlanoValor] = useState<number | ''>('');
+  const [planoFrequencia, setPlanoFrequencia] = useState<'SEMANAL' | 'QUINZENAL' | 'MENSAL'>('MENSAL');
   const [itensPlanoSelected, setItensPlanoSelected] = useState<{ itemId: number, quantidade: number }[]>([]);
   const [catalogo, setCatalogo] = useState<any[]>([]);
+  const { user } = useAuth();
 
   // Modal State
   const [transacoes, setTransacoes] = useState<any[]>([]);
@@ -54,6 +57,7 @@ const Assinaturas: React.FC = () => {
       const payload = {
         nome: planoNome,
         valorMensal: Number(planoValor),
+        frequencia: planoFrequencia,
         itens: itensPlanoSelected
       };
 
@@ -93,6 +97,7 @@ const Assinaturas: React.FC = () => {
     setPlanoEditingId(Number(plano.id));
     setPlanoNome(plano.nome);
     setPlanoValor(Number(plano.valorMensal));
+    setPlanoFrequencia(plano.frequencia || 'MENSAL');
     setItensPlanoSelected(plano.itens?.map((i: any) => ({
       itemId: i.itemId,
       quantidade: i.quantidade
@@ -104,6 +109,7 @@ const Assinaturas: React.FC = () => {
     setPlanoEditingId(null);
     setPlanoNome('');
     setPlanoValor('');
+    setPlanoFrequencia('MENSAL');
     setItensPlanoSelected([]);
   };
 
@@ -121,6 +127,36 @@ const Assinaturas: React.FC = () => {
     const newItens = [...itensPlanoSelected];
     newItens[index] = { ...newItens[index], [field]: value };
     setItensPlanoSelected(newItens);
+  };
+
+  const handleRenovar = async (assinaturaId: number) => {
+    if (!window.confirm("Deseja registrar o pagamento e renovar esta assinatura agora? Isso resetará os créditos do cliente e atualizará a data de vencimento.")) return;
+    
+    setLoadingAction(true);
+    try {
+        // Usa o ID do profissional logado ou o primeiro da lista como fallback
+        const profId = user?.id || 1;
+        await assinaturaService.renovar(assinaturaId, profId);
+        await fetchData();
+        alert("Assinatura renovada com sucesso!");
+    } catch (error: any) {
+        console.error("Erro ao renovar assinatura", error);
+        alert("Erro ao renovar: " + (error.response?.data?.error || error.message));
+    } finally {
+        setLoadingAction(false);
+    }
+  };
+
+  const getStatusColor = (vencimento: string | null) => {
+    if (!vencimento) return 'text-[var(--color-text)]/40';
+    const dataVenc = new Date(vencimento);
+    const hoje = new Date();
+    hoje.setHours(0,0,0,0);
+    dataVenc.setHours(0,0,0,0);
+
+    if (dataVenc < hoje) return 'text-red-500 font-bold';
+    if (dataVenc.getTime() === hoje.getTime()) return 'text-amber-500 font-bold';
+    return 'text-emerald-500';
   };
 
   return (
@@ -185,7 +221,20 @@ const Assinaturas: React.FC = () => {
             </div>
             
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase tracking-wider">Mensalidade (R$)</label>
+              <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase tracking-wider">Ciclo de Cobrança (Frequência)</label>
+              <select
+                value={planoFrequencia}
+                onChange={e => setPlanoFrequencia(e.target.value as any)}
+                className="w-full px-4 py-3 bg-[var(--color-background)] text-[var(--color-text)] rounded-lg border border-[var(--color-primary)]/20 focus:outline-none focus:border-[var(--color-primary)] transition-colors"
+              >
+                <option value="SEMANAL">Semanal</option>
+                <option value="QUINZENAL">Quinzenal</option>
+                <option value="MENSAL">Mensal</option>
+              </select>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase tracking-wider">Valor do Plano (R$)</label>
               <input
                 type="number"
                 step="0.01"
@@ -298,6 +347,9 @@ const Assinaturas: React.FC = () => {
                 <div className="text-3xl font-serif text-[var(--color-primary)] font-bold">
                   {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(plano.valorMensal)}
                 </div>
+                <div className="text-xs uppercase tracking-widest text-[var(--color-text)]/40 font-bold">
+                    Cobrança {plano.frequencia?.toLowerCase()}
+                </div>
                 <div className="text-sm border-t border-[var(--color-primary)]/20 pt-4 w-full text-[var(--color-text)]/70 space-y-2">
                   {plano.itens?.map((i: any) => (
                     <p key={i.id} className="flex justify-between">
@@ -316,8 +368,9 @@ const Assinaturas: React.FC = () => {
               <thead>
                 <tr className="border-b border-[var(--color-primary)]/20 text-[var(--color-text)]/50 text-xs uppercase tracking-wider">
                   <th className="pb-3 px-4">Cliente</th>
-                  <th className="pb-3 px-4">Plano</th>
+                  <th className="pb-3 px-4">Plano / Ciclo</th>
                   <th className="pb-3 px-4 text-center">Status</th>
+                  <th className="pb-3 px-4 text-center">Vencimento</th>
                   <th className="pb-3 px-4 text-right">Saldo de Créditos</th>
                   <th className="pb-3 px-4 text-right">Ação</th>
                 </tr>
@@ -327,11 +380,25 @@ const Assinaturas: React.FC = () => {
                 {assinaturas.map(ass => (
                   <tr key={ass.id} className="border-b border-[var(--color-primary)]/10 hover:bg-[var(--color-primary)]/5 transition-colors">
                     <td className="py-4 px-4 text-[var(--color-text)]">{ass.cliente?.nome}</td>
-                    <td className="py-4 px-4 text-[var(--color-primary)]">{ass.plano?.nome}</td>
+                    <td className="py-4 px-4">
+                        <div className="text-[var(--color-primary)] font-bold">{ass.plano?.nome}</div>
+                        <div className="text-[10px] text-[var(--color-text)]/40 uppercase tracking-tighter">{ass.plano?.frequencia}</div>
+                    </td>
                     <td className="py-4 px-4 text-center">
                       <span className={`px-2 py-1 rounded-sm text-[10px] uppercase font-bold tracking-widest ${ass.status === 'ATIVA' ? 'bg-[var(--color-primary)]/20 text-[var(--color-primary)]' : 'bg-red-500/20 text-red-500'}`}>
                         {ass.status}
                       </span>
+                    </td>
+                    <td className="py-4 px-4 text-center">
+                        <div className={`text-sm ${getStatusColor(ass.dataProximoVencimento)} flex flex-col items-center gap-0.5`}>
+                           <span className="flex items-center gap-1 font-sans">
+                             <Calendar size={12} />
+                             {ass.dataProximoVencimento ? new Date(ass.dataProximoVencimento).toLocaleDateString('pt-BR') : '-'}
+                           </span>
+                           {ass.dataProximoVencimento && new Date(ass.dataProximoVencimento) < new Date() && (
+                             <span className="text-[9px] uppercase tracking-tighter bg-red-500 text-white px-1 rounded-xs">Vencido</span>
+                           )}
+                        </div>
                     </td>
                     <td className="py-4 px-4 text-[var(--color-text)] text-right">
                       <div className="flex flex-col gap-1 items-end">
@@ -344,7 +411,21 @@ const Assinaturas: React.FC = () => {
                       </div>
                     </td>
                     <td className="py-4 px-4 text-right">
-                       <button onClick={() => setModalClienteOpen({nome: ass.cliente?.nome, clienteId: ass.clienteId})} className="text-xs bg-[var(--color-primary)]/10 text-[var(--color-primary)] px-3 py-1.5 rounded hover:bg-[var(--color-primary)]/20 border border-[var(--color-primary)]/20 font-bold uppercase tracking-wider">Histórico</button>
+                       <div className="flex items-center justify-end gap-2">
+                        <button 
+                            onClick={() => handleRenovar(ass.id)} 
+                            className="p-1.5 bg-emerald-500/10 text-emerald-500 rounded hover:bg-emerald-500/20 border border-emerald-500/20 transition-colors"
+                            title="Renovar agora (Registra pagamento)"
+                        >
+                            <RotateCw size={14} className={loadingAction ? 'animate-spin' : ''} />
+                        </button>
+                        <button 
+                            onClick={() => setModalClienteOpen({nome: ass.cliente?.nome, clienteId: ass.clienteId})} 
+                            className="text-xs bg-[var(--color-primary)]/10 text-[var(--color-primary)] px-3 py-1.5 rounded hover:bg-[var(--color-primary)]/20 border border-[var(--color-primary)]/20 font-bold uppercase tracking-wider"
+                        >
+                            Histórico
+                        </button>
+                       </div>
                     </td>
                   </tr>
                 ))}

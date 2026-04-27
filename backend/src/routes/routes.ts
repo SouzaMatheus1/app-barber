@@ -52,6 +52,7 @@ routes.put('/planos/:id', isAuth, assinaturaController.editarPlano);
 routes.delete('/planos/:id', isAuth, assinaturaController.deletarPlano);
 routes.get('/assinaturas', isAuth, assinaturaController.listarAssinaturas);
 routes.post('/assinaturas', isAuth, assinaturaController.assinar);
+routes.patch('/assinaturas/:id/renovar', isAuth, assinaturaController.renovar);
 routes.get('/assinaturas/cliente/:clienteId/ativa', isAuth, assinaturaController.getAssinaturaCliente);
 
 // comissao funcionarios

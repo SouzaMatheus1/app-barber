@@ -3,11 +3,12 @@ import { statusAssinatura } from '@prisma/client';
 
 export class AssinaturaService {
     // Planos
-    async createPlano(data: { nome: string, valorMensal: number, itens: { itemId: number, quantidade: number }[] }) {
+    async createPlano(data: { nome: string, valorMensal: number, frequencia?: 'SEMANAL' | 'QUINZENAL' | 'MENSAL', itens: { itemId: number, quantidade: number }[] }) {
         return prisma.plano.create({
             data: {
                 nome: data.nome,
                 valorMensal: data.valorMensal,
+                frequencia: data.frequencia || 'MENSAL',
                 ativo: true,
                 itens: {
                     create: data.itens.map(i => ({
@@ -27,7 +28,7 @@ export class AssinaturaService {
         });
     }
 
-    async editPlano(id: number, data: { nome?: string, valorMensal?: number, itens?: { itemId: number, quantidade: number }[] }) {
+    async editPlano(id: number, data: { nome?: string, valorMensal?: number, frequencia?: 'SEMANAL' | 'QUINZENAL' | 'MENSAL', itens?: { itemId: number, quantidade: number }[] }) {
         const plano = await prisma.plano.findUnique({ where: { id } });
         if (!plano) throw new Error('Plano não encontrado');
 
@@ -36,6 +37,7 @@ export class AssinaturaService {
             data: {
                 nome: data.nome,
                 valorMensal: data.valorMensal,
+                frequencia: data.frequencia,
                 ...(data.itens && {
                     itens: {
                         deleteMany: {},
@@ -82,6 +84,7 @@ export class AssinaturaService {
         }
 
         const hoje = new Date();
+        const proximoVencimento = this.calcularProximoVencimento(hoje, plano.frequencia);
 
         const novaAssinatura = await prisma.assinatura.create({
             data: {
@@ -89,6 +92,8 @@ export class AssinaturaService {
                 planoId,
                 status: statusAssinatura.ATIVA,
                 diaVencimento: hoje.getDate(),
+                dataProximoVencimento: proximoVencimento,
+                dataUltimoPagamento: hoje,
                 creditos: {
                     create: plano.itens.map(i => ({
                         itemId: i.itemId,
@@ -104,7 +109,7 @@ export class AssinaturaService {
             await prisma.transacao.create({
                 data: {
                     valorTotal: plano.valorMensal,
-                    descricao: `Pagamento/Renovação Plano de Assinatura: ${plano.nome}`,
+                    descricao: `Pagamento/Adesão Plano: ${plano.nome}`,
                     clienteId,
                     profissionalId: profissionalIdParaTransacao,
                     tipoTransacaoId: 1 // 1 equivale a ENTRADA
@@ -115,6 +120,74 @@ export class AssinaturaService {
         }
 
         return novaAssinatura;
+    }
+
+    async renewSubscription(assinaturaId: number, profissionalIdParaTransacao: number) {
+        const assinatura = await prisma.assinatura.findUnique({
+            where: { id: assinaturaId },
+            include: { plano: { include: { itens: true } } }
+        });
+
+        if (!assinatura) throw new Error('Assinatura não encontrada');
+        if (assinatura.status !== statusAssinatura.ATIVA) throw new Error('Apenas assinaturas ativas podem ser renovadas');
+
+        const hoje = new Date();
+        // Se já venceu, calculamos a partir de hoje. Se ainda não venceu, estendemos a partir do vencimento atual.
+        const baseCalculo = (assinatura.dataProximoVencimento && assinatura.dataProximoVencimento > hoje) 
+            ? assinatura.dataProximoVencimento 
+            : hoje;
+            
+        const novoVencimento = this.calcularProximoVencimento(baseCalculo, assinatura.plano.frequencia);
+
+        const assinaturaAtualizada = await prisma.assinatura.update({
+            where: { id: assinaturaId },
+            data: {
+                dataProximoVencimento: novoVencimento,
+                dataUltimoPagamento: hoje,
+                creditos: {
+                    deleteMany: {},
+                    create: assinatura.plano.itens.map(i => ({
+                        itemId: i.itemId,
+                        quantidadeRestante: i.quantidade
+                    }))
+                }
+            },
+            include: { creditos: true }
+        });
+
+        // Registra o pagamento da renovação
+        try {
+            await prisma.transacao.create({
+                data: {
+                    valorTotal: assinatura.plano.valorMensal,
+                    descricao: `Renovação de Assinatura: ${assinatura.plano.nome}`,
+                    clienteId: assinatura.clienteId,
+                    profissionalId: profissionalIdParaTransacao,
+                    tipoTransacaoId: 1 // ENTRADA
+                }
+            });
+        } catch (err) {
+            console.warn('Aviso: Assinatura renovada mas falhou ao registrar no caixa:', err);
+        }
+
+        return assinaturaAtualizada;
+    }
+
+    private calcularProximoVencimento(dataReferencia: Date, frequencia: string): Date {
+        const data = new Date(dataReferencia);
+        switch (frequencia) {
+            case 'SEMANAL':
+                data.setDate(data.getDate() + 7);
+                break;
+            case 'QUINZENAL':
+                data.setDate(data.getDate() + 15);
+                break;
+            case 'MENSAL':
+            default:
+                data.setMonth(data.getMonth() + 1);
+                break;
+        }
+        return data;
     }
 
     async getAssinaturaAtivaByClienteId(clienteId: number) {

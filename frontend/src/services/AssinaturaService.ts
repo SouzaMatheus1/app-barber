@@ -28,5 +28,9 @@ export const assinaturaService = {
   getAssinaturaAtiva: async (clienteId: number) => {
     const res = await api.get(`/assinaturas/cliente/${clienteId}/ativa`);
     return res.data;
+  },
+  renovar: async (id: number, profissionalIdParaTransacao: number) => {
+    const res = await api.patch(`/assinaturas/${id}/renovar`, { profissionalIdParaTransacao });
+    return res.data;
   }
 };

@@ -70,14 +70,20 @@ const Transacoes: React.FC = () => {
   const [descricao, setDescricao] = useState('Atendimento: Avulso');
   const [descricaoDirty, setDescricaoDirty] = useState(false);
 
-  useEffect(() => {
-    if (!descricaoDirty) {
-      setDescricao(`Atendimento: ${clientName || 'Avulso'}`);
-    }
-  }, [clientName, descricaoDirty]);
   const [cartItems, setCartItems] = useState<CartItem[]>([
     { uuid: crypto.randomUUID(), itemId: undefined, name: '', quantity: 1, originalPrice: 0, usouCredito: false }
   ]);
+
+  useEffect(() => {
+    if (!descricaoDirty) {
+      const itensNomes = cartItems
+        .filter(item => item.name)
+        .map(item => `${item.name}${item.quantity > 1 ? ` (x${item.quantity})` : ''}`)
+        .join(', ');
+      
+      setDescricao(itensNomes || `Atendimento: ${clientName || 'Avulso'}`);
+    }
+  }, [clientName, cartItems, descricaoDirty]);
 
   // UI state
   const [loading, setLoading] = useState(false);
@@ -626,7 +632,8 @@ const Transacoes: React.FC = () => {
               <thead>
                 <tr className="bg-[var(--color-background)]">
                   <th className="py-4 px-6 text-[var(--color-text)]/70 font-semibold text-sm uppercase tracking-wider">Data</th>
-                  <th className="py-4 px-6 text-[var(--color-text)]/70 font-semibold text-sm uppercase tracking-wider">Descrição / Cliente</th>
+                  <th className="py-4 px-6 text-[var(--color-text)]/70 font-semibold text-sm uppercase tracking-wider">Descrição</th>
+                  <th className="py-4 px-6 text-[var(--color-text)]/70 font-semibold text-sm uppercase tracking-wider">Cliente</th>
                   <th className="py-4 px-6 text-[var(--color-text)]/70 font-semibold text-sm uppercase tracking-wider">Pagamento</th>
                   <th className="py-4 px-6 text-[var(--color-text)]/70 font-semibold text-sm uppercase tracking-wider">Valor</th>
                   <th className="py-4 px-6 text-[var(--color-text)]/70 font-semibold text-sm uppercase tracking-wider text-right">Ações</th>
@@ -641,6 +648,7 @@ const Transacoes: React.FC = () => {
                   <tr key={t.id} className="hover:bg-[var(--color-primary)]/5">
                     <td className="py-4 px-6 text-[var(--color-text)] font-medium">{new Date(t.data).toLocaleString('pt-BR')}</td>
                     <td className="py-4 px-6 text-[var(--color-text)]/80">{t.descricao || 'Sem descrição'}</td>
+                    <td className="py-4 px-6 text-[var(--color-text)]/80">{t.cliente?.nome || 'Cliente Avulso'}</td>
                     <td className="py-4 px-6 text-[var(--color-primary)] font-bold text-xs uppercase tracking-widest">{t.metodoPagamento?.descricao || '-'}</td>
                     <td className="py-4 px-6 text-[var(--color-primary)] font-bold">R$ {Number(t.valorTotal).toFixed(2)}</td>
                     <td className="py-4 px-6 text-right space-x-3">

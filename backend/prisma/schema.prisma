@@ -165,11 +165,12 @@ model ItemTransacao {
 }
 
 model Plano {
-  id          Int     @id @default(autoincrement())
-  empresaId   Int     @default(1)
+  id          Int            @id @default(autoincrement())
+  empresaId   Int            @default(1)
   nome        String
-  valorMensal Decimal @db.Decimal(10, 2)
-  ativo       Boolean @default(true)
+  valorMensal Decimal        @db.Decimal(10, 2)
+  ativo       Boolean        @default(true)
+  frequencia  FrequenciaPlano @default(MENSAL)
 
   empresa     Empresa      @relation(fields: [empresaId], references: [id])
   assinaturas Assinatura[]
@@ -194,13 +195,15 @@ model ItemPlano {
 }
 
 model Assinatura {
-  id            Int              @id @default(autoincrement())
-  empresaId     Int              @default(1)
-  status        statusAssinatura @default(ATIVA)
-  diaVencimento Int?
-  criadoEm      DateTime         @default(now())
-  clienteId     Int
-  planoId       Int
+  id                    Int              @id @default(autoincrement())
+  empresaId             Int              @default(1)
+  status                statusAssinatura @default(ATIVA)
+  diaVencimento         Int?
+  dataProximoVencimento DateTime?
+  dataUltimoPagamento   DateTime?
+  criadoEm              DateTime         @default(now())
+  clienteId             Int
+  planoId               Int
 
   empresa  Empresa             @relation(fields: [empresaId], references: [id])
   cliente  Cliente             @relation(fields: [clienteId], references: [id])
@@ -230,6 +233,12 @@ model CreditoAssinatura {
 enum statusAssinatura {
   ATIVA
   INATIVA
+}
+
+enum FrequenciaPlano {
+  SEMANAL
+  QUINZENAL
+  MENSAL
 }
 
 model Tema {

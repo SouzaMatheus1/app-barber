@@ -292,7 +292,7 @@ const Transacoes: React.FC = () => {
       descricao: t.descricao || '',
       valorTotal: t.valorTotal,
       formaPagamentoId: t.formaPagamentoId || 1,
-      data: new Date(t.data).toISOString().slice(0, 16) // datetime-local format
+      data: new Date(new Date(t.data).getTime() - new Date(t.data).getTimezoneOffset() * 60000).toISOString().slice(0, 16) // datetime-local format
     });
     setEditModalOpen(true);
   };

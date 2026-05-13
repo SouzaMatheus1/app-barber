@@ -13,7 +13,7 @@ A implementação multi-tenant foi projetada sob os seguintes pilares:
 As seguintes modificações foram implementadas na base:
 1. **Model `TipoEmpresa`**: Sub-entidade criada para permitir que o sistema classifique clientes B2B (Ex: ID 1 = Barbearia, ID 2 = Mecânica).
 2. **Model `Empresa`**: A nova tabela raiz universal arquitetada para representar o locatário real do sistema no lugar da antiga tabela "Barbearia". 
-3. **Coluna `empresaId`**: Foi injetada como Foreign Key de Segurança em absolutamente todas as tabelas transacionais: `Profissional`, `Cliente`, `Transacao`, `ItemCatalogo`, `Plano` e `Assinatura`. 
+3. **Coluna `empresaId`**: Foi injetada como Foreign Key de Segurança em absolutamente todas as tabelas transacionais: `Profissional`, `Cliente`, `Transacao`, `ItemCatalogo`, `Plano`, `Assinatura`, `FechamentoCaixa`, `CategoriaCusto`, `ItemTransacao` e `CreditoAssinatura`. 
 4. **Casos Globais:** Algumas tabelas atuam apenas como dicionário comum compartilhado e são agnósticas (não recebem o ID da Empresa), como por exemplo: `MetodoPagamento`, `Perfil`, `TipoItem`, `TipoTransacao`.
 
 ## 3. Segurança Baseada no App (Contexto Assíncrono)
@@ -30,11 +30,10 @@ A conversão dos antigos bancos isolados baseados no ambiente antigo para a Nuve
 - O Robô lê a Fonte de Dados original (ex: Banco da Empresa 2 isolado) e chuta pacotes de cópia para o banco Master. No meio do trajeto, ele faz `ID + 100.000` em toda chave primária e Foreign Key do relacionamento forçando eles a assumirem o vínculo de `empresaId = 2`.
 - Isso garante 0.00% de perda ou intersecção na integridade do histórico contábil herdado dos clientes.
 
-## 5. Tema Dinâmico (White-label)
+## 5. Tema Dinâmico (White-label) - **[PAUSADO]**
 
-Para suportar o atendimento a diferentes nichos e identidades corporativas, foi implementada uma estrutura de **Tema Dinâmico** baseada no conceito White-label:
-- **Banco de Dados**: Criado o model `Tema` atrelado em relação 1:1 com a `Empresa`. Ele armazena as escolhas estéticas como `corPrimaria`, `corFundo` e `logoUrl`.
-- **Backend (API)**: O sistema expõe as configurações visuais de uma empresa a partir de seu `slug` através de endpoints públicos. Isso garante que a customização carregue _antes_ mesmo de existir uma sessão de login (útil para portais de clientes).
-- **Frontend (Injeção de CSS)**: As cores fixas foram substituídas por variáveis semânticas CSS (`var(--color-primary)`, etc.). Um Hook customizado (`useTheme.ts`) intercepta o ciclo de vida inicial do React, busca a paleta baseada no domínio/slug e injeta os valores na folha de estilos (DOM Root).
+A funcionalidade de Temas Dinâmicos por inquilino foi projetada, porém encontra-se **temporariamente pausada** para priorizar a estabilidade do MVP SaaS.
+- **Estado Atual**: O modelo `Tema` foi removido do banco de dados e o controlador (`TemaController`) atua como um *stub*, retornando sempre uma paleta padrão (`#C9A84C`, `#0A0A0A`, etc.) para evitar erros na interface. As cores base atuais estão declaradas de forma global através de variáveis CSS no arquivo `frontend/src/index.css`.
+- **Planejamento Futuro**: Quando reativado, um model `Tema` atrelado em relação 1:1 com a `Empresa` armazenará as escolhas estéticas (cor primária, logo, etc.), e o hook `useTheme.ts` no frontend voltará a interceptar as configurações baseadas no `slug` para injetar os valores no DOM Root.
 
 *(Documentação técnica arquivada no controle de versões sob a branch `feature/multi-tenant`)*

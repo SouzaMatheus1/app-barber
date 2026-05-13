@@ -15,13 +15,16 @@ const adapter = new PrismaMariaDb({
 const basePrisma = new PrismaClient({ adapter });
 
 const TENANT_MODELS = [
-  'Profissional', 
-  'Cliente', 
-  'ItemCatalogo', 
-  'Transacao', 
-  'Plano', 
+  'Profissional',
+  'Cliente',
+  'ItemCatalogo',
+  'Transacao',
+  'Plano',
   'Assinatura',
-  'FechamentoCaixa'
+  'FechamentoCaixa',
+  'CategoriaCusto',
+  'ItemTransacao',
+  'CreditoAssinatura'
 ];
 
 export const prisma = basePrisma.$extends({
@@ -29,7 +32,7 @@ export const prisma = basePrisma.$extends({
     $allModels: {
       async $allOperations({ args, query, model, operation }) {
         const store = tenantStorage.getStore();
-        
+
         // Se existir um tenant no contexto e o modelo for suportado:
         if (store?.empresaId && TENANT_MODELS.includes(model)) {
           const bId = store.empresaId;
@@ -39,11 +42,11 @@ export const prisma = basePrisma.$extends({
           if (['findMany', 'findFirst', 'updateMany', 'deleteMany', 'count', 'aggregate', 'groupBy'].includes(operation)) {
             a.where = { ...a.where, empresaId: bId };
           }
-          
+
           if (operation === 'create') {
             a.data = { ...a.data, empresaId: bId };
           }
-          
+
           if (operation === 'createMany') {
             if (Array.isArray(a.data)) {
               a.data = a.data.map((d: any) => ({ ...d, empresaId: bId }));
@@ -51,7 +54,7 @@ export const prisma = basePrisma.$extends({
               a.data = { ...a.data, empresaId: bId };
             }
           }
-          
+
           if (['findUnique', 'update', 'delete'].includes(operation)) {
             const id = a.where?.id;
             if (id) {
@@ -60,7 +63,7 @@ export const prisma = basePrisma.$extends({
                 where: { id, empresaId: bId }
               });
               if (exists === 0) {
-                 throw new Error(`[Multi-tenant] Acesso restrito ou registro inexistente.`);
+                throw new Error(`[Multi-tenant] Acesso restrito ou registro inexistente.`);
               }
             }
           }

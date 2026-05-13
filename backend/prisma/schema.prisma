@@ -30,6 +30,8 @@ model Empresa {
   assinaturas     Assinatura[]
   categoriasCusto CategoriaCusto[]
   fechamentosCaixa FechamentoCaixa[]
+  itensTransacao ItemTransacao[]
+  creditosAssinatura CreditoAssinatura[]
 
   @@index([tipoEmpresaId])
   @@map("Empresa")
@@ -166,15 +168,18 @@ model TipoTransacao {
 
 model ItemTransacao {
   id                    Int     @id @default(autoincrement())
+  empresaId             Int     @default(1)
   transacaoId           Int
   itemId                Int
   quantidade            Int     @default(1)
   precoUnitario         Decimal @db.Decimal(10, 2)
   usouCreditoAssinatura Boolean @default(false)
 
+  empresa   Empresa      @relation(fields: [empresaId], references: [id])
   item      ItemCatalogo @relation(fields: [itemId], references: [id])
   transacao Transacao    @relation(fields: [transacaoId], references: [id])
 
+  @@index([empresaId])
   @@index([itemId])
   @@index([transacaoId])
   @@map("ItemTransacao")
@@ -234,13 +239,16 @@ model Assinatura {
 
 model CreditoAssinatura {
   id                 Int @id @default(autoincrement())
+  empresaId          Int @default(1)
   assinaturaId       Int
   itemId             Int
   quantidadeRestante Int
 
+  empresa    Empresa      @relation(fields: [empresaId], references: [id])
   assinatura Assinatura   @relation(fields: [assinaturaId], references: [id])
   item       ItemCatalogo @relation(fields: [itemId], references: [id])
 
+  @@index([empresaId])
   @@index([assinaturaId])
   @@index([itemId])
   @@map("CreditoAssinatura")

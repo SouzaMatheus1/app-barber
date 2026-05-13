@@ -29,7 +29,7 @@ model Empresa {
   planos          Plano[]
   assinaturas     Assinatura[]
   categoriasCusto CategoriaCusto[]
-  tema            Tema?
+  fechamentosCaixa FechamentoCaixa[]
 
   @@index([tipoEmpresaId])
   @@map("Empresa")
@@ -141,6 +141,7 @@ model Transacao {
   @@index([formaPagamentoId])
   @@index([empresaId])
   @@index([categoriaCustoId])
+  @@index([empresaId, data])
   @@map("Transacao")
 }
 
@@ -256,18 +257,18 @@ enum FrequenciaPlano {
   MENSAL
 }
 
-model Tema {
-  id            Int     @id @default(autoincrement())
-  empresaId     Int     @unique
-  corPrimaria   String? @default("#C9A84C")
-  corSecundaria String? @default("#E2C175")
-  corFundo      String? @default("#0A0A0A")
-  corSuperficie String? @default("#111111")
-  corTexto      String? @default("#F5F5F5")
-  logoUrl       String?
-  faviconUrl    String?
+model FechamentoCaixa {
+  id           Int      @id @default(autoincrement())
+  empresaId    Int
+  data         DateTime @db.Date
+  saldoInicial Decimal  @db.Decimal(10, 2)
+  receitas     Decimal  @db.Decimal(10, 2) @default(0)
+  despesas     Decimal  @db.Decimal(10, 2) @default(0)
+  saldoFinal   Decimal  @db.Decimal(10, 2)
 
-  empresa Empresa @relation(fields: [empresaId], references: [id])
+  empresa      Empresa  @relation(fields: [empresaId], references: [id])
 
-  @@map("Tema")
+  @@unique([empresaId, data])
+  @@index([empresaId])
+  @@map("FechamentoCaixa")
 }

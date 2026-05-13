@@ -10,6 +10,8 @@ import { AuthController } from '../controllers/authController';
 import { AssinaturaController } from '../controllers/AssinaturaController';
 import { TemaController } from '../controllers/TemaController';
 import { CategoriaCustoController } from '../controllers/CategoriaCustoController';
+import { FinanceiroController } from '../controllers/FinanceiroController';
+import { RelatorioController } from '../controllers/RelatorioController';
 
 const routes = Router();
 const profissionalController = new ProfissionalController();
@@ -21,6 +23,8 @@ const caixaController = new CaixaController();
 const authController = new AuthController();
 const assinaturaController = new AssinaturaController();
 const categoriaCustoController = new CategoriaCustoController();
+const financeiroController = new FinanceiroController();
+const relatorioController = new RelatorioController();
 
 // profissional
 routes.get('/profissionais', isAuth, profissionalController.listar);
@@ -69,6 +73,10 @@ routes.get('/comissoes/profissional/:id', isAuth, comissaoController.relatorio);
 // rotas protegidas
 // resumo caixa diario
 routes.get('/caixa/diario', isAuth, isAdmin, caixaController.resumo);
+
+// fluxo de caixa
+routes.get('/financeiro/fluxo-caixa', isAuth, financeiroController.fluxoCaixa);
+routes.get('/relatorios/vendas-produtos', isAuth, relatorioController.vendasProdutos);
 
 routes.post('/login', authController.login)
 

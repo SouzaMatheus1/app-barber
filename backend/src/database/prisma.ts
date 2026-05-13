@@ -20,7 +20,8 @@ const TENANT_MODELS = [
   'ItemCatalogo', 
   'Transacao', 
   'Plano', 
-  'Assinatura'
+  'Assinatura',
+  'FechamentoCaixa'
 ];
 
 export const prisma = basePrisma.$extends({

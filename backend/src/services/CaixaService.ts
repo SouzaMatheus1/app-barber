@@ -23,11 +23,21 @@ export class CaixaService {
             if (transacao.tipoTransacaoId === 2) { // SAIDA
                 saldoInicial -= Number(transacao.valorTotal);
             } else { // ENTRADA (Calcula comissão se houver itens)
+                const valorReal = Number(transacao.valorTotal);
+                let somaValorItens = 0;
+                let somaComissaoItens = 0;
+
                 transacao.itens.forEach((itemTransacao: any) => {
                     const totalItem = itemTransacao.quantidade * Number(itemTransacao.precoUnitario);
                     const percentualComissao = itemTransacao.item.comissao ? Number(itemTransacao.item.comissao) : 0;
-                    saldoInicial += totalItem - ((totalItem * percentualComissao) / 100);
+                    somaValorItens += totalItem;
+                    somaComissaoItens += (totalItem * percentualComissao) / 100;
                 });
+                
+                const razaoPagamento = somaValorItens > 0 ? valorReal / somaValorItens : 1;
+                const comissaoReal = somaComissaoItens * razaoPagamento;
+                
+                saldoInicial += (valorReal - comissaoReal);
             }
         });
 
@@ -59,15 +69,26 @@ export class CaixaService {
                     avulsosCount++;
                 }
 
+                const valorReal = Number(transacao.valorTotal);
+                faturamentoDia += valorReal;
+
+                let somaValorItens = 0;
+                let somaComissaoItens = 0;
+
                 transacao.itens.forEach((itemTransacao: any) => {
                     const totalItem = itemTransacao.quantidade * Number(itemTransacao.precoUnitario);
                     const percentualComissao = itemTransacao.item.comissao ? Number(itemTransacao.item.comissao) : 0;
-                    const valorComissao = (totalItem * percentualComissao) / 100;
-
-                    faturamentoDia += totalItem;
-                    comissoesDia += valorComissao;
-                    parteEmpresaDia += (totalItem - valorComissao);
+                    
+                    somaValorItens += totalItem;
+                    somaComissaoItens += (totalItem * percentualComissao) / 100;
                 });
+
+                // Calcula comissão proporcional ao valorReal caso tenha havido desconto ou acréscimo
+                const razaoPagamento = somaValorItens > 0 ? valorReal / somaValorItens : 1;
+                const comissaoReal = somaComissaoItens * razaoPagamento;
+
+                comissoesDia += comissaoReal;
+                parteEmpresaDia += (valorReal - comissaoReal);
             }
         });
 

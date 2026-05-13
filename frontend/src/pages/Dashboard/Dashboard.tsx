@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { TrendingUp, Users, Scissors, DollarSign, Loader2 } from 'lucide-react';
 import { dashboardService } from '../../services/dashboardService';
 import { useAuth } from '../../contexts/AuthContext';
+import FluxoCaixaTab from './FluxoCaixaTab';
+import VendasTab from './VendasTab';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -10,8 +12,10 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState<any[]>([]);
   const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'geral' | 'fluxo' | 'vendas'>('geral');
 
   useEffect(() => {
+    if (activeTab !== 'geral') return;
     async function loadData() {
       try {
         setLoading(true);
@@ -55,8 +59,10 @@ const Dashboard: React.FC = () => {
       }
     }
 
-    loadData();
-  }, []);
+    if (activeTab === 'geral') {
+      loadData();
+    }
+  }, [activeTab]);
 
   if (loading) {
     return (
@@ -70,10 +76,36 @@ const Dashboard: React.FC = () => {
     <div className="space-y-8 animate-in fade-in duration-500">
       <header>
         <h1 className="text-3xl font-serif font-bold text-[var(--color-primary)]">{ user?.nomeFantasia || 'Seja bem-vindo' }</h1>
-        <p className="text-[#000000]/60 mt-1">Resumo das atividades métricas de hoje.</p>
+        <p className="text-[#000000]/60 mt-1">Visão geral e relatórios financeiros do seu negócio.</p>
       </header>
 
-      {/* Metrics Grid */}
+      <div className="flex border-b border-[var(--color-primary)]/20 mb-6">
+        <button
+          className={`py-3 px-6 font-semibold text-sm transition-colors relative ${activeTab === 'geral' ? 'text-[var(--color-primary)]' : 'text-[var(--color-text)]/60 hover:text-[var(--color-primary)]/80'}`}
+          onClick={() => setActiveTab('geral')}
+        >
+          Visão Geral
+          {activeTab === 'geral' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[var(--color-primary)]"></span>}
+        </button>
+        <button
+          className={`py-3 px-6 font-semibold text-sm transition-colors relative ${activeTab === 'fluxo' ? 'text-[var(--color-primary)]' : 'text-[var(--color-text)]/60 hover:text-[var(--color-primary)]/80'}`}
+          onClick={() => setActiveTab('fluxo')}
+        >
+          Fluxo de Caixa
+          {activeTab === 'fluxo' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[var(--color-primary)]"></span>}
+        </button>
+        <button
+          className={`py-3 px-6 font-semibold text-sm transition-colors relative ${activeTab === 'vendas' ? 'text-[var(--color-primary)]' : 'text-[var(--color-text)]/60 hover:text-[var(--color-primary)]/80'}`}
+          onClick={() => setActiveTab('vendas')}
+        >
+          Vendas de Produtos
+          {activeTab === 'vendas' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[var(--color-primary)]"></span>}
+        </button>
+      </div>
+
+      {activeTab === 'geral' && (
+        <div className="space-y-8 animate-in fade-in duration-500">
+          {/* Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {metrics.map((metric) => (
           <div
@@ -137,6 +169,11 @@ const Dashboard: React.FC = () => {
           </table>
         </div>
       </div>
+      </div>
+      )}
+
+      {activeTab === 'fluxo' && <FluxoCaixaTab />}
+      {activeTab === 'vendas' && <VendasTab />}
     </div>
   );
 };

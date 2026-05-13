@@ -24,6 +24,11 @@ export function useTheme(slugProp?: string) {
       try {
         setLoadingTheme(true);
 
+        // DESABILITADO TEMPORARIAMENTE
+        setLoadingTheme(false);
+        return;
+        // --------------------------
+
         const queryParams = new URLSearchParams(window.location.search);
         const slugQuery = queryParams.get('slug') || queryParams.get('company');
         

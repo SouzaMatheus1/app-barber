@@ -1,6 +1,7 @@
 import { prisma } from '../database/prisma';
 import { ItemTransacao, statusAssinatura } from '@prisma/client';
 import { AppError } from '../utils/AppError';
+import { tenantStorage } from '../database/tenantContext';
 
 export class TransacaoService {
     async listAll(){
@@ -20,6 +21,58 @@ export class TransacaoService {
         });
 
         return transacoes;
+    }
+
+    private async syncFechamentoCaixa(tx: any, dataStr: Date | string) {
+        const store = tenantStorage.getStore();
+        if (!store?.empresaId) return;
+        const empresaId = store.empresaId;
+
+        const dataObj = new Date(dataStr);
+        // Normaliza para o início do dia no UTC local para alinhar com banco
+        const data = new Date(dataObj.getFullYear(), dataObj.getMonth(), dataObj.getDate());
+        const dataFim = new Date(data.getTime() + 24 * 60 * 60 * 1000);
+
+        const transacoesDoDia = await tx.transacao.findMany({
+            where: {
+                data: {
+                    gte: data,
+                    lt: dataFim
+                }
+            }
+        });
+
+        let receitas = 0;
+        let despesas = 0;
+
+        transacoesDoDia.forEach((t: any) => {
+            if (t.tipoTransacaoId === 2) { // SAIDA
+                despesas += Number(t.valorTotal);
+            } else { // ENTRADA
+                receitas += Number(t.valorTotal);
+            }
+        });
+
+        const saldoFinal = receitas - despesas;
+
+        await tx.fechamentoCaixa.upsert({
+            where: {
+                empresaId_data: { empresaId, data }
+            },
+            create: {
+                empresaId,
+                data,
+                saldoInicial: 0,
+                receitas,
+                despesas,
+                saldoFinal
+            },
+            update: {
+                receitas,
+                despesas,
+                saldoFinal
+            }
+        });
     }
 
     async create(dataParams: {
@@ -151,6 +204,9 @@ export class TransacaoService {
                     });
                 }
             }
+
+            await this.syncFechamentoCaixa(tx, trx.data);
+
             return trx;
         });
 
@@ -173,24 +229,36 @@ export class TransacaoService {
         if(!transacao)
             throw new AppError('Registro não encontrado', 404);
 
-        const result = await prisma.transacao.update({
-            where: { id },
-            data: {
-                ...(dataParams.descricao && { descricao: dataParams.descricao }),
-                ...(dataParams.valorTotal !== undefined && { valorTotal: dataParams.valorTotal }),
-                ...(dataParams.tipoTransacaoId && { tipoTransacaoId: dataParams.tipoTransacaoId }),
-                ...(dataParams.profissionalId && { profissionalId: dataParams.profissionalId }),
-                ...(dataParams.clienteId && { clienteId: dataParams.clienteId }),
-                ...(dataParams.formaPagamentoId && { formaPagamentoId: dataParams.formaPagamentoId }),
-                ...(dataParams.data && { data: new Date(dataParams.data) })
-            },
-            select: {
-                descricao: true,
-                valorTotal: true,
-                tipoTransacaoId: true,
-                profissionalId: true,
-                clienteId: true
+        const result = await prisma.$transaction(async (tx) => {
+            const updated = await tx.transacao.update({
+                where: { id },
+                data: {
+                    ...(dataParams.descricao && { descricao: dataParams.descricao }),
+                    ...(dataParams.valorTotal !== undefined && { valorTotal: dataParams.valorTotal }),
+                    ...(dataParams.tipoTransacaoId && { tipoTransacaoId: dataParams.tipoTransacaoId }),
+                    ...(dataParams.profissionalId && { profissionalId: dataParams.profissionalId }),
+                    ...(dataParams.clienteId && { clienteId: dataParams.clienteId }),
+                    ...(dataParams.formaPagamentoId && { formaPagamentoId: dataParams.formaPagamentoId }),
+                    ...(dataParams.data && { data: new Date(dataParams.data) })
+                },
+                select: {
+                    descricao: true,
+                    valorTotal: true,
+                    tipoTransacaoId: true,
+                    profissionalId: true,
+                    clienteId: true,
+                    data: true
+                }
+            });
+
+            await this.syncFechamentoCaixa(tx, updated.data);
+            
+            // Se a data mudou, também precisamos sincronizar a data antiga
+            if (dataParams.data && new Date(dataParams.data).getDate() !== transacao.data.getDate()) {
+                await this.syncFechamentoCaixa(tx, transacao.data);
             }
+
+            return updated;
         });
 
         return result;
@@ -204,10 +272,11 @@ export class TransacaoService {
         if (!transacao)
             throw new AppError('Transação não encontrada', 404);
 
-        await prisma.$transaction([
-            prisma.itemTransacao.deleteMany({ where: { transacaoId: id } }),
-            prisma.transacao.delete({ where: { id } })
-        ]);
+        await prisma.$transaction(async (tx) => {
+            await tx.itemTransacao.deleteMany({ where: { transacaoId: id } });
+            await tx.transacao.delete({ where: { id } });
+            await this.syncFechamentoCaixa(tx, transacao.data);
+        });
 
         return { message: 'Transação e itens excluídos com sucesso' };
     }

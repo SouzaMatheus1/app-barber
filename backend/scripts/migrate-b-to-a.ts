@@ -26,7 +26,7 @@ const prismaOld = createPrismaClient(process.env.DATABASE_URL_B);
 const prismaNew = createPrismaClient(process.env.DATABASE_URL_A);
 
 const TARGET_EMPRESA_ID = 2; // Barbearia B
-const BATCH_SIZE = 500;
+const BATCH_SIZE = 200;
 
 // Dicionários Globais (Texto -> Novo ID)
 const perfilMap = new Map<string, number>();
@@ -79,8 +79,7 @@ async function migrateTable(
       console.log(`✅ Lote processado (${skip} até ${skip + records.length}) - Total: ${totalProcessados}`);
     } catch (error) {
       console.error(`❌ ERRO crítico no lote ${skip} da tabela ${tableName}:`, error);
-      // Aqui podemos decidir abortar a migração com 'throw error' ou continuar 
-      // Depende da rigorosidade desejada, mas logamos para análise
+      process.exit(1);
     }
 
     skip += BATCH_SIZE;
@@ -114,8 +113,8 @@ async function main() {
         return perfilMap.get(desc) || 1; 
       });
 
-      const inserted = await prismaNew.$transaction(
-        batch.map((r, i) => prismaNew.profissional.create({
+      const inserted = await prismaNew.$transaction(async (tx) => {
+        return await Promise.all(batch.map((r, i) => tx.profissional.create({
           data: {
             empresaId: TARGET_EMPRESA_ID,
             nome: r.nome,
@@ -125,15 +124,15 @@ async function main() {
             ativo: r.ativo ? true : false,
             perfilId: novosPerfis[i]
           }
-        }))
-      );
+        })));
+      }, { timeout: 60000 });
       inserted.forEach((r, i) => profissionalMap.set(batch[i].id, r.id));
     });
 
     // 2. Cliente
     await migrateTable('Cliente', async (batch) => {
-      const inserted = await prismaNew.$transaction(
-        batch.map(r => prismaNew.cliente.create({
+      const inserted = await prismaNew.$transaction(async (tx) => {
+        return await Promise.all(batch.map(r => tx.cliente.create({
           data: {
             empresaId: TARGET_EMPRESA_ID,
             nome: r.nome,
@@ -141,8 +140,8 @@ async function main() {
             criadoEm: r.criadoEm,
             ativo: r.ativo ? true : false
           }
-        }))
-      );
+        })));
+      }, { timeout: 60000 });
       inserted.forEach((r, i) => clienteMap.set(batch[i].id, r.id));
     });
 
@@ -156,8 +155,8 @@ async function main() {
         return tipoItemMap.get(desc) || 1;
       });
 
-      const inserted = await prismaNew.$transaction(
-        batch.map((r, i) => prismaNew.itemCatalogo.create({
+      const inserted = await prismaNew.$transaction(async (tx) => {
+        return await Promise.all(batch.map((r, i) => tx.itemCatalogo.create({
           data: {
             empresaId: TARGET_EMPRESA_ID,
             nome: r.nome,
@@ -167,15 +166,15 @@ async function main() {
             ativo: r.ativo ? true : false,
             tipoItemId: novosTipos[i]
           }
-        }))
-      );
+        })));
+      }, { timeout: 60000 });
       inserted.forEach((r, i) => itemCatalogoMap.set(batch[i].id, r.id));
     });
 
     // 4. Plano
     await migrateTable('Plano', async (batch) => {
-      const inserted = await prismaNew.$transaction(
-        batch.map(r => prismaNew.plano.create({
+      const inserted = await prismaNew.$transaction(async (tx) => {
+        return await Promise.all(batch.map(r => tx.plano.create({
           data: {
             empresaId: TARGET_EMPRESA_ID,
             nome: r.nome,
@@ -183,15 +182,15 @@ async function main() {
             ativo: r.ativo ? true : false,
             frequencia: r.frequencia
           }
-        }))
-      );
+        })));
+      }, { timeout: 60000 });
       inserted.forEach((r, i) => planoMap.set(batch[i].id, r.id));
     });
 
     // 5. ItemPlano
     await migrateTable('ItemPlano', async (batch) => {
-      await prismaNew.$transaction(
-        batch.map(r => {
+      await prismaNew.$transaction(async (tx) => {
+        return await Promise.all(batch.map(r => {
           const novoPlanoId = planoMap.get(r.planoId);
           const novoItemId = itemCatalogoMap.get(r.itemId);
 
@@ -199,21 +198,21 @@ async function main() {
              throw new Error(`Dependência Map ausente: Plano ${r.planoId} / Item ${r.itemId}`);
           }
 
-          return prismaNew.itemPlano.create({
+          return tx.itemPlano.create({
             data: {
               planoId: novoPlanoId,
               itemId: novoItemId,
               quantidade: r.quantidade
             }
           });
-        })
-      );
+        }));
+      }, { timeout: 60000 });
     });
 
     // 6. Assinatura
     await migrateTable('Assinatura', async (batch) => {
-      const inserted = await prismaNew.$transaction(
-        batch.map(r => {
+      const inserted = await prismaNew.$transaction(async (tx) => {
+        return await Promise.all(batch.map(r => {
           const novoClienteId = clienteMap.get(r.clienteId);
           const novoPlanoId = planoMap.get(r.planoId);
 
@@ -221,7 +220,7 @@ async function main() {
              throw new Error(`Dependência Map ausente: Cliente ${r.clienteId} / Plano ${r.planoId}`);
           }
 
-          return prismaNew.assinatura.create({
+          return tx.assinatura.create({
             data: {
               empresaId: TARGET_EMPRESA_ID,
               status: r.status,
@@ -233,15 +232,15 @@ async function main() {
               planoId: novoPlanoId
             }
           });
-        })
-      );
+        }));
+      }, { timeout: 60000 });
       inserted.forEach((r, i) => assinaturaMap.set(batch[i].id, r.id));
     });
 
     // 7. CreditoAssinatura
     await migrateTable('CreditoAssinatura', async (batch) => {
-      await prismaNew.$transaction(
-        batch.map(r => {
+      await prismaNew.$transaction(async (tx) => {
+        return await Promise.all(batch.map(r => {
           const novaAssinaturaId = assinaturaMap.get(r.assinaturaId);
           const novoItemId = itemCatalogoMap.get(r.itemId);
 
@@ -249,7 +248,7 @@ async function main() {
              throw new Error(`Dependência Map ausente: Assinatura ${r.assinaturaId} / Item ${r.itemId}`);
           }
 
-          return prismaNew.creditoAssinatura.create({
+          return tx.creditoAssinatura.create({
             data: {
               empresaId: TARGET_EMPRESA_ID,
               assinaturaId: novaAssinaturaId,
@@ -257,8 +256,8 @@ async function main() {
               quantidadeRestante: r.quantidadeRestante
             }
           });
-        })
-      );
+        }));
+      }, { timeout: 60000 });
     });
 
     // 8. Transacao
@@ -269,8 +268,8 @@ async function main() {
       const tiposB = await prismaOld.$queryRawUnsafe<any[]>('SELECT id, descricao FROM TipoTransacao');
       const tiposOld = new Map(tiposB.map(t => [t.id, t.descricao.toLowerCase()]));
 
-      const inserted = await prismaNew.$transaction(
-        batch.map(r => {
+      const inserted = await prismaNew.$transaction(async (tx) => {
+        return await Promise.all(batch.map(r => {
           const novoClienteId = r.clienteId ? clienteMap.get(r.clienteId) : null;
           const novoProfissionalId = r.profissionalId ? profissionalMap.get(r.profissionalId) : null;
 
@@ -280,7 +279,7 @@ async function main() {
           const descTipo = tiposOld.get(r.tipoTransacaoId) || '';
           const novoTipoTransacaoId = tipoTransacaoMap.get(descTipo) || 1;
 
-          return prismaNew.transacao.create({
+          return tx.transacao.create({
             data: {
               empresaId: TARGET_EMPRESA_ID,
               descricao: r.descricao,
@@ -293,15 +292,15 @@ async function main() {
               categoriaCustoId: null // Omitido neste escopo a menos que também tenha De-Para
             }
           });
-        })
-      );
+        }));
+      }, { timeout: 60000 });
       inserted.forEach((r, i) => transacaoMap.set(batch[i].id, r.id));
     });
 
     // 9. ItemTransacao
     await migrateTable('ItemTransacao', async (batch) => {
-      await prismaNew.$transaction(
-        batch.map(r => {
+      await prismaNew.$transaction(async (tx) => {
+        return await Promise.all(batch.map(r => {
           const novaTransacaoId = transacaoMap.get(r.transacaoId);
           const novoItemId = itemCatalogoMap.get(r.itemId);
 
@@ -309,7 +308,7 @@ async function main() {
              throw new Error(`Dependência Map ausente: Transacao ${r.transacaoId} / Item ${r.itemId}`);
           }
 
-          return prismaNew.itemTransacao.create({
+          return tx.itemTransacao.create({
             data: {
               empresaId: TARGET_EMPRESA_ID,
               transacaoId: novaTransacaoId,
@@ -319,8 +318,8 @@ async function main() {
               usouCreditoAssinatura: r.usouCreditoAssinatura ? true : false
             }
           });
-        })
-      );
+        }));
+      }, { timeout: 60000 });
     });
 
     console.log("🌟 Migração concluída com sucesso!");

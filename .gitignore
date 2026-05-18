@@ -15,3 +15,4 @@ frontend/*.log
 .vite
 
 backend/teste-db.ts
+frontend/hooks/useTheme.ts

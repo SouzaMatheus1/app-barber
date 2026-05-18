@@ -56,11 +56,11 @@ export function useTheme(slugProp?: string) {
         if (data.corTexto) root.style.setProperty('--color-text', data.corTexto);
 
         if (data.faviconUrl) {
-          let link: HTMLLinkElement | null = document.querySelector("link[rel~='icon']");
+          let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
           if (!link) {
-            link = document.createElement('link');
+            link = document.createElement('link') as HTMLLinkElement;
             link.rel = 'icon';
-            document.getElementsByTagName('head')[0].appendChild(link);
+            document.head.appendChild(link);
           }
           link.href = data.faviconUrl;
         }

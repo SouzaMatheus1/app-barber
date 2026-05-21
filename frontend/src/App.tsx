@@ -13,6 +13,7 @@ import { Comissoes } from './pages/Comissoes/Comissoes'
 import Assinaturas from './pages/Assinaturas/Assinaturas'
 import Custos from './pages/Custos/Custos'
 import Layout from './components/Layout/Layout'
+import { Agenda } from './pages/Agenda/Agenda'
 
 function ThemeLoader() {
   useTheme();
@@ -39,6 +40,7 @@ export default function App() {
           <Route element={<PrivateRoute adminOnly />}>
             <Route element={<Layout />}>
               <Route path="/profissionais" element={<Profissionais />} />
+              <Route path="/agenda" element={<Agenda />} />
               <Route path="/catalogo" element={<Catalogo />} />
               <Route path="/comissoes" element={<Comissoes />} />
               <Route path="/assinaturas" element={<Assinaturas />} />

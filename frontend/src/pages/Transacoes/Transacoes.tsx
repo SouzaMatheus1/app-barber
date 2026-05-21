@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { Plus, Trash2, CheckCircle2, Loader2, Crown, User, Edit2, History } from 'lucide-react';
 import { transacaoService } from '../../services/TransacaoService';
 import { assinaturaService } from '../../services/AssinaturaService';
@@ -49,6 +49,7 @@ interface CartItem {
 
 const Transacoes: React.FC = () => {
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   // Tabs
   const [activeTab, setActiveTab] = useState<'nova' | 'historico'>(
     (location.state as any)?.tab === 'historico' ? 'historico' : 'nova'
@@ -144,13 +145,6 @@ const Transacoes: React.FC = () => {
     })();
   }, []);
 
-  // ── Fetch History ──
-  useEffect(() => {
-    if (activeTab === 'historico') {
-      loadHistory();
-    }
-  }, [activeTab]);
-
   const loadHistory = async () => {
     setLoadingHistory(true);
     try {
@@ -174,6 +168,30 @@ const Transacoes: React.FC = () => {
       setLoadingAssinatura(false);
     }
   }, []);
+
+  // ── Auto Fill via Query String ──
+  useEffect(() => {
+    const pId = searchParams.get('profissionalId');
+    const cId = searchParams.get('clienteId');
+    const cNome = searchParams.get('clienteNome');
+
+    if (pId) setProfessional(pId);
+    
+    if (cId) {
+      setSelectedClientId(Number(cId));
+      setClientName(cNome || 'Cliente Vinculado');
+      fetchAssinatura(Number(cId));
+    } else if (cNome) {
+      setClientName(cNome);
+    }
+  }, [searchParams, fetchAssinatura]);
+
+  // ── Fetch History ──
+  useEffect(() => {
+    if (activeTab === 'historico') {
+      loadHistory();
+    }
+  }, [activeTab]);
 
   const selectClient = (cliente: any) => {
     setClientName(cliente.nome);

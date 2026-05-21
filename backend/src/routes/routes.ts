@@ -12,6 +12,7 @@ import { TemaController } from '../controllers/TemaController';
 import { CategoriaCustoController } from '../controllers/CategoriaCustoController';
 import { FinanceiroController } from '../controllers/FinanceiroController';
 import { RelatorioController } from '../controllers/RelatorioController';
+import { AgendamentoController } from '../controllers/AgendamentoController';
 
 const routes = Router();
 const profissionalController = new ProfissionalController();
@@ -25,6 +26,7 @@ const assinaturaController = new AssinaturaController();
 const categoriaCustoController = new CategoriaCustoController();
 const financeiroController = new FinanceiroController();
 const relatorioController = new RelatorioController();
+const agendamentoController = new AgendamentoController();
 
 // profissional
 routes.get('/profissionais', isAuth, profissionalController.listar);
@@ -86,5 +88,11 @@ routes.get('/temas/empresa/:slug', TemaController.getBySlug);
 
 // Rota privada: Painel administrativo altera as cores (precisa de token)
 routes.put('/temas', isAuth, TemaController.update);
+
+// Agendamentos
+routes.get('/agendamentos', isAuth, agendamentoController.listar);
+routes.post('/agendamentos', isAuth, agendamentoController.criar);
+routes.put('/agendamentos/:id/status', isAuth, agendamentoController.alterarStatus);
+routes.delete('/agendamentos/:id', isAuth, agendamentoController.deletar);
 
 export { routes };

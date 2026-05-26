@@ -87,6 +87,7 @@ export class TransacaoService {
         itens?: { itemId: number, quantidade: number, usouCreditoAssinatura?: boolean } []
     }){
         const { descricao, tipoTransacaoId, profissionalId, clienteId, itens, formaPagamentoId, categoriaCustoId, valorTotal } = dataParams;
+        const store = tenantStorage.getStore();
 
         // Validação: profissional é obrigatório para ENTRADAS (atendimento)
         if (tipoTransacaoId === 1 && !profissionalId) {
@@ -169,9 +170,12 @@ export class TransacaoService {
                 quantidade: itemRegistrado.quantidade,
                 precoUnitario: valorItem,
                 usouCreditoAssinatura: usouCredito,
-                item: { connect: { id: itemRegistrado.itemId }}
+                itemId: itemRegistrado.itemId,
+                empresaId: store?.empresaId ?? 1
             }
         });
+
+        const empresaIdAtual = store?.empresaId ?? 1;
 
         /**
          * @function Execução do Fluxo Contábil (Transaction)
@@ -182,6 +186,7 @@ export class TransacaoService {
         const transacao = await prisma.$transaction(async (tx) => {
             const trx = await tx.transacao.create({
                 data: {
+                    empresaId: empresaIdAtual,
                     valorTotal: totalVenda,
                     descricao,
                     data: dataParams.data ? new Date(dataParams.data) : new Date(),

@@ -43,9 +43,11 @@ export const prisma = basePrisma.$extends({
             a.where = { ...a.where, empresaId: bId };
           }
 
-          // Criação única (usa sintaxe de relação, pois create() não aceita FK escalar)
+          // Criação única (escalar, compatível com o adapter MariaDB)
           if (operation === 'create') {
-            a.data = { ...a.data, empresa: { connect: { id: bId } } };
+            if (!a.data.empresaId && !a.data.empresa) {
+              a.data = { ...a.data, empresaId: bId };
+            }
           }
 
           // Criação em massa

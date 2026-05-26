@@ -28,7 +28,7 @@ export class ProfissionalController {
             return res.status(201).json(result);
 
         } catch (error: any) {
-            return res.status(500).json({ error: 'Erro ao cadastrar profissional' });
+            return res.status(400).json({ error: error.message });
         }
     }
 

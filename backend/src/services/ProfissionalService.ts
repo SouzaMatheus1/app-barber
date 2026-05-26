@@ -35,7 +35,7 @@ export class ProfissionalService {
                 nome,
                 email,
                 senha: senhaHash,
-                perfil: {connect: { id: perfilId }}
+                perfilId
             },
             select: {
                 id: true,
@@ -79,7 +79,7 @@ export class ProfissionalService {
                 nome: nome,
                 email: email,
                 senha: senhaHash,
-                perfil: { connect: { id: perfilId }}
+                perfilId
             },
             select: {
                 id: true,

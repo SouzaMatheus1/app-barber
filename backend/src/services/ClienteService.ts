@@ -108,6 +108,7 @@ export class ClienteService {
                 await assinaturaService.subscribe(id, data.planoId, profId);
             } catch (err) {
                 console.error("Erro ao ativar/alterar assinatura na edicao", err);
+                throw err;
             }
         }
 

@@ -34,7 +34,7 @@ export class ItemCatalogoService {
                 preco,
                 comissao,
                 quantidade: quantidade ? Number(quantidade) : 0,
-                tipo: { connect: { id: tipoItemId }}
+                tipoItemId
             },
             select: {
                 id: true,

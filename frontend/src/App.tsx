@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
+import { PortalAuthProvider } from './contexts/PortalAuthContext'
 import { PrivateRoute } from './components/PrivateRoute'
+import { PortalPrivateRoute } from './components/PortalPrivateRoute'
 import { useTheme } from './hooks/useTheme'
 
 import Login from './pages/Login/Login'
@@ -14,6 +16,7 @@ import Assinaturas from './pages/Assinaturas/Assinaturas'
 import Custos from './pages/Custos/Custos'
 import Layout from './components/Layout/Layout'
 import { Agenda } from './pages/Agenda/Agenda'
+import LoginPortal from './pages/Portal/Login/LoginPortal'
 
 function ThemeLoader() {
   useTheme();
@@ -23,9 +26,10 @@ function ThemeLoader() {
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <ThemeLoader />
-        <Routes>
+      <PortalAuthProvider>
+        <BrowserRouter>
+          <ThemeLoader />
+          <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           
@@ -47,8 +51,15 @@ export default function App() {
               <Route path="/custos" element={<Custos />} />
             </Route>
           </Route>
+
+          <Route path="/portal/:slug/login" element={<LoginPortal />} />
+          <Route element={<PortalPrivateRoute />}>
+             {/* Futuras rotas do PWA vão aqui, como /portal/:slug/home */}
+          </Route>
+
         </Routes>
       </BrowserRouter>
+      </PortalAuthProvider>
     </AuthProvider>
   )
 }

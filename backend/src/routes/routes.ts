@@ -13,6 +13,7 @@ import { CategoriaCustoController } from '../controllers/CategoriaCustoControlle
 import { FinanceiroController } from '../controllers/FinanceiroController';
 import { RelatorioController } from '../controllers/RelatorioController';
 import { AgendamentoController } from '../controllers/AgendamentoController';
+import { PortalAuthController } from '../controllers/PortalAuthController';
 
 const routes = Router();
 const profissionalController = new ProfissionalController();
@@ -27,6 +28,7 @@ const categoriaCustoController = new CategoriaCustoController();
 const financeiroController = new FinanceiroController();
 const relatorioController = new RelatorioController();
 const agendamentoController = new AgendamentoController();
+const portalAuthController = new PortalAuthController();
 
 // profissional
 routes.get('/profissionais', isAuth, profissionalController.listar);
@@ -94,5 +96,10 @@ routes.get('/agendamentos', isAuth, agendamentoController.listar);
 routes.post('/agendamentos', isAuth, agendamentoController.criar);
 routes.put('/agendamentos/:id/status', isAuth, agendamentoController.alterarStatus);
 routes.delete('/agendamentos/:id', isAuth, agendamentoController.deletar);
+
+// Portal do Cliente
+routes.post('/portal/:slug/auth/check-phone', portalAuthController.checkPhone);
+routes.post('/portal/:slug/auth/login', portalAuthController.login);
+routes.post('/portal/:slug/auth/register', portalAuthController.register);
 
 export { routes };

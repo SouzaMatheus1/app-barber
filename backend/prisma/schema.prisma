@@ -71,6 +71,7 @@ model Cliente {
   empresaId Int      @default(1)
   nome      String
   telefone  String?
+  senha     String?
   criadoEm  DateTime @default(now())
   ativo     Boolean  @default(true)
 

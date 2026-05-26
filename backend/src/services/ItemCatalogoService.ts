@@ -21,7 +21,7 @@ export class ItemCatalogoService {
         const { nome, preco, comissao, quantidade, tipoItemId } = data;
 
         const exists = await prisma.itemCatalogo.findFirst({
-            where: { nome }
+            where: { nome, ativo: true }
         });
 
         if (exists) {

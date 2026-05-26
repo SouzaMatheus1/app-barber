@@ -36,17 +36,19 @@ export const prisma = basePrisma.$extends({
         // Se existir um tenant no contexto e o modelo for suportado:
         if (store?.empresaId && TENANT_MODELS.includes(model)) {
           const bId = store.empresaId;
-
           const a = args as any;
 
+          // Leituras e exclusões em massa
           if (['findMany', 'findFirst', 'updateMany', 'deleteMany', 'count', 'aggregate', 'groupBy'].includes(operation)) {
             a.where = { ...a.where, empresaId: bId };
           }
 
+          // Criação única (CORRIGIDO PARA INJEÇÃO ESCALAR)
           if (operation === 'create') {
             a.data = { ...a.data, empresaId: bId };
           }
 
+          // Criação em massa
           if (operation === 'createMany') {
             if (Array.isArray(a.data)) {
               a.data = a.data.map((d: any) => ({ ...d, empresaId: bId }));
@@ -55,6 +57,7 @@ export const prisma = basePrisma.$extends({
             }
           }
 
+          // Operações baseadas em ID único
           if (['findUnique', 'update', 'delete'].includes(operation)) {
             const id = a.where?.id;
             if (id) {
@@ -62,6 +65,7 @@ export const prisma = basePrisma.$extends({
               const exists = await (basePrisma as any)[modelNameLower].count({
                 where: { id, empresaId: bId }
               });
+              
               if (exists === 0) {
                 throw new Error(`[Multi-tenant] Acesso restrito ou registro inexistente.`);
               }

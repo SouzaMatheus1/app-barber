@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Plus, 
-  Trash2, 
-  CheckCircle2, 
-  Loader2, 
-  DollarSign, 
-  Tag, 
-  Calendar as CalendarIcon, 
+import {
+  Plus,
+  Trash2,
+  CheckCircle2,
+  Loader2,
+  DollarSign,
+  Tag,
+  Calendar as CalendarIcon,
   History,
   AlertCircle,
   TrendingDown,
@@ -18,14 +18,20 @@ import dayjs from 'dayjs';
 
 const Custos: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'nova' | 'historico' | 'categorias'>('nova');
-  
+
+  const getFormatDataAtual = () => {
+    const d = new Date();
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().slice(0, 16);
+  };
+
   // Form State
   const [valor, setValor] = useState('');
   const [descricao, setDescricao] = useState('');
   const [categoriaId, setCategoriaId] = useState<string>('');
   const [formaPagamentoId, setFormaPagamentoId] = useState<string>('1');
-  const [data, setData] = useState(new Date().toISOString().slice(0, 16));
-  
+  const [data, setData] = useState(getFormatDataAtual());
+
   // Data State
   const [categorias, setCategorias] = useState<CategoriaCusto[]>([]);
   const [historico, setHistorico] = useState<any[]>([]);
@@ -71,7 +77,7 @@ const Custos: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    
+
     try {
       await transacaoService.create({
         descricao,
@@ -83,7 +89,7 @@ const Custos: React.FC = () => {
         profissionalId: null,
         itens: []
       });
-      
+
       setSuccess(true);
       setValor('');
       setDescricao('');
@@ -99,7 +105,7 @@ const Custos: React.FC = () => {
   const handleCriarCategoria = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!novaCategoria.trim()) return;
-    
+
     setLoadingCategoria(true);
     try {
       await categoriaCustoService.criar(novaCategoria);
@@ -142,37 +148,34 @@ const Custos: React.FC = () => {
           </h1>
           <p className="text-gray-400 mt-1">Controle suas despesas e saídas de caixa</p>
         </div>
-        
+
         <div className="flex bg-[#1a1a1a] p-1 rounded-xl border border-white/5 shadow-2xl">
           <button
             onClick={() => setActiveTab('nova')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 ${
-              activeTab === 'nova' 
-                ? 'bg-red-500/10 text-red-500 shadow-inner' 
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 ${activeTab === 'nova'
+                ? 'bg-red-500/10 text-red-500 shadow-inner'
                 : 'text-gray-400 hover:text-white hover:bg-white/5'
-            }`}
+              }`}
           >
             <Plus size={18} />
             Nova Saída
           </button>
           <button
             onClick={() => setActiveTab('historico')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 ${
-              activeTab === 'historico' 
-                ? 'bg-red-500/10 text-red-500 shadow-inner' 
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 ${activeTab === 'historico'
+                ? 'bg-red-500/10 text-red-500 shadow-inner'
                 : 'text-gray-400 hover:text-white hover:bg-white/5'
-            }`}
+              }`}
           >
             <History size={18} />
             Histórico
           </button>
           <button
             onClick={() => setActiveTab('categorias')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 ${
-              activeTab === 'categorias' 
-                ? 'bg-red-500/10 text-red-500 shadow-inner' 
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 ${activeTab === 'categorias'
+                ? 'bg-red-500/10 text-red-500 shadow-inner'
                 : 'text-gray-400 hover:text-white hover:bg-white/5'
-            }`}
+              }`}
           >
             <Tag size={18} />
             Categorias
@@ -186,7 +189,7 @@ const Custos: React.FC = () => {
             <div className="lg:col-span-2">
               <div className="bg-[#1a1a1a] border border-white/5 rounded-3xl p-8 shadow-2xl relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/5 blur-[100px] rounded-full -mr-32 -mt-32 transition-all group-hover:bg-red-500/10" />
-                
+
                 <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
                   <ArrowDownCircle className="text-red-500" />
                   Registrar Nova Despesa
@@ -289,7 +292,7 @@ const Custos: React.FC = () => {
                     </div>
                     <h3 className="text-2xl font-bold text-white">Lançado com Sucesso!</h3>
                     <p className="text-gray-400 mt-2">A despesa foi registrada no caixa.</p>
-                    <button 
+                    <button
                       onClick={() => setSuccess(false)}
                       className="mt-6 text-red-500 hover:underline"
                     >
@@ -310,7 +313,7 @@ const Custos: React.FC = () => {
                   Lançar suas despesas diariamente ajuda a manter o <strong>Faturamento Líquido</strong> real da sua empresa sempre atualizado no painel de controle.
                 </p>
               </div>
-              
+
               <div className="bg-[#1a1a1a] border border-white/5 rounded-3xl p-6">
                 <h3 className="text-white font-bold mb-4">Resumo Rápido</h3>
                 <div className="space-y-4">

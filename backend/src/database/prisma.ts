@@ -43,9 +43,9 @@ export const prisma = basePrisma.$extends({
             a.where = { ...a.where, empresaId: bId };
           }
 
-          // Criação única (CORRIGIDO PARA INJEÇÃO ESCALAR)
+          // Criação única (usa sintaxe de relação, pois create() não aceita FK escalar)
           if (operation === 'create') {
-            a.data = { ...a.data, empresaId: bId };
+            a.data = { ...a.data, empresa: { connect: { id: bId } } };
           }
 
           // Criação em massa

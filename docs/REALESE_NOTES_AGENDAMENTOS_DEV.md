@@ -1,68 +1,61 @@
-# 🛠️ Release Notes - Técnico para Desenvolvedores (v2.0)
+# 📅 Release Notes - Técnico para Desenvolvedores (Agendamentos V2)
 
-Esta documentação detalha as mudanças arquiteturais, estruturais e de segurança introduzidas no sistema com a migração para **Multi-Tenant (SaaS)** e a implementação dos módulos de Assinaturas e Custos.
-
----
-
-## 1. Arquitetura Multi-Tenant & Isolamento de Dados
-
-A arquitetura do sistema foi migrada de *Single-Tenant* (instalações isoladas) para um modelo **SaaS Multi-Tenant** compartilhado (uma instância única de API e Banco de Dados atendendo múltiplos locatários com isolamento estrito).
-
-### Injeção de Contexto Assíncrono (`AsyncLocalStorage`)
-Para evitar vazamentos de dados entre inquilinos (*cross-tenant data leakage*) sob requisições concorrentes, adotamos o `AsyncLocalStorage` do Node.js:
-- **`tenantContext.ts`**: Cria um storage isolado para armazenar o `empresaId` durante o ciclo de vida de cada requisição.
-- **Middleware de Autenticação (`auth.ts`)**: Decodifica o JWT enviado (seja do portal ou administrativo), extrai o `empresaId` criptograficamente assinado e inicia a execução da rota com `tenantStorage.run()`.
-
-### Middleware Global do Prisma (`prisma.ts`)
-Implementamos uma extensão global no Prisma Client (`$allOperations`) que intercepta todas as operações de banco de dados nos modelos definidos em `TENANT_MODELS`:
-- **Operações de Leitura (`findMany`, `findFirst`, etc.)**: Injeta automaticamente a cláusula `where: { empresaId: currentTenantId }` em tempo de execução.
-- **Operações de Escrita (`create`, `createMany`)**: Injeta de forma invisível o `empresaId` nos dados a serem inseridos.
-- **Operações Baseadas em ID (`update`, `delete`, `findUnique`)**: Realiza um pré-check de contagem no modelo garantindo que o registro com o ID fornecido pertence à empresa do contexto atual antes de executar a modificação. Caso contrário, joga um erro de permissão.
+Esta documentação descreve as implementações técnicas do **Módulo de Agendamentos V2** na branch `feature/agendamentos-v2`, incluindo o motor de agendamentos com isolamento de transação, geração de disponibilidade, integração com o Clube de Assinaturas e o fluxo de autenticação do portal do cliente.
 
 ---
 
-## 2. Refatoração de Banco de Dados (`schema.prisma`)
+## 1. Modelagem no Banco de Dados (`schema.prisma`)
 
-Foram aplicadas modificações profundas no banco de dados através de migrations atômicas (`Prisma Migrate`):
-1. **Model `Empresa` (Nova Raiz)**: Substituiu o antigo modelo "Barbearia", generalizando a plataforma white-label.
-2. **Model `TipoEmpresa`**: Permite classificar o tipo de negócio (ex: Barbearia, Salão, Clínica).
-3. **Model `Plano` e `Assinatura`**: Suporte para recorrências contratuais.
-4. **Model `CreditoAssinatura`**: Rastreabilidade e decremento automático de créditos.
-5. **Model `CategoriaCusto` e `FechamentoCaixa`**: Tabelas de apoio contábil.
-6. **Injeção de FK**: A coluna `empresaId` foi adicionada a todas as tabelas transacionais (`Profissional`, `Cliente`, `Transacao`, `ItemCatalogo`, `Assinatura`, `FechamentoCaixa`, `CategoriaCusto`, `ItemTransacao`, `CreditoAssinatura`, `Agendamento`).
+- **Model `Agendamento`**: Armazena as sessões reservadas, contendo `dataHoraInicio`, `dataHoraFim`, `clienteId`, `profissionalId`, `observacao`, `status` (`CONFIRMADO`, `EM_ANDAMENTO`, `CONCLUIDO`, `CANCELADO`, `INDISPONIVEL`) e o vínculo multi-tenant `empresaId`.
+- **Relacionamento N:N**: Mapeado de forma implícita entre `Agendamento` e `ItemCatalogo` (serviços agendados).
 
 ---
 
-## 3. Segurança de Rede, CORS & Sessão
+## 2. Motor de Agendamentos & Concorrência (`AgendamentoService.ts`)
 
-### Configuração de CORS Restrita (`server.ts`)
-Substituímos o CORS padrão (`*`) por um validador de whitelist dinâmico que carrega as origens aceitas em produção via variáveis de ambiente:
-```typescript
-const allowedOrigins = [
-  process.env.ADMIN_FRONTEND_URL,
-  process.env.PORTAL_FRONTEND_URL
-].filter(Boolean) as string[];
-```
-Caso a requisição não venha de uma dessas origens (e o ambiente seja de produção), ela é rejeitada na camada HTTP do Express.
+### Prevenção de Conflito de Horário (Overbooking / Double Booking)
+Para garantir que dois clientes não reservem o mesmo profissional no mesmo período sob condições de alta concorrência:
+- A operação de criação é envelopada em uma transação de banco de dados (`prisma.$transaction`).
+- O nível de isolamento é definido como `RepeatableRead` para travar leituras e escritas concorrentes.
+- Verifica-se a existência de conflitos na faixa de tempo:
+  ```typescript
+  const overbooking = await tx.agendamento.findFirst({
+      where: {
+          profissionalId,
+          status: { in: ['CONFIRMADO', 'EM_ANDAMENTO', 'INDISPONIVEL'] },
+          AND: [
+              { dataHoraInicio: { lt: datetimeFim } },
+              { dataHoraFim: { gt: datetimeInicio } }
+          ]
+      }
+  });
+  ```
 
-### Interceptor Axios & Tratamento de Expirados (`api.ts`)
-- **Separação de Storage**: B2B e PWA rodam em subdomínios diferentes. O Axios foi simplificado para ler a chave do cookie correto baseado no caminho da URL atual (lendo `'portal_token'` para o PWA ou `'token'` para a aplicação administrativa).
-- **Tratamento de status 401**: Adicionado interceptor de resposta que monitora tokens expirados e redireciona dinamicamente:
-  - No PWA: Redireciona para o login do cliente `/portal/${slug}/login` (extraindo o slug da URL atual).
-  - No Admin: Redireciona para `/login`.
+### Integração com Clube de Assinaturas & Créditos
+- **Consumo de Créditos**: Se a opção `usarCreditos` for enviada, o motor localiza a assinatura ativa do cliente, valida se há saldo suficiente para cada serviço agendado na tabela `CreditoAssinatura` e realiza o decremento do saldo.
+- **Estorno Automático**: Caso um agendamento seja marcado como `CANCELADO`, o sistema verifica se ele foi criado utilizando créditos da assinatura (marcado na observação). Se sim, ele realiza o estorno incrementando o saldo do serviço de volta à assinatura ativa do cliente de forma transacional.
+
+### Geração Dinâmica de Slots de Disponibilidade (`getDisponibilidade`)
+- Mapeia o dia selecionado (faixa padrão de atendimento das 08h00 às 20h00) em blocos de 15 minutos.
+- Subtrai a duração total necessária para os serviços selecionados.
+- Elimina os slots que colidem com agendamentos existentes ativos (`CONFIRMADO`, `EM_ANDAMENTO`, `INDISPONIVEL`) do profissional específico e desconsidera horários retroativos.
+- Restrição de antecedência mínima de 30 minutos em agendamentos feitos através do portal do cliente.
 
 ---
 
-## 4. Script de Migração ETL (`scripts/migrate-b-to-a.ts`)
+## 3. Fluxo de Autenticação e Rotas do Portal (PWA)
 
-Desenvolvemos um script robô em TypeScript de alta performance para converter bancos legados para o novo modelo consolidado:
-- Realiza o processamento de tabelas respeitando a ordem de chaves estrangeiras.
-- Utiliza a técnica de *offsetting* (salto de IDs incrementando $100.000$ nas chaves primárias e estrangeiras) para unificar registros sem colisão matemática no banco unificado.
-- Utiliza mapeamento em memória (`Map`) para manter o vínculo entre os IDs originais e os novos IDs gerados.
+- **`PortalAuthController.ts`**: Adicionados endpoints de login e cadastro dedicados a clientes finais. O JWT gerado inclui `{ id, empresaId, isPortal: true }`.
+- **`PortalPrivateRoute.tsx`**: Middleware de rota privada no frontend que direciona clientes sem token ativo no `localStorage` de volta para a rota `/portal/:slug/login`.
+- **Axios Request Interceptor**: Identifica o contexto da rota (/portal) e anexa de forma transparente o token correto (`portal_token` ou `token`).
+- **Axios Response Interceptor**: Monitora respostas com status `401` e limpa as credenciais locais corretas, redirecionando o cliente para a tela de autenticação adequada ao seu subdomínio.
 
 ---
 
-## 5. Módulo de Temas Dinâmicos (Stub)
-O módulo de White-label foi pausado temporariamente para estabilização do MVP:
-- O controlador `TemaController` atua como um *stub*, retornando uma paleta de cores global padrão.
-- As variáveis CSS no DOM Root (`frontend/src/index.css`) garantem o theming do site de forma centralizada e leve.
+## 4. Interface do Portal de Agendamento (`PortalAgendar.tsx`)
+
+Implementamos um fluxo guiado passo a passo para o agendamento de serviços:
+1. **Seleção de Profissional**.
+2. **Seleção de Serviços** (calculando o tempo e valor acumulado em tempo real).
+3. **Seleção de Data e Hora** com listagem dinâmica de slots vagos.
+4. **Forma de Cobrança**: Permite que o cliente opte por agendar usando o saldo de créditos da assinatura ativa ou pagar presencialmente/avulso.

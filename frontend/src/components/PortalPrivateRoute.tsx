@@ -2,7 +2,7 @@ import { Navigate, Outlet, useParams } from 'react-router-dom'
 import { usePortalAuth } from '../contexts/PortalAuthContext'
 
 export function PortalPrivateRoute() {
-  const { token, cliente } = usePortalAuth()
+  const { token } = usePortalAuth()
 
   // No React Strict mode, é melhor verificar diretamente no localStorage
   // ou suportar loading state pra evitar redirect glitch, mas isso serve pro PWA

@@ -9,7 +9,10 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const isPortalPath = typeof window !== 'undefined' && window.location.pathname.includes('/portal');
+  const token = isPortalPath 
+    ? (localStorage.getItem('portal_token') || localStorage.getItem('token'))
+    : (localStorage.getItem('token') || localStorage.getItem('portal_token'));
   
   if (token) {
     if (config.headers && typeof config.headers.set === 'function') {

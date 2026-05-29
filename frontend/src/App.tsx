@@ -17,6 +17,8 @@ import Custos from './pages/Custos/Custos'
 import Layout from './components/Layout/Layout'
 import { Agenda } from './pages/Agenda/Agenda'
 import LoginPortal from './pages/Portal/Login/LoginPortal'
+import PortalHome from './pages/Portal/Home/PortalHome'
+import PortalAgendar from './pages/Portal/Agendar/PortalAgendar'
 
 function ThemeLoader() {
   useTheme();
@@ -54,7 +56,8 @@ export default function App() {
 
           <Route path="/portal/:slug/login" element={<LoginPortal />} />
           <Route element={<PortalPrivateRoute />}>
-             {/* Futuras rotas do PWA vão aqui, como /portal/:slug/home */}
+             <Route path="/portal/:slug/home" element={<PortalHome />} />
+             <Route path="/portal/:slug/agendar" element={<PortalAgendar />} />
           </Route>
 
         </Routes>

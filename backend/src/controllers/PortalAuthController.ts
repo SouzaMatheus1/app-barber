@@ -137,4 +137,28 @@ export class PortalAuthController {
       return res.status(500).json({ error: 'Erro interno do servidor.' });
     }
   }
+
+  async getEmpresa(req: Request, res: Response) {
+    const slug = req.params.slug as string;
+
+    try {
+      const empresa = await prisma.empresa.findUnique({
+        where: { slug },
+        select: {
+          id: true,
+          nomeFantasia: true,
+          slug: true
+        }
+      });
+
+      if (!empresa) {
+        return res.status(404).json({ error: 'Barbearia não encontrada.' });
+      }
+
+      return res.json(empresa);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: 'Erro interno do servidor.' });
+    }
+  }
 }

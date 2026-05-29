@@ -52,6 +52,7 @@ app.use(limiterGeral);
 app.use('/login', limiterAutenticacao);
 
 app.use(express.json({ limit: '10kb' }));
+app.use(express.json());
 app.use(routes);
 
 app.get('/ping', (req, res) => {

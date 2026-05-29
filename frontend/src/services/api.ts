@@ -9,10 +9,8 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const isPortalPath = typeof window !== 'undefined' && window.location.pathname.includes('/portal');
-  const token = isPortalPath 
-    ? (localStorage.getItem('portal_token') || localStorage.getItem('token'))
-    : (localStorage.getItem('token') || localStorage.getItem('portal_token'));
+  const isPortal = typeof window !== 'undefined' && window.location.pathname.includes('/portal');
+  const token = localStorage.getItem(isPortal ? 'portal_token' : 'token');
   
   if (token) {
     if (config.headers && typeof config.headers.set === 'function') {
@@ -26,3 +24,26 @@ api.interceptors.request.use((config) => {
 }, (error) => {
   return Promise.reject(error);
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      const isPortal = typeof window !== 'undefined' && window.location.pathname.includes('/portal');
+      
+      if (isPortal) {
+        localStorage.removeItem('portal_token');
+        localStorage.removeItem('portal_cliente');
+        
+        const match = window.location.pathname.match(/\/portal\/([^/]+)/);
+        const slug = match ? match[1] : '';
+        window.location.href = `/portal/${slug}/login`;
+      } else {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);

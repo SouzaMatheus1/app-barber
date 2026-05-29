@@ -6,7 +6,22 @@ import { errorHandler } from './middleware/errorHandler';
 
 const app = express();
 
-app.use(cors());
+const allowedOrigins = [
+  process.env.ADMIN_FRONTEND_URL,
+  process.env.PORTAL_FRONTEND_URL
+].filter(Boolean) as string[];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+      callback(null, true);
+    } else {
+      callback(new Error('Acesso rejeitado por política CORS de produção.'));
+    }
+  },
+  credentials: true
+}));
+
 app.use(express.json());
 app.use(routes);
 

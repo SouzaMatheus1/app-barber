@@ -16,5 +16,3 @@ frontend/*.log
 
 backend/teste-db.ts
 frontend/hooks/useTheme.ts
-
-/tmp_legacy/*

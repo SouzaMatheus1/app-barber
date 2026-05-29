@@ -70,6 +70,7 @@ routes.get('/assinaturas', isAuth, assinaturaController.listarAssinaturas);
 routes.post('/assinaturas', isAuth, assinaturaController.assinar);
 routes.patch('/assinaturas/:id/renovar', isAuth, assinaturaController.renovar);
 routes.get('/assinaturas/cliente/:clienteId/ativa', isAuth, assinaturaController.getAssinaturaCliente);
+routes.get('/portal/minha-assinatura', isAuth, assinaturaController.getMinhaAssinatura);
 
 // comissao funcionarios
 routes.get('/comissoes/profissional/:id', isAuth, comissaoController.relatorio);
@@ -92,12 +93,14 @@ routes.get('/temas/empresa/:slug', TemaController.getBySlug);
 routes.put('/temas', isAuth, TemaController.update);
 
 // Agendamentos
+routes.get('/agendamentos/disponibilidade', isAuth, agendamentoController.getDisponibilidade);
 routes.get('/agendamentos', isAuth, agendamentoController.listar);
 routes.post('/agendamentos', isAuth, agendamentoController.criar);
 routes.put('/agendamentos/:id/status', isAuth, agendamentoController.alterarStatus);
 routes.delete('/agendamentos/:id', isAuth, agendamentoController.deletar);
 
 // Portal do Cliente
+routes.get('/portal/:slug/empresa', portalAuthController.getEmpresa);
 routes.post('/portal/:slug/auth/check-phone', portalAuthController.checkPhone);
 routes.post('/portal/:slug/auth/login', portalAuthController.login);
 routes.post('/portal/:slug/auth/register', portalAuthController.register);

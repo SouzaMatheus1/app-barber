@@ -324,7 +324,7 @@ const Assinaturas: React.FC = () => {
         </form>
       )}
 
-      <div className={`bg-[var(--color-surface)] rounded-2xl border border-[var(--color-primary)]/20 shadow-lg p-6 min-h-[400px] ${isEditingPlano && activeTab === 'planos' ? 'hidden' : 'block'}`}>
+      <div className={`bg-[var(--color-surface)] rounded-2xl border border-[var(--color-primary)]/20 shadow-lg p-6 min-h-[400px] ${((isEditingPlano && activeTab === 'planos') || activeTab === 'relatorios') ? 'hidden' : 'block'}`}>
         {loading ? (
           <div className="text-center py-20 text-[var(--color-primary)] opacity-60 flex flex-col items-center justify-center h-full">
             <Crown size={48} className="animate-pulse mb-4" />
@@ -362,7 +362,7 @@ const Assinaturas: React.FC = () => {
               </div>
             ))}
           </div>
-        ) : (
+        ) : activeTab === 'assinantes' ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[700px]">
               <thead>
@@ -432,7 +432,7 @@ const Assinaturas: React.FC = () => {
               </tbody>
             </table>
           </div>
-        )}
+        ) : null}
       </div>
 
       {activeTab === 'relatorios' && (

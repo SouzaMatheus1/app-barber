@@ -4,12 +4,13 @@ import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 import { tenantStorage } from './tenantContext';
 
 const adapter = new PrismaMariaDb({
-  host: process.env.DATABASE_HOST as string,
-  user: process.env.DATABASE_USER as string,
-  password: process.env.DATABASE_PASSWORD as string,
-  database: process.env.DATABASE_NAME as string,
-  port: Number(process.env.DATABASE_PORT),
+  host: (process.env.DATABASE_HOST as string || '127.0.0.1').replace(/"/g, '').trim(),
+  user: (process.env.DATABASE_USER as string || 'admin').replace(/"/g, '').trim(),
+  password: (process.env.DATABASE_PASSWORD as string || 'Password123!').replace(/"/g, '').trim(),
+  database: (process.env.DATABASE_NAME as string || 'dump-prod').replace(/"/g, '').trim(),
+  port: Number(process.env.DATABASE_PORT || 3306),
   connectionLimit: 5,
+  allowPublicKeyRetrieval: true,
 });
 
 const basePrisma = new PrismaClient({ adapter });

@@ -70,6 +70,7 @@ const Transacoes: React.FC = () => {
   
   const [descricao, setDescricao] = useState('Atendimento: Avulso');
   const [descricaoDirty, setDescricaoDirty] = useState(false);
+  const [itensLoadedFromUrl, setItensLoadedFromUrl] = useState(false);
 
   const [cartItems, setCartItems] = useState<CartItem[]>([
     { uuid: crypto.randomUUID(), itemId: undefined, name: '', quantity: 1, originalPrice: 0, usouCredito: false }
@@ -185,6 +186,40 @@ const Transacoes: React.FC = () => {
       setClientName(cNome);
     }
   }, [searchParams, fetchAssinatura]);
+
+  // ── Auto Fill Client Details ──
+  useEffect(() => {
+    if (selectedClientId && allClientes.length > 0) {
+      const foundClient = allClientes.find(c => c.id === selectedClientId);
+      if (foundClient) {
+        setClientName(foundClient.nome);
+      }
+    }
+  }, [selectedClientId, allClientes]);
+
+  // ── Auto Fill Items/Services via URL Query String ──
+  useEffect(() => {
+    const itensIdsStr = searchParams.get('itensIds');
+    if (itensIdsStr && catalog.length > 0 && !itensLoadedFromUrl) {
+      const ids = itensIdsStr.split(',').map(Number);
+      const itemsMapped = ids.map(id => {
+        const found = catalog.find(c => c.id === id);
+        return {
+          uuid: crypto.randomUUID(),
+          itemId: id,
+          name: found ? found.name : '',
+          quantity: 1,
+          originalPrice: found ? found.price : 0,
+          usouCredito: false
+        };
+      }).filter(item => item.itemId);
+
+      if (itemsMapped.length > 0) {
+        setCartItems(itemsMapped);
+        setItensLoadedFromUrl(true);
+      }
+    }
+  }, [searchParams, catalog, itensLoadedFromUrl]);
 
   // ── Fetch History ──
   useEffect(() => {

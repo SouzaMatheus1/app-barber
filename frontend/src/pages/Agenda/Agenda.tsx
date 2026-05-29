@@ -46,7 +46,7 @@ export function Agenda() {
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
   const [profissionais, setProfissionais] = useState<Profissional[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
-  const [servicos, setServicos] = useState<Servico[]>([]);
+  const [_servicos, setServicos] = useState<Servico[]>([]);
   const [loading, setLoading] = useState(true);
   
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
@@ -351,6 +351,10 @@ export function Agenda() {
                                                         if (ag.clienteId) {
                                                           params.set('clienteId', String(ag.clienteId));
                                                           if (ag.cliente?.nome) params.set('clienteNome', ag.cliente.nome);
+                                                        }
+                                                        if (ag.servicos && ag.servicos.length > 0) {
+                                                          const ids = ag.servicos.map(s => s.item.id).join(',');
+                                                          params.set('itensIds', ids);
                                                         }
                                                         
                                                         // Enviar para transações pra finalizar e receber

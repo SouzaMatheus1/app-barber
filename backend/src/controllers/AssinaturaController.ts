@@ -90,4 +90,17 @@ export class AssinaturaController {
             res.status(400).json({ error: error.message });
         }
     }
+
+    getMinhaAssinatura = async (req: Request, res: Response) => {
+        try {
+            const loggedUser = res.locals.user;
+            if (!loggedUser || (loggedUser.perfil !== 'CLIENTE' && !loggedUser.isPortal)) {
+                return res.status(403).json({ error: 'Acesso negado. Apenas clientes do portal.' });
+            }
+            const ativa = await assinaturaService.getAssinaturaAtivaByClienteId(Number(loggedUser.id));
+            return res.status(200).json(ativa);
+        } catch (error: any) {
+            return res.status(500).json({ error: error.message });
+        }
+    }
 }

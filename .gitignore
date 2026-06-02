@@ -16,3 +16,6 @@ frontend/*.log
 
 backend/teste-db.ts
 frontend/hooks/useTheme.ts
+
+docs/ARCHITECTURE.md
+docs/CONVENTIONS.md

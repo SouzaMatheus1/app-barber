@@ -13,6 +13,7 @@ jest.mock('../database/prisma', () => ({
   prisma: {
     cliente: {
       findMany: jest.fn(),
+      findFirst: jest.fn(),
       create: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),
@@ -71,6 +72,7 @@ describe('Cliente API', () => {
         criadoEm: new Date(),
       };
 
+      (prisma.cliente.findFirst as jest.Mock).mockResolvedValueOnce(null);
       (prisma.cliente.create as jest.Mock).mockResolvedValueOnce(mockNovoCliente);
 
       const res = await request(app)
@@ -81,6 +83,18 @@ describe('Cliente API', () => {
       expect(res.status).toBe(201);
       expect(res.body.nome).toBe('Pedro Alves');
       expect(prisma.cliente.create).toHaveBeenCalledTimes(1);
+    });
+
+    it('deve retornar erro 400 ao tentar cadastrar telefone duplicado', async () => {
+      (prisma.cliente.findFirst as jest.Mock).mockResolvedValueOnce({ id: 1, nome: 'João Existente' });
+
+      const res = await request(app)
+        .post('/clientes')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ nome: 'Duplicado', telefone: '11777777777' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('Já existe um cliente ativo cadastrado com este telefone.');
     });
   });
 
@@ -95,16 +109,30 @@ describe('Cliente API', () => {
 
       // Mock findUnique para passar na validação de existência
       (prisma.cliente.findUnique as jest.Mock).mockResolvedValueOnce({ id: 1, nome: 'João da Silva' });
+      (prisma.cliente.findFirst as jest.Mock).mockResolvedValueOnce(null);
       (prisma.cliente.update as jest.Mock).mockResolvedValueOnce(mockClienteEditado);
 
       const res = await request(app)
         .put('/clientes/1')
         .set('Authorization', `Bearer ${token}`)
-        .send({ nome: 'João Silva Editado' });
+        .send({ nome: 'João Silva Editado', telefone: '11999999999' });
 
       expect(res.status).toBe(200);
       expect(res.body.result.nome).toBe('João Silva Editado');
       expect(res.body.message).toBe('Registro alterado com sucesso');
+    });
+
+    it('deve retornar erro 400 ao tentar atualizar para telefone pertencente a outro cliente ativo', async () => {
+      (prisma.cliente.findUnique as jest.Mock).mockResolvedValueOnce({ id: 1, nome: 'João da Silva' });
+      (prisma.cliente.findFirst as jest.Mock).mockResolvedValueOnce({ id: 2, nome: 'Outro Cliente' });
+
+      const res = await request(app)
+        .put('/clientes/1')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ nome: 'João Silva Editado', telefone: '11888888888' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('Já existe outro cliente ativo cadastrado com este telefone.');
     });
 
     it('deve retornar erro 400 se o cliente não existir', async () => {
@@ -124,7 +152,7 @@ describe('Cliente API', () => {
     it('deve deletar um cliente existente', async () => {
       // Mock findUnique para passar na validação
       (prisma.cliente.findUnique as jest.Mock).mockResolvedValueOnce({ id: 1, nome: 'João da Silva' });
-      (prisma.cliente.delete as jest.Mock).mockResolvedValueOnce({});
+      (prisma.cliente.update as jest.Mock).mockResolvedValueOnce({});
 
       const res = await request(app)
         .delete('/clientes/1')
@@ -132,7 +160,7 @@ describe('Cliente API', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.message).toBe('Registro excluído com sucesso');
-      expect(prisma.cliente.delete).toHaveBeenCalledTimes(1);
+      expect(prisma.cliente.update).toHaveBeenCalledTimes(1);
     });
 
     it('deve retornar erro 400 se o cliente a deletar não existir', async () => {

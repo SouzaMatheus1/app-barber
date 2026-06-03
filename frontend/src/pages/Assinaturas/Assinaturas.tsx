@@ -324,116 +324,118 @@ const Assinaturas: React.FC = () => {
         </form>
       )}
 
-      <div className={`bg-[var(--color-surface)] rounded-2xl border border-[var(--color-primary)]/20 shadow-lg p-6 min-h-[400px] ${isEditingPlano && activeTab === 'planos' ? 'hidden' : 'block'}`}>
-        {loading ? (
-          <div className="text-center py-20 text-[var(--color-primary)] opacity-60 flex flex-col items-center justify-center h-full">
-            <Crown size={48} className="animate-pulse mb-4" />
-            <p>Carregando dados do clube...</p>
-          </div>
-        ) : activeTab === 'planos' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {planos.length === 0 ? <p className="text-[var(--color-text)]/50 col-span-3 text-center py-10">Nenhum plano ativo no momento.</p> : null}
-            {planos.map(plano => (
-              <div key={plano.id} className="border border-[var(--color-primary)]/30 bg-[var(--color-background)] p-6 rounded-xl flex flex-col items-center text-center space-y-4 hover:shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all relative group overflow-hidden">
-                <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                   <button onClick={() => editPlano(plano)} className="p-1.5 bg-[var(--color-surface)] border border-[var(--color-primary)]/30 text-[var(--color-primary)] rounded hover:bg-[var(--color-primary)]/20 transition" title="Editar plano">
-                      <Edit2 size={14} />
-                   </button>
-                   <button onClick={() => handleDeletePlano(plano.id)} className="p-1.5 bg-[var(--color-surface)] border border-red-500/30 text-red-500 rounded hover:bg-red-500/20 transition" title="Desativar plano">
-                      <Trash2 size={14} />
-                   </button>
+      {activeTab !== 'relatorios' && (
+        <div className={`bg-[var(--color-surface)] rounded-2xl border border-[var(--color-primary)]/20 shadow-lg p-6 min-h-[400px] ${isEditingPlano && activeTab === 'planos' ? 'hidden' : 'block'}`}>
+          {loading ? (
+            <div className="text-center py-20 text-[var(--color-primary)] opacity-60 flex flex-col items-center justify-center h-full">
+              <Crown size={48} className="animate-pulse mb-4" />
+              <p>Carregando dados do clube...</p>
+            </div>
+          ) : activeTab === 'planos' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {planos.length === 0 ? <p className="text-[var(--color-text)]/50 col-span-3 text-center py-10">Nenhum plano ativo no momento.</p> : null}
+              {planos.map(plano => (
+                <div key={plano.id} className="border border-[var(--color-primary)]/30 bg-[var(--color-background)] p-6 rounded-xl flex flex-col items-center text-center space-y-4 hover:shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all relative group overflow-hidden">
+                  <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                     <button onClick={() => editPlano(plano)} className="p-1.5 bg-[var(--color-surface)] border border-[var(--color-primary)]/30 text-[var(--color-primary)] rounded hover:bg-[var(--color-primary)]/20 transition" title="Editar plano">
+                        <Edit2 size={14} />
+                     </button>
+                     <button onClick={() => handleDeletePlano(plano.id)} className="p-1.5 bg-[var(--color-surface)] border border-red-500/30 text-red-500 rounded hover:bg-red-500/20 transition" title="Desativar plano">
+                        <Trash2 size={14} />
+                     </button>
+                  </div>
+                  <h3 className="text-xl font-bold text-[var(--color-text)] uppercase tracking-wider">{plano.nome}</h3>
+                  <div className="text-3xl font-serif text-[var(--color-primary)] font-bold">
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(plano.valorMensal)}
+                  </div>
+                  <div className="text-xs uppercase tracking-widest text-[var(--color-text)]/40 font-bold">
+                      Cobrança {plano.frequencia?.toLowerCase()}
+                  </div>
+                  <div className="text-sm border-t border-[var(--color-primary)]/20 pt-4 w-full text-[var(--color-text)]/70 space-y-2">
+                    {plano.itens?.map((i: any) => (
+                      <p key={i.id} className="flex justify-between">
+                        <span>{i.item?.nome || 'Serviço'}</span> 
+                        <span className="text-[var(--color-primary)] font-bold">x{i.quantidade}</span>
+                      </p>
+                    ))}
+                    {(!plano.itens || plano.itens.length === 0) && <p className="text-xs text-[var(--color-text)]/40 italic">Sem serviços inclusos</p>}
+                  </div>
                 </div>
-                <h3 className="text-xl font-bold text-[var(--color-text)] uppercase tracking-wider">{plano.nome}</h3>
-                <div className="text-3xl font-serif text-[var(--color-primary)] font-bold">
-                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(plano.valorMensal)}
-                </div>
-                <div className="text-xs uppercase tracking-widest text-[var(--color-text)]/40 font-bold">
-                    Cobrança {plano.frequencia?.toLowerCase()}
-                </div>
-                <div className="text-sm border-t border-[var(--color-primary)]/20 pt-4 w-full text-[var(--color-text)]/70 space-y-2">
-                  {plano.itens?.map((i: any) => (
-                    <p key={i.id} className="flex justify-between">
-                      <span>{i.item?.nome || 'Serviço'}</span> 
-                      <span className="text-[var(--color-primary)] font-bold">x{i.quantidade}</span>
-                    </p>
-                  ))}
-                  {(!plano.itens || plano.itens.length === 0) && <p className="text-xs text-[var(--color-text)]/40 italic">Sem serviços inclusos</p>}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[700px]">
-              <thead>
-                <tr className="border-b border-[var(--color-primary)]/20 text-[var(--color-text)]/50 text-xs uppercase tracking-wider">
-                  <th className="pb-3 px-4">Cliente</th>
-                  <th className="pb-3 px-4">Plano / Ciclo</th>
-                  <th className="pb-3 px-4 text-center">Status</th>
-                  <th className="pb-3 px-4 text-center">Vencimento</th>
-                  <th className="pb-3 px-4 text-right">Saldo de Créditos</th>
-                  <th className="pb-3 px-4 text-right">Ação</th>
-                </tr>
-              </thead>
-              <tbody className="text-sm font-medium">
-                {assinaturas.length === 0 ? <tr><td colSpan={6} className="text-center py-8 text-[var(--color-text)]/50">Nenhum assinante ativo.</td></tr> : null}
-                {assinaturas.map(ass => (
-                  <tr key={ass.id} className="border-b border-[var(--color-primary)]/10 hover:bg-[var(--color-primary)]/5 transition-colors">
-                    <td className="py-4 px-4 text-[var(--color-text)]">{ass.cliente?.nome}</td>
-                    <td className="py-4 px-4">
-                        <div className="text-[var(--color-primary)] font-bold">{ass.plano?.nome}</div>
-                        <div className="text-[10px] text-[var(--color-text)]/40 uppercase tracking-tighter">{ass.plano?.frequencia}</div>
-                    </td>
-                    <td className="py-4 px-4 text-center">
-                      <span className={`px-2 py-1 rounded-sm text-[10px] uppercase font-bold tracking-widest ${ass.status === 'ATIVA' ? 'bg-[var(--color-primary)]/20 text-[var(--color-primary)]' : 'bg-red-500/20 text-red-500'}`}>
-                        {ass.status}
-                      </span>
-                    </td>
-                    <td className="py-4 px-4 text-center">
-                        <div className={`text-sm ${getStatusColor(ass.dataProximoVencimento)} flex flex-col items-center gap-0.5`}>
-                           <span className="flex items-center gap-1 font-sans">
-                             <Calendar size={12} />
-                             {ass.dataProximoVencimento ? new Date(ass.dataProximoVencimento).toLocaleDateString('pt-BR') : '-'}
-                           </span>
-                           {ass.dataProximoVencimento && new Date(ass.dataProximoVencimento) < new Date() && (
-                             <span className="text-[9px] uppercase tracking-tighter bg-red-500 text-white px-1 rounded-xs">Vencido</span>
-                           )}
-                        </div>
-                    </td>
-                    <td className="py-4 px-4 text-[var(--color-text)] text-right">
-                      <div className="flex flex-col gap-1 items-end">
-                        {ass.creditos?.map((c: any) => (
-                          <div key={c.id} className="text-xs">
-                            <span className="text-[var(--color-text)]/60 mr-2">{c.item?.nome}:</span>
-                            <span className={`${c.quantidadeRestante > 0 ? 'text-emerald-400' : 'text-red-400'} font-bold`}>{c.quantidadeRestante}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="py-4 px-4 text-right">
-                       <div className="flex items-center justify-end gap-2">
-                        <button 
-                            onClick={() => handleRenovar(ass.id)} 
-                            className="p-1.5 bg-emerald-500/10 text-emerald-500 rounded hover:bg-emerald-500/20 border border-emerald-500/20 transition-colors"
-                            title="Renovar agora (Registra pagamento)"
-                        >
-                            <RotateCw size={14} className={loadingAction ? 'animate-spin' : ''} />
-                        </button>
-                        <button 
-                            onClick={() => setModalClienteOpen({nome: ass.cliente?.nome, clienteId: ass.clienteId})} 
-                            className="text-xs bg-[var(--color-primary)]/10 text-[var(--color-primary)] px-3 py-1.5 rounded hover:bg-[var(--color-primary)]/20 border border-[var(--color-primary)]/20 font-bold uppercase tracking-wider"
-                        >
-                            Histórico
-                        </button>
-                       </div>
-                    </td>
+              ))}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse min-w-[700px]">
+                <thead>
+                  <tr className="border-b border-[var(--color-primary)]/20 text-[var(--color-text)]/50 text-xs uppercase tracking-wider">
+                    <th className="pb-3 px-4">Cliente</th>
+                    <th className="pb-3 px-4">Plano / Ciclo</th>
+                    <th className="pb-3 px-4 text-center">Status</th>
+                    <th className="pb-3 px-4 text-center">Vencimento</th>
+                    <th className="pb-3 px-4 text-right">Saldo de Créditos</th>
+                    <th className="pb-3 px-4 text-right">Ação</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+                </thead>
+                <tbody className="text-sm font-medium">
+                  {assinaturas.length === 0 ? <tr><td colSpan={6} className="text-center py-8 text-[var(--color-text)]/50">Nenhum assinante ativo.</td></tr> : null}
+                  {assinaturas.map(ass => (
+                    <tr key={ass.id} className="border-b border-[var(--color-primary)]/10 hover:bg-[var(--color-primary)]/5 transition-colors">
+                      <td className="py-4 px-4 text-[var(--color-text)]">{ass.cliente?.nome}</td>
+                      <td className="py-4 px-4">
+                          <div className="text-[var(--color-primary)] font-bold">{ass.plano?.nome}</div>
+                          <div className="text-[10px] text-[var(--color-text)]/40 uppercase tracking-tighter">{ass.plano?.frequencia}</div>
+                      </td>
+                      <td className="py-4 px-4 text-center">
+                        <span className={`px-2 py-1 rounded-sm text-[10px] uppercase font-bold tracking-widest ${ass.status === 'ATIVA' ? 'bg-[var(--color-primary)]/20 text-[var(--color-primary)]' : 'bg-red-500/20 text-red-500'}`}>
+                          {ass.status}
+                        </span>
+                      </td>
+                      <td className="py-4 px-4 text-center">
+                          <div className={`text-sm ${getStatusColor(ass.dataProximoVencimento)} flex flex-col items-center gap-0.5`}>
+                             <span className="flex items-center gap-1 font-sans">
+                               <Calendar size={12} />
+                               {ass.dataProximoVencimento ? new Date(ass.dataProximoVencimento).toLocaleDateString('pt-BR') : '-'}
+                             </span>
+                             {ass.dataProximoVencimento && new Date(ass.dataProximoVencimento) < new Date() && (
+                               <span className="text-[9px] uppercase tracking-tighter bg-red-500 text-white px-1 rounded-xs">Vencido</span>
+                             )}
+                          </div>
+                      </td>
+                      <td className="py-4 px-4 text-[var(--color-text)] text-right">
+                        <div className="flex flex-col gap-1 items-end">
+                          {ass.creditos?.map((c: any) => (
+                            <div key={c.id} className="text-xs">
+                              <span className="text-[var(--color-text)]/60 mr-2">{c.item?.nome}:</span>
+                              <span className={`${c.quantidadeRestante > 0 ? 'text-emerald-400' : 'text-red-400'} font-bold`}>{c.quantidadeRestante}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="py-4 px-4 text-right">
+                         <div className="flex items-center justify-end gap-2">
+                          <button 
+                              onClick={() => handleRenovar(ass.id)} 
+                              className="p-1.5 bg-emerald-500/10 text-emerald-500 rounded hover:bg-emerald-500/20 border border-emerald-500/20 transition-colors"
+                              title="Renovar agora (Registra pagamento)"
+                          >
+                              <RotateCw size={14} className={loadingAction ? 'animate-spin' : ''} />
+                          </button>
+                          <button 
+                              onClick={() => setModalClienteOpen({nome: ass.cliente?.nome, clienteId: ass.clienteId})} 
+                              className="text-xs bg-[var(--color-primary)]/10 text-[var(--color-primary)] px-3 py-1.5 rounded hover:bg-[var(--color-primary)]/20 border border-[var(--color-primary)]/20 font-bold uppercase tracking-wider"
+                          >
+                              Histórico
+                          </button>
+                         </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
 
       {activeTab === 'relatorios' && (
         <div className="space-y-6">

@@ -33,8 +33,9 @@ export class TransacaoService {
         const data = new Date(dataObj.getFullYear(), dataObj.getMonth(), dataObj.getDate());
         const dataFim = new Date(data.getTime() + 24 * 60 * 60 * 1000);
 
-        const transacoesDoDia = await tx.transacao.findMany({
+                const transacoesDoDia = await tx.transacao.findMany({
             where: {
+                empresaId,
                 data: {
                     gte: data,
                     lt: dataFim

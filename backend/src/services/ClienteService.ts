@@ -53,6 +53,19 @@ export class ClienteService {
     async create(data: { nome: string, telefone?: string, planoId?: number }) {
         const { nome, telefone, planoId } = data;
 
+        if (telefone && telefone.trim() !== '') {
+            const clienteExistente = await prisma.cliente.findFirst({
+                where: {
+                    telefone,
+                    ativo: true
+                }
+            });
+
+            if (clienteExistente) {
+                throw new Error('Já existe um cliente ativo cadastrado com este telefone.');
+            }
+        }
+
         const cliente = await prisma.cliente.create({
             data: {
                 nome,
@@ -89,6 +102,20 @@ export class ClienteService {
 
         if(!cliente)
             throw new Error('Cliente não encontrado');
+
+        if (data.telefone && data.telefone.trim() !== '') {
+            const clienteExistente = await prisma.cliente.findFirst({
+                where: {
+                    telefone: data.telefone,
+                    ativo: true,
+                    id: { not: id }
+                }
+            });
+
+            if (clienteExistente) {
+                throw new Error('Já existe outro cliente ativo cadastrado com este telefone.');
+            }
+        }
 
         if (data.planoId === 0) {
             try {

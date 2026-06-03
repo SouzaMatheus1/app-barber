@@ -130,7 +130,7 @@ describe('ItemCatalogo API', () => {
   describe('DELETE /itens/:id', () => {
     it('deve deletar um item existente', async () => {
       (prisma.itemCatalogo.findUnique as jest.Mock).mockResolvedValueOnce({ id: 1, nome: 'Corte' });
-      (prisma.itemCatalogo.delete as jest.Mock).mockResolvedValueOnce({});
+      (prisma.itemCatalogo.update as jest.Mock).mockResolvedValueOnce({});
 
       const res = await request(app)
         .delete('/itens/1')
@@ -138,7 +138,7 @@ describe('ItemCatalogo API', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.message).toBe('Registro excluído');
-      expect(prisma.itemCatalogo.delete).toHaveBeenCalledTimes(1);
+      expect(prisma.itemCatalogo.update).toHaveBeenCalledTimes(1);
     });
 
     it('deve retornar erro 400 se o item não for encontrado para deleção', async () => {

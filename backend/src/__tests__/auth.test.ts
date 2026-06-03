@@ -9,13 +9,18 @@ app.use(express.json());
 app.use(routes);
 
 // Mocking o prisma client
-jest.mock('../database/prisma', () => ({
-  prisma: {
+jest.mock('../database/prisma', () => {
+  const mPrisma = {
     profissional: {
+      findFirst: jest.fn(),
       findUnique: jest.fn(),
     },
-  },
-}));
+  };
+  return {
+    prisma: mPrisma,
+    systemPrisma: mPrisma,
+  };
+});
 
 describe('Auth API /login', () => {
   beforeAll(() => {
@@ -34,7 +39,7 @@ describe('Auth API /login', () => {
   it('deve logar com credenciais corretas e retornar token JWT', async () => {
     const mockHash = await bcrypt.hash('senha_secreta', 8);
     // @ts-ignore
-    (prisma.profissional.findUnique as jest.Mock).mockResolvedValueOnce({
+    (prisma.profissional.findFirst as jest.Mock).mockResolvedValueOnce({
       id: 'mock-id-123',
       nome: 'Profissional Teste',
       email: 'teste@empresa.com',
@@ -54,7 +59,7 @@ describe('Auth API /login', () => {
 
   it('deve retornar erro 401 quando o profissional não é encontrado (email incorreto)', async () => {
     // @ts-ignore
-    (prisma.profissional.findUnique as jest.Mock).mockResolvedValueOnce(null);
+    (prisma.profissional.findFirst as jest.Mock).mockResolvedValueOnce(null);
 
     const res = await request(app)
       .post('/login')
@@ -67,7 +72,7 @@ describe('Auth API /login', () => {
   it('deve retornar erro 401 quando a senha é incorreta', async () => {
     const mockHash = await bcrypt.hash('senha_secreta', 8);
     // @ts-ignore
-    (prisma.profissional.findUnique as jest.Mock).mockResolvedValueOnce({
+    (prisma.profissional.findFirst as jest.Mock).mockResolvedValueOnce({
       senha: mockHash,
       perfil: { descricao: 'ADMIN' },
     });

@@ -46,6 +46,7 @@ describe('Caixa API', () => {
       (prisma.transacao.findMany as jest.Mock).mockResolvedValueOnce([
         {
           id: 1,
+          valorTotal: 100.0,
           itens: [
             { quantidade: 1, precoUnitario: 100.0, item: { comissao: 40.0 } } // 100 - (100*0.4) = 60 vai pro saldo
           ]

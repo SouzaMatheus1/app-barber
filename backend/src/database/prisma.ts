@@ -13,7 +13,7 @@ const adapter = new PrismaMariaDb({
   allowPublicKeyRetrieval: true,
 });
 
-const basePrisma = new PrismaClient({ adapter });
+export const systemPrisma = new PrismaClient({ adapter });
 
 const TENANT_MODELS = [
   'Profissional',
@@ -29,14 +29,19 @@ const TENANT_MODELS = [
   'Agendamento'
 ];
 
-export const prisma = basePrisma.$extends({
+export const prisma = systemPrisma.$extends({
   query: {
     $allModels: {
       async $allOperations({ args, query, model, operation }) {
         const store = tenantStorage.getStore();
 
-        // Se existir um tenant no contexto e o modelo for suportado:
-        if (store?.empresaId && TENANT_MODELS.includes(model)) {
+        // Se o modelo for suportado:
+        if (TENANT_MODELS.includes(model)) {
+          // Guardião de segurança: Impede vazamento global acidental
+          if (!store?.empresaId) {
+            throw new Error(`[Multi-tenant] Tentativa de acesso a '${model}' sem contexto de tenant ativo.`);
+          }
+
           const bId = store.empresaId;
           const a = args as any;
 
@@ -61,17 +66,25 @@ export const prisma = basePrisma.$extends({
             }
           }
 
-          // Operações baseadas em ID único
+          // Operações baseadas em ID ou filtros únicos
           if (['findUnique', 'update', 'delete'].includes(operation)) {
-            const id = a.where?.id;
-            if (id) {
+            if (a.where) {
               const modelNameLower = model.charAt(0).toLowerCase() + model.slice(1);
-              const exists = await (basePrisma as any)[modelNameLower].count({
-                where: { id, empresaId: bId }
-              });
               
-              if (exists === 0) {
-                throw new Error(`[Multi-tenant] Acesso restrito ou registro inexistente.`);
+              // Verifica se o registro existe globalmente no banco de dados
+              const globalCount = await (systemPrisma as any)[modelNameLower].count({
+                where: a.where
+              });
+
+              if (globalCount > 0) {
+                // Se existe globalmente, verifica se pertence ao tenant ativo
+                const tenantCount = await (systemPrisma as any)[modelNameLower].count({
+                  where: { ...a.where, empresaId: bId }
+                });
+                
+                if (tenantCount === 0) {
+                  throw new Error(`[Multi-tenant] Acesso restrito ou registro inexistente.`);
+                }
               }
             }
           }

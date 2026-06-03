@@ -1,11 +1,11 @@
-import { prisma } from '../database/prisma';
+import { prisma, systemPrisma } from '../database/prisma';
 import { compare } from 'bcryptjs';
 import { sign } from 'jsonwebtoken';
 
 export class AuthService {
     async login(email: string, senhaPlana: string) {
-        // Traz o profissional, perfil e empresa (com tipo) junto
-        const profissional = await prisma.profissional.findFirst({
+        // Traz o profissional, perfil e empresa (com tipo) junto usando systemPrisma para busca global de login
+        const profissional = await systemPrisma.profissional.findFirst({
             where: { email, ativo: true },
             include: { 
                 perfil: true, 

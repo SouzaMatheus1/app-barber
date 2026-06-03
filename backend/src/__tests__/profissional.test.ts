@@ -91,7 +91,7 @@ describe('Profissional API', () => {
       expect(prisma.profissional.create).toHaveBeenCalledTimes(1);
     });
 
-    it('deve retornar 500 se tentar cadastrar e-mail já existente', async () => {
+    it('deve retornar 400 se tentar cadastrar e-mail já existente', async () => {
       (prisma.profissional.findUnique as jest.Mock).mockResolvedValueOnce({ id: 1, email: 'existente@teste.com' });
 
       const res = await request(app)
@@ -99,8 +99,8 @@ describe('Profissional API', () => {
         .set('Authorization', `Bearer ${token}`)
         .send({ nome: 'Novo', email: 'existente@teste.com', senha: '123', perfilId: 2 });
 
-      expect(res.status).toBe(500);
-      expect(res.body.error).toBe('Erro ao cadastrar profissional'); // A mensagem padrão do catch no Controller
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('E-mail já cadastrado'); // A mensagem retornada pelo catch/Service
     });
   });
 

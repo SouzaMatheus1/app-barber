@@ -67,9 +67,10 @@ export function Clientes() {
       }
       resetForm();
       await loadClientes();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao salvar cliente", error);
-      alert("Erro ao salvar cliente");
+      const msg = error.response?.data?.error || "Erro ao salvar cliente";
+      alert(msg);
     } finally {
       setLoadingAction(false);
     }
@@ -81,9 +82,10 @@ export function Clientes() {
     try {
       await clienteService.deletar(id);
       await loadClientes();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao excluir cliente", error);
-      alert("Erro ao excluir cliente");
+      const msg = error.response?.data?.error || "Erro ao excluir cliente";
+      alert(msg);
     } finally {
       setLoadingAction(false);
     }

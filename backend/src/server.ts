@@ -30,7 +30,7 @@ app.use(cors({
   credentials: true
 }));
 
-app.use(express.json());
+app.use(express.json({ limit: '10kb' }));
 // Aplicar cabeçalhos de segurança Helmet
 app.use(helmet());
 
@@ -52,7 +52,6 @@ const limiterAutenticacao = rateLimit({
 app.use(limiterGeral);
 app.use('/login', limiterAutenticacao);
 
-app.use(express.json({ limit: '10kb' }));
 app.use(routes);
 
 app.get('/ping', (req, res) => {

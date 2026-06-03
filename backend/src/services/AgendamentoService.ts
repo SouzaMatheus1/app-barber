@@ -77,6 +77,7 @@ export class AgendamentoService {
             // Retorna o primeiro agendamento que cruze a nova faixa de tempo.
             const overbooking = await tx.agendamento.findFirst({
                 where: {
+                    empresaId,
                     profissionalId: data.profissionalId,
                     status: {
                         in: ['CONFIRMADO', 'EM_ANDAMENTO', 'INDISPONIVEL']
@@ -98,7 +99,7 @@ export class AgendamentoService {
                     throw new Error('Cliente é obrigatório para utilizar créditos de assinatura.');
                 }
                 const assinaturaAtiva = await tx.assinatura.findFirst({
-                    where: { clienteId: data.clienteId, status: 'ATIVA' },
+                    where: { clienteId: data.clienteId, status: 'ATIVA', empresaId },
                     include: { creditos: true }
                 });
 
@@ -109,7 +110,7 @@ export class AgendamentoService {
                 for (const itemId of data.servicosIds) {
                     const credito = assinaturaAtiva.creditos.find(c => c.itemId === itemId);
                     if (!credito || credito.quantidadeRestante <= 0) {
-                        const item = await tx.itemCatalogo.findUnique({ where: { id: itemId } });
+                        const item = await tx.itemCatalogo.findFirst({ where: { id: itemId, empresaId } });
                         throw new Error(`Saldo de créditos insuficiente para o serviço: ${item?.nome || itemId}.`);
                     }
                     // Decrementar
@@ -174,13 +175,14 @@ export class AgendamentoService {
                 const consumiuCredito = agendamento.observacao?.includes('[Crédito de Assinatura Consumido]');
                 if (consumiuCredito && agendamento.clienteId) {
                     const assinaturaAtiva = await tx.assinatura.findFirst({
-                        where: { clienteId: agendamento.clienteId, status: 'ATIVA' }
+                        where: { clienteId: agendamento.clienteId, status: 'ATIVA', empresaId: agendamento.empresaId }
                     });
 
                     if (assinaturaAtiva) {
                         for (const servico of agendamento.servicos) {
                             const credito = await tx.creditoAssinatura.findFirst({
                                 where: {
+                                    empresaId: agendamento.empresaId,
                                     assinaturaId: assinaturaAtiva.id,
                                     itemId: servico.itemId
                                 }

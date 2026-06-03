@@ -30,6 +30,7 @@ app.use(cors({
   credentials: true
 }));
 
+app.use(express.json({ limit: '10kb' }));
 // Aplicar cabeçalhos de segurança Helmet
 app.use(helmet());
 
@@ -51,30 +52,6 @@ const limiterAutenticacao = rateLimit({
 app.use(limiterGeral);
 app.use('/login', limiterAutenticacao);
 
-app.use(express.json({ limit: '10kb' }));
-app.use(express.json());
-// Aplicar cabeçalhos de segurança Helmet
-app.use(helmet());
-
-// Rate Limiting Geral e Específico (com limites flexibilizados em desenvolvimento)
-const isProd = process.env.NODE_ENV === 'production';
-
-const limiterGeral = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: isProd ? 100 : 10000, // máximo de 10.000 requisições por IP em desenvolvimento
-  message: { error: 'Muitas requisições originárias deste IP. Tente novamente mais tarde.' }
-});
-
-const limiterAutenticacao = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: isProd ? 15 : 1000, // limite rígido somente em produção
-  message: { error: 'Tentativas excessivas de autenticação. Bloqueado por 15 minutos.' }
-});
-
-app.use(limiterGeral);
-app.use('/login', limiterAutenticacao);
-
-app.use(express.json({ limit: '10kb' }));
 app.use(routes);
 
 app.get('/ping', (req, res) => {

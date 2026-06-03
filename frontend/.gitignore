@@ -23,6 +23,5 @@ dist-ssr
 *.sln
 *.sw?
 
-
-
-descritivoPastasReact.txt
+dev-dist/
+.vite/

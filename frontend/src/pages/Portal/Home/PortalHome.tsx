@@ -101,7 +101,7 @@ export default function PortalHome() {
 
   const handleLogout = () => {
     logout();
-    navigate(`/portal/${slug}/login`);
+    navigate(`/${slug}/login`);
   };
 
   // Separa próximos de passados
@@ -178,7 +178,7 @@ export default function PortalHome() {
               <p className="text-sm text-[var(--color-text)]/60 mb-6">Agende e gerencie seus compromissos com poucos cliques de forma rápida.</p>
               
               <button 
-                onClick={() => navigate(`/portal/${slug}/agendar`)}
+                onClick={() => navigate(`/${slug}/agendar`)}
                 className="w-full py-4 bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] text-[var(--color-background)] font-bold rounded-2xl flex items-center justify-center gap-2.5 transition-all shadow-[0_4px_20px_var(--color-primary)]/20 hover:shadow-[0_4px_25px_var(--color-primary)]/40 hover:scale-[1.01]"
               >
                 <Scissors size={20} /> Agendar Agora
@@ -261,7 +261,7 @@ export default function PortalHome() {
               <div className="bg-[var(--color-surface)]/40 border border-dashed border-[var(--color-primary)]/10 rounded-2xl p-8 text-center">
                 <p className="text-sm text-[var(--color-text)]/40">Nenhum agendamento ativo.</p>
                 <button 
-                  onClick={() => navigate(`/portal/${slug}/agendar`)}
+                  onClick={() => navigate(`/${slug}/agendar`)}
                   className="mt-3 text-xs text-[var(--color-primary)] font-bold hover:underline"
                 >
                   Clique aqui para reservar seu horário

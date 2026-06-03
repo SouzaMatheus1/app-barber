@@ -11,7 +11,7 @@ export function PortalPrivateRoute() {
   const { slug } = useParams<{ slug: string }>();
 
   if (!hasToken) {
-    return <Navigate to={`/portal/${slug}/login`} replace />
+    return <Navigate to={`/${slug}/login`} replace />
   }
 
   return <Outlet />

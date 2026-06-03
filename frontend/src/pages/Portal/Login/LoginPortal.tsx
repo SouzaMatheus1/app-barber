@@ -50,7 +50,7 @@ export default function LoginPortal() {
     try {
       const res = await api.post(`/portal/${slug}/auth/login`, { telefone: phone, senha });
       login(res.data.token, res.data.cliente);
-      navigate(`/portal/${slug}/home`);
+      navigate(`/${slug}/home`);
     } catch (error: any) {
       setServerMessage(error.response?.data?.error || 'Senha incorreta.');
     } finally {
@@ -65,7 +65,7 @@ export default function LoginPortal() {
     try {
       const res = await api.post(`/portal/${slug}/auth/register`, { telefone: phone, senha, nome, email });
       login(res.data.token, res.data.cliente);
-      navigate(`/portal/${slug}/home`);
+      navigate(`/${slug}/home`);
     } catch (error: any) {
       setServerMessage(error.response?.data?.error || 'Falha ao registrar.');
     } finally {

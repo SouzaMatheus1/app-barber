@@ -256,7 +256,7 @@ export default function PortalAgendar() {
           </div>
 
           <button 
-            onClick={() => navigate(`/portal/${slug}/home`)}
+            onClick={() => navigate(`/${slug}/home`)}
             className="w-full py-4 bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] text-[var(--color-background)] font-bold rounded-2xl transition-all shadow-[0_4px_20px_var(--color-primary)]/20 uppercase tracking-widest text-xs"
           >
             Voltar para a Home
@@ -281,7 +281,7 @@ export default function PortalAgendar() {
       <header className="sticky top-0 z-40 bg-[var(--color-background)]/80 backdrop-blur-xl border-b border-[var(--color-primary)]/10 px-6 py-4 flex items-center max-w-2xl mx-auto w-full">
         <button 
           onClick={() => {
-            if (step === 'SERVICOS') navigate(`/portal/${slug}/home`);
+            if (step === 'SERVICOS') navigate(`/${slug}/home`);
             else if (step === 'PROFISSIONAL') setStep('SERVICOS');
             else if (step === 'DATA_HORA') setStep('PROFISSIONAL');
             else if (step === 'CONFIRMAR') setStep('DATA_HORA');

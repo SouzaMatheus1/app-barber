@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect } from 'react'
+import { BrowserRouter, Routes, Route, Navigate, useParams, Outlet } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { PortalAuthProvider } from './contexts/PortalAuthContext'
 import { PrivateRoute } from './components/PrivateRoute'
@@ -25,13 +26,70 @@ function ThemeLoader() {
   return null;
 }
 
-export default function App() {
+function PortalRedirect() {
+  const { slug } = useParams<{ slug: string }>();
+  return <Navigate to={`/${slug}/login`} replace />;
+}
+
+function PortalLayoutWrapper() {
+  const { slug } = useParams<{ slug: string }>();
+  
+  useEffect(() => {
+    if (slug) {
+      localStorage.setItem('@lambda:last_slug', slug);
+    }
+  }, [slug]);
+
+  return <Outlet />;
+}
+
+function PortalIndex() {
+  const savedSlug = localStorage.getItem('@lambda:last_slug');
+  
+  if (savedSlug) {
+    return <Navigate to={`/${savedSlug}`} replace />;
+  }
+
   return (
-    <AuthProvider>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-950 text-zinc-400 p-6 text-center">
+      <h1 className="text-xl font-bold mb-2 text-zinc-200">Portal do Cliente</h1>
+      <p className="text-sm">Por favor, acesse utilizando o link direto da sua barbearia (ex: portal.localhost/sua-barbearia).</p>
+    </div>
+  );
+}
+
+export default function App() {
+  const hostname = window.location.hostname;
+  const isPortal = hostname.startsWith('portal');
+
+  if (isPortal) {
+    return (
       <PortalAuthProvider>
         <BrowserRouter>
           <ThemeLoader />
           <Routes>
+            <Route element={<PortalLayoutWrapper />}>
+              <Route path="/:slug/login" element={<LoginPortal />} />
+              <Route path="/:slug" element={<PortalRedirect />} />
+              <Route element={<PortalPrivateRoute />}>
+                 <Route path="/:slug/home" element={<PortalHome />} />
+                 <Route path="/:slug/agendar" element={<PortalAgendar />} />
+              </Route>
+            </Route>
+            <Route path="/" element={<PortalIndex />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </PortalAuthProvider>
+    );
+  }
+
+  // Admin / default panel
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <ThemeLoader />
+        <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           
@@ -53,16 +111,9 @@ export default function App() {
               <Route path="/custos" element={<Custos />} />
             </Route>
           </Route>
-
-          <Route path="/portal/:slug/login" element={<LoginPortal />} />
-          <Route element={<PortalPrivateRoute />}>
-             <Route path="/portal/:slug/home" element={<PortalHome />} />
-             <Route path="/portal/:slug/agendar" element={<PortalAgendar />} />
-          </Route>
-
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>
-      </PortalAuthProvider>
     </AuthProvider>
-  )
+  );
 }

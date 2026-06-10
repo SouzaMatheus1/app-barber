@@ -33,7 +33,7 @@ export default function LoginPortal() {
         setServerMessage(`Olá ${res.data.nome.split(' ')[0]}, bem-vindo(a) de volta! Crie uma senha para proteger sua conta.`);
         setStep('REGISTER');
       } else {
-        setServerMessage('Bem-vindo(a)! Vamos criar o seu acesso vip.');
+        setServerMessage('Bem-vindo(a)! Vamos criar o seu acesso.');
         setStep('REGISTER');
       }
     } catch (error: any) {
@@ -86,7 +86,7 @@ export default function LoginPortal() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-secondary)] shadow-[0_0_30px_var(--color-primary)] mb-6">
             <Sparkles className="text-[var(--color-background)] w-8 h-8" />
           </div>
-          <h1 className="text-3xl font-serif font-bold text-[var(--color-primary)] mb-2 tracking-wide uppercase">Área VIP</h1>
+          <h1 className="text-3xl font-serif font-bold text-[var(--color-primary)] mb-2 tracking-wide uppercase">Agendamentos</h1>
           <p className="text-[var(--color-text)]/60 text-sm">Seu portal exclusivo.</p>
         </div>
 

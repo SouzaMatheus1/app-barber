@@ -174,7 +174,7 @@ export function Clientes() {
             </div>
             <div className="space-y-2">
               <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase tracking-wider">
-                Vincular Plano VIP <span className="text-[var(--color-text)]/40 text-[10px] ml-1">(Opcional)</span>
+                Vincular Plano <span className="text-[var(--color-text)]/40 text-[10px] ml-1">(Opcional)</span>
               </label>
               <div className="relative">
                 <select

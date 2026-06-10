@@ -169,4 +169,61 @@ describe('Agendamento API', () => {
       expect(prisma.agendamento.delete).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe('GET /agendamentos/disponibilidade', () => {
+    it('deve retornar a lista de slots disponiveis filtrando os ja agendados considerando timezone America/Sao_Paulo', async () => {
+      // Mock da data de hoje para o teste (vamos fingir que é 2026-06-10T12:00:00.000Z em UTC, que é 09:00:00 em America/Sao_Paulo)
+      const mockSystemTime = new Date('2026-06-10T12:00:00.000Z');
+      jest.useFakeTimers({ now: mockSystemTime });
+
+      // Profissional tem um agendamento das 10:00 às 11:00 local (13:00 às 14:00 UTC)
+      // Como o fuso é America/Sao_Paulo, 10:00 local é 13:00 UTC
+      const mockAgendamentos = [
+        {
+          id: 10,
+          dataHoraInicio: new Date('2026-06-10T13:00:00.000Z'),
+          dataHoraFim: new Date('2026-06-10T14:00:00.000Z'),
+        }
+      ];
+
+      (prisma.agendamento.findMany as jest.Mock).mockResolvedValueOnce(mockAgendamentos);
+
+      const res = await request(app)
+        .get('/agendamentos/disponibilidade')
+        .query({
+          profissionalId: 2,
+          data: '2026-06-10',
+          duracaoMinutos: 60
+        })
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+      
+      // Desde as 08:00 às 20:00 local:
+      // Agora é 09:00 local, com antecedência mínima de 29 min (até 09:29 local).
+      // Então os slots de 08:00, 08:15, 08:30, 08:45, 09:00, 09:15 devem ser ignorados.
+      // O primeiro slot possível após 09:29 é 09:30.
+      // O agendamento mockado é das 10:00 às 11:00 local.
+      // Para duracaoMinutos = 60, slots que colidem com [10:00 - 11:00] são:
+      // - 09:15 (termina 10:15 > 10:00) - ja ignorado por antecedência
+      // - 09:30 (termina 10:30 > 10:00)
+      // - 09:45 (termina 10:45 > 10:00)
+      // - 10:00 (inicia 10:00 < 11:00)
+      // - 10:15 (inicia 10:15 < 11:00)
+      // - 10:30 (inicia 10:30 < 11:00)
+      // - 10:45 (inicia 10:45 < 11:00)
+      // O slot das 11:00 é válido (inicia 11:00 >= 11:00).
+      // Então 09:30, 09:45, 10:00, 10:15, 10:30, 10:45 devem ser bloqueados.
+      // E 11:00 deve estar disponível.
+      expect(res.body).toContain('11:00');
+      expect(res.body).not.toContain('08:00');
+      expect(res.body).not.toContain('09:00');
+      expect(res.body).not.toContain('09:30');
+      expect(res.body).not.toContain('10:00');
+      expect(res.body).not.toContain('10:30');
+
+      jest.useRealTimers();
+    });
+  });
 });
+

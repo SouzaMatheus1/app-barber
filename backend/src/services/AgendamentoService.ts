@@ -252,7 +252,7 @@ export class AgendamentoService {
 
         const slotsDisponiveis: string[] = [];
         const baseDate = dayjs.tz(dataStr, 'America/Sao_Paulo');
-        const antecedenciaMinima = new Date(Date.now() + 29 * 60 * 1000); // 29 minutos no futuro (fuso universal)
+        const antecedenciaMinima = new Date(Date.now() + 14 * 60 * 1000); // 14 minutos no futuro (fuso universal)
 
         const limiteFechamento = baseDate.hour(horaFechamento).minute(0).second(0).millisecond(0).toDate();
 

@@ -1,6 +1,9 @@
 import { prisma } from '../database/prisma';
 import { StatusAgendamento, Prisma } from '@prisma/client';
 import { tenantStorage } from '../database/tenantContext';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
 
 export class AgendamentoService {
 
@@ -218,9 +221,12 @@ export class AgendamentoService {
     }
 
     async getDisponibilidade(profissionalId: number, dataStr: string, duracaoMinutos: number) {
-        // Encontra todos os agendamentos do profissional na data selecionada
-        const dataInicio = new Date(`${dataStr}T00:00:00`);
-        const dataFim = new Date(`${dataStr}T23:59:59`);
+        dayjs.extend(utc);
+        dayjs.extend(timezone);
+
+        // Encontra todos os agendamentos do profissional na data selecionada, considerando o fuso de America/Sao_Paulo
+        const dataInicio = dayjs.tz(`${dataStr} 00:00:00`, 'America/Sao_Paulo').toDate();
+        const dataFim = dayjs.tz(`${dataStr} 23:59:59`, 'America/Sao_Paulo').toDate();
 
         const agendamentos = await prisma.agendamento.findMany({
             where: {
@@ -245,25 +251,23 @@ export class AgendamentoService {
         const horaFechamento = 20;
 
         const slotsDisponiveis: string[] = [];
-        const agora = new Date();
-        const antecedenciaMinima = new Date(Date.now() + 29 * 60 * 1000); // 29 minutos no futuro
+        const baseDate = dayjs.tz(dataStr, 'America/Sao_Paulo');
+        const antecedenciaMinima = new Date(Date.now() + 29 * 60 * 1000); // 29 minutos no futuro (fuso universal)
+
+        const limiteFechamento = baseDate.hour(horaFechamento).minute(0).second(0).millisecond(0).toDate();
 
         // Gerar slots de 15 em 15 minutos
         for (let hora = horaAbertura; hora < horaFechamento; hora++) {
             for (const minuto of [0, 15, 30, 45]) {
-                const slotStart = new Date(dataInicio);
-                slotStart.setHours(hora, minuto, 0, 0);
-
+                const slotStart = baseDate.hour(hora).minute(minuto).second(0).millisecond(0).toDate();
                 const slotEnd = new Date(slotStart.getTime() + duracaoMinutos * 60 * 1000);
 
                 // Se o slot terminar depois do horário de fechamento, ignora
-                const limiteFechamento = new Date(dataInicio);
-                limiteFechamento.setHours(horaFechamento, 0, 0, 0);
                 if (slotEnd > limiteFechamento) {
                     continue;
                 }
 
-                // Se for hoje, o slot deve respeitar a antecedência mínima
+                // Se for hoje/passado, o slot deve respeitar a antecedência mínima
                 if (slotStart < antecedenciaMinima) {
                     continue;
                 }

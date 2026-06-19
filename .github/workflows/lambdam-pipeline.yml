@@ -1,0 +1,56 @@
+name: Pipeline Lambda M
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    name: Integracao Continua (CI)
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout do repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Instalar dependencias
+        run: npm ci
+        working-directory: ./backend
+
+      - name: Gerar Prisma Client
+        run: npx prisma generate
+        working-directory: ./backend
+
+      - name: Compilar codigo TypeScript
+        run: npm run build
+        working-directory: ./backend
+
+  deploy-producao:
+    name: Entrega Continua (CD)
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Conectar e atualizar VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DO_HOST }}
+          username: ${{ secrets.DO_USER }}
+          key: ${{ secrets.DO_SSH_KEY }}
+          script: |
+            cd /var/www/ws-barber-shop/backend
+            git restore package-lock.json
+            git pull origin main
+            npm ci
+            npx prisma generate
+            npx prisma migrate deploy
+            npm run build
+            pm2 restart api-barber
+            pm2 save

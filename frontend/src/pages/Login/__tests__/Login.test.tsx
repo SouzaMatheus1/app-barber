@@ -29,7 +29,7 @@ describe('Página de Login', () => {
 
   it('deve renderizar a tela de login corretamente', () => {
     render(<Login />);
-    expect(screen.getByText(/barbearia X/i)).toBeInTheDocument();
+    expect(screen.getByText(/λ MAT/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/exemplo@email.com/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/••••••••/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Entrar na Plataforma/i })).toBeInTheDocument();

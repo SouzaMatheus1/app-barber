@@ -2,6 +2,11 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Dashboard from '../Dashboard';
 import { dashboardService } from '../../../services/dashboardService';
+import { MemoryRouter } from 'react-router-dom';
+
+vi.mock('../../../contexts/AuthContext', () => ({
+  useAuth: () => ({ user: { nomeFantasia: 'barbearia X' } })
+}));
 
 // Mock do serviço
 vi.mock('../../../services/dashboardService', () => ({
@@ -37,7 +42,11 @@ describe('Página Dashboard', () => {
 
     (dashboardService.getClientes as any).mockResolvedValueOnce([{}, {}, {}]); // 3 clientes
 
-    render(<Dashboard />);
+    render(
+      <MemoryRouter>
+        <Dashboard />
+      </MemoryRouter>
+    );
 
     // Loader está na tela inicialmente? 
     // Wait for disappear é feito esperando aparecer os titulos
@@ -46,7 +55,7 @@ describe('Página Dashboard', () => {
       expect(screen.getByText('Faturamento do Dia')).toBeInTheDocument();
       expect(screen.getByText(/R\$ 500,50/i)).toBeInTheDocument();
 
-      expect(screen.getByText('Cortes Realizados')).toBeInTheDocument();
+      expect(screen.getByText('Atendimentos Hoje')).toBeInTheDocument();
 
       // Ticket médio (500.5 / 10 = 50.05)
       expect(screen.getByText('Ticket Médio')).toBeInTheDocument();
@@ -71,7 +80,11 @@ describe('Página Dashboard', () => {
     (dashboardService.getTransacoes as any).mockResolvedValueOnce([]);
     (dashboardService.getClientes as any).mockResolvedValueOnce([]);
 
-    render(<Dashboard />);
+    render(
+      <MemoryRouter>
+        <Dashboard />
+      </MemoryRouter>
+    );
 
     await waitFor(() => {
       expect(screen.getByText('barbearia X')).toBeInTheDocument(); // Title is there, loading finished

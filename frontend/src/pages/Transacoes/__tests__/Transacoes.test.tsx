@@ -4,6 +4,7 @@ import Transacoes from '../Transacoes';
 import { transacaoService } from '../../../services/TransacaoService';
 import { assinaturaService } from '../../../services/AssinaturaService';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 
 // Mock do assinaturaService
 vi.mock('../../../services/AssinaturaService', () => ({
@@ -15,18 +16,12 @@ vi.mock('../../../services/AssinaturaService', () => ({
 // Mock do ClienteService
 vi.mock('../../../services/ClienteService', () => {
   return {
-    ClienteService: vi.fn().mockImplementation(() => ({
-      search: vi.fn().mockResolvedValue([{ id: 1, nome: 'João Silva', telefone: '123456789' }])
-    }))
+    ClienteService: class {
+      search = vi.fn().mockResolvedValue([{ id: 1, nome: 'João Silva', telefone: '123456789' }]);
+      listar = vi.fn().mockResolvedValue([{ id: 1, nome: 'João Silva', telefone: '123456789' }]);
+    }
   };
 });
-
-// Mock do ClienteService
-vi.mock('../../../services/ClienteService', () => ({
-  ClienteService: class {
-    search = vi.fn().mockResolvedValue([{ id: 1, nome: 'João Silva', telefone: '123456789' }])
-  }
-}));
 
 // Mock do transacaoService
 vi.mock('../../../services/TransacaoService', () => ({
@@ -55,9 +50,13 @@ describe('Página de Transações', () => {
   });
 
   it('deve carregar e renderizar os dados do banco nos selects corretamente', async () => {
-    render(<Transacoes />);
+    render(
+      <MemoryRouter>
+        <Transacoes />
+      </MemoryRouter>
+    );
     
-    expect(screen.getByText('Nova Transação')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Transações/i })).toBeInTheDocument();
 
     await waitFor(() => {
       // Select de profissional deve ter Admin Batista
@@ -69,7 +68,11 @@ describe('Página de Transações', () => {
   });
 
   it('deve permitir adicionar múltiplos itens e calcular o total', async () => {
-    render(<Transacoes />);
+    render(
+      <MemoryRouter>
+        <Transacoes />
+      </MemoryRouter>
+    );
 
     await waitFor(() => {
       expect(screen.getByRole('option', { name: 'Corte' })).toBeInTheDocument();
@@ -78,7 +81,8 @@ describe('Página de Transações', () => {
     const user = userEvent.setup();
     const selects = screen.getAllByRole('combobox');
     const selectProfissional = selects[0]; // O primeiro select é o profissional
-    const selectItemInicial = selects[1]; // O segundo é o primeiro item do catalogo
+    const selectFormaPagamento = selects[1];
+    const selectItemInicial = selects[2]; // O terceiro é o primeiro item do catalogo
     
     // Seleciona profissional
     await user.selectOptions(selectProfissional, '1');
@@ -96,24 +100,19 @@ describe('Página de Transações', () => {
     const btnAdd = screen.getByRole('button', { name: /Adicionar Item/i });
     await user.click(btnAdd);
 
-    // Agora devem haver 3 selects (Profissional, Item 1, Item 2)
+    // Agora devem haver 4 selects (Profissional, Pgto, Item 1, Item 2)
     const newSelects = screen.getAllByRole('combobox');
-    expect(newSelects.length).toBe(3);
+    expect(newSelects.length).toBe(4);
     
-    const selectSegundoItem = newSelects[2];
+    const selectSegundoItem = newSelects[3];
 
     // Seleciona "Pomada"
     await user.selectOptions(selectSegundoItem, 'Pomada');
 
     // Muda a quantidade do segundo item para 2
-    // input de qtd é o primeiro number type input (ou podemos pegar pelo role generalizado - spinbutton)
     const inputsQtd = screen.getAllByRole('spinbutton'); 
-    // Inputs de spinbutton: 
-    // Item 1: qtd, preco
-    // Item 2: qtd, preco
-    // Index 0 = qtd Item 1, Index 1 = preco Item 1, Index 2 = qtd Item 2, Index 3 = preco Item 2
     
-    fireEvent.change(inputsQtd[2], { target: { value: '2' } });
+    fireEvent.change(inputsQtd[1], { target: { value: '2' } });
 
     // 1 Corte (35) + 2 Pomadas (2x25=50) => Total = 85.00
     await waitFor(() => {
@@ -123,7 +122,11 @@ describe('Página de Transações', () => {
 
   it('deve enviar a form submissão com os dados corretos e exibir sucesso', async () => {
     (transacaoService.create as any).mockResolvedValueOnce({ success: true });
-    render(<Transacoes />);
+    render(
+      <MemoryRouter>
+        <Transacoes />
+      </MemoryRouter>
+    );
 
     await waitFor(() => {
       expect(screen.getByRole('option', { name: 'Corte' })).toBeInTheDocument();
@@ -132,7 +135,7 @@ describe('Página de Transações', () => {
     const user = userEvent.setup();
     const selects = screen.getAllByRole('combobox');
     const selectProf = selects[0];
-    const selectItem = selects[1];
+    const selectItem = selects[2];
 
     // Set client and select from suggestions
     const inputCliente = screen.getByPlaceholderText(/Ex: João Silva ou Avulso/i);
@@ -153,13 +156,14 @@ describe('Página de Transações', () => {
     await user.click(btnSubmit);
 
     await waitFor(() => {
-      expect(transacaoService.create).toHaveBeenCalledWith({
-        descricao: 'Atendimento: João Silva',
+      expect(transacaoService.create).toHaveBeenCalledWith(expect.objectContaining({
+        descricao: 'Corte',
         tipoTransacaoId: 1,
         profissionalId: 1,
         clienteId: 1,
+        formaPagamentoId: 1,
         itens: [{ itemId: 1, quantidade: 1, usouCreditoAssinatura: false }]
-      });
+      }));
     });
 
     // Mostra "Transação Registrada!"

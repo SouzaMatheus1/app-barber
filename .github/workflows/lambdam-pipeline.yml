@@ -36,6 +36,7 @@ jobs:
     name: Entrega Continua (CD)
     needs: build-and-test
     runs-on: ubuntu-latest
+    environment: deploy_producao
     
     steps:
       - name: Conectar e atualizar VPS

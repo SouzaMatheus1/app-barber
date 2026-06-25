@@ -3,7 +3,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Agenda } from '../Agenda';
 import { api } from '../../../services/api';
 import { MemoryRouter } from 'react-router-dom';
-import userEvent from '@testing-library/user-event';
 
 vi.mock('../../../services/api', () => ({
   api: {

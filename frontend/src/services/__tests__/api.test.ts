@@ -3,7 +3,6 @@ import { api } from '../api';
 
 describe('Instância Axios API (services/api.ts)', () => {
   const originalLocation = window.location;
-  const originalLocalStorage = global.localStorage;
 
   // Helper para simular diferentes URLs/caminhos
   const mockLocation = (url: string) => {

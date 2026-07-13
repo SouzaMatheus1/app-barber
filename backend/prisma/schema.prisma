@@ -377,27 +377,49 @@ model Ativo {
 }
 
 model AtivoVeiculo {
-  ativoId   Int     @id
-  modelo    String
-  categoria String  @default("CARRO")
-  ano       Int?
-  cor       String?
-  placa     String?
+  ativoId     Int     @id
+  modelo      String
+  categoriaId Int
+  ano         Int?
+  cor         String?
+  placa       String?
 
-  ativo   Ativo   @relation(fields: [ativoId], references: [id], onDelete: Cascade)
+  ativo     Ativo            @relation(fields: [ativoId], references: [id], onDelete: Cascade)
+  categoria CategoriaVeiculo @relation(fields: [categoriaId], references: [id])
 
+  @@index([categoriaId])
   @@map("AtivoVeiculo")
 }
 
 model AtivoAnimal {
-  ativoId Int     @id
-  especie String
-  raca    String?
-  porte   String?
+  ativoId   Int     @id
+  especieId Int
+  raca      String?
+  porte     String?
 
-  ativo   Ativo   @relation(fields: [ativoId], references: [id], onDelete: Cascade)
+  ativo   Ativo         @relation(fields: [ativoId], references: [id], onDelete: Cascade)
+  especie EspecieAnimal @relation(fields: [especieId], references: [id])
 
+  @@index([especieId])
   @@map("AtivoAnimal")
+}
+
+model CategoriaVeiculo {
+  id        Int    @id @default(autoincrement())
+  descricao String @unique
+
+  veiculos AtivoVeiculo[]
+
+  @@map("CategoriaVeiculo")
+}
+
+model EspecieAnimal {
+  id        Int    @id @default(autoincrement())
+  descricao String @unique
+
+  animais AtivoAnimal[]
+
+  @@map("EspecieAnimal")
 }
 
 

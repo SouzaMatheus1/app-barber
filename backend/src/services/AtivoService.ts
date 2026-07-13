@@ -7,13 +7,13 @@ interface CriarAtivoInput {
   nome: string;
   detalhesVeiculo?: {
     modelo: string;
-    categoria: string;
+    categoriaId: number;
     ano?: number;
     cor?: string;
     placa?: string;
   };
   detalhesAnimal?: {
-    especie: string;
+    especieId: number;
     raca?: string;
     porte?: string;
   };
@@ -23,13 +23,13 @@ interface AtualizarAtivoInput {
   nome?: string;
   detalhesVeiculo?: {
     modelo: string;
-    categoria?: string;
+    categoriaId?: number;
     ano?: number;
     cor?: string;
     placa?: string;
   };
   detalhesAnimal?: {
-    especie: string;
+    especieId?: number;
     raca?: string;
     porte?: string;
   };
@@ -70,21 +70,31 @@ export class AtivoService {
       throw new Error('Cliente não encontrado.');
     }
 
-    // 4. Validar e normalizar subcategorias
+    // 4. Validar subcategorias no banco de dados
     if (dados.detalhesVeiculo) {
-      const cat = dados.detalhesVeiculo.categoria?.toUpperCase();
-      if (!cat || !['CARRO', 'MOTO', 'CAMINHAO'].includes(cat)) {
-        throw new Error('Categoria de veículo inválida. Opções: CARRO, MOTO, CAMINHAO.');
+      const catId = dados.detalhesVeiculo.categoriaId;
+      if (!catId) {
+        throw new Error('Categoria de veículo é obrigatória.');
       }
-      dados.detalhesVeiculo.categoria = cat;
+      const categoriaExiste = await prisma.categoriaVeiculo.findUnique({
+        where: { id: catId }
+      });
+      if (!categoriaExiste) {
+        throw new Error('Categoria de veículo inválida ou inexistente.');
+      }
     }
 
     if (dados.detalhesAnimal) {
-      const esp = dados.detalhesAnimal.especie?.toUpperCase();
-      if (!esp || !['CACHORRO', 'GATO', 'AVE', 'OUTROS'].includes(esp)) {
-        throw new Error('Espécie de animal inválida. Opções: CACHORRO, GATO, AVE, OUTROS.');
+      const espId = dados.detalhesAnimal.especieId;
+      if (!espId) {
+        throw new Error('Espécie de animal é obrigatória.');
       }
-      dados.detalhesAnimal.especie = esp;
+      const especieExiste = await prisma.especieAnimal.findUnique({
+        where: { id: espId }
+      });
+      if (!especieExiste) {
+        throw new Error('Espécie de animal inválida ou inexistente.');
+      }
     }
 
     // 5. Salvar dentro de uma transação
@@ -103,7 +113,7 @@ export class AtivoService {
           data: {
             ativoId: novoAtivo.id,
             modelo: dados.detalhesVeiculo.modelo,
-            categoria: dados.detalhesVeiculo.categoria,
+            categoriaId: dados.detalhesVeiculo.categoriaId,
             ano: dados.detalhesVeiculo.ano,
             cor: dados.detalhesVeiculo.cor,
             placa: dados.detalhesVeiculo.placa
@@ -113,7 +123,7 @@ export class AtivoService {
         await tx.ativoAnimal.create({
           data: {
             ativoId: novoAtivo.id,
-            especie: dados.detalhesAnimal.especie,
+            especieId: dados.detalhesAnimal.especieId,
             raca: dados.detalhesAnimal.raca,
             porte: dados.detalhesAnimal.porte
           }
@@ -122,7 +132,10 @@ export class AtivoService {
 
       return await tx.ativo.findUnique({
         where: { id: novoAtivo.id },
-        include: { veiculo: true, animal: true }
+        include: {
+          veiculo: { include: { categoria: true } },
+          animal: { include: { especie: true } }
+        }
       });
     });
   }
@@ -134,8 +147,8 @@ export class AtivoService {
         ativo: true
       },
       include: {
-        veiculo: true,
-        animal: true
+        veiculo: { include: { categoria: true } },
+        animal: { include: { especie: true } }
       }
     });
   }
@@ -150,26 +163,28 @@ export class AtivoService {
       throw new Error('Ativo não encontrado.');
     }
 
-    // Validar e normalizar subcategorias para atualização
-    let validatedCategory: string | undefined;
+    // Validar subcategorias para atualização
     if (dados.detalhesVeiculo && ativo.veiculo) {
-      const cat = dados.detalhesVeiculo.categoria?.toUpperCase();
-      if (cat) {
-        if (!['CARRO', 'MOTO', 'CAMINHAO'].includes(cat)) {
-          throw new Error('Categoria de veículo inválida. Opções: CARRO, MOTO, CAMINHAO.');
+      const catId = dados.detalhesVeiculo.categoriaId;
+      if (catId) {
+        const categoriaExiste = await prisma.categoriaVeiculo.findUnique({
+          where: { id: catId }
+        });
+        if (!categoriaExiste) {
+          throw new Error('Categoria de veículo inválida ou inexistente.');
         }
-        validatedCategory = cat;
       }
     }
 
-    let validatedEspecie: string | undefined;
     if (dados.detalhesAnimal && ativo.animal) {
-      const esp = dados.detalhesAnimal.especie?.toUpperCase();
-      if (esp) {
-        if (!['CACHORRO', 'GATO', 'AVE', 'OUTROS'].includes(esp)) {
-          throw new Error('Espécie de animal inválida. Opções: CACHORRO, GATO, AVE, OUTROS.');
+      const espId = dados.detalhesAnimal.especieId;
+      if (espId) {
+        const especieExiste = await prisma.especieAnimal.findUnique({
+          where: { id: espId }
+        });
+        if (!especieExiste) {
+          throw new Error('Espécie de animal inválida ou inexistente.');
         }
-        validatedEspecie = esp;
       }
     }
 
@@ -186,7 +201,7 @@ export class AtivoService {
           where: { ativoId: id },
           data: {
             modelo: dados.detalhesVeiculo.modelo,
-            categoria: validatedCategory || ativo.veiculo.categoria,
+            categoriaId: dados.detalhesVeiculo.categoriaId || ativo.veiculo.categoriaId,
             ano: dados.detalhesVeiculo.ano,
             cor: dados.detalhesVeiculo.cor,
             placa: dados.detalhesVeiculo.placa
@@ -196,7 +211,7 @@ export class AtivoService {
         await tx.ativoAnimal.update({
           where: { ativoId: id },
           data: {
-            especie: validatedEspecie || ativo.animal.especie,
+            especieId: dados.detalhesAnimal.especieId || ativo.animal.especieId,
             raca: dados.detalhesAnimal.raca,
             porte: dados.detalhesAnimal.porte
           }
@@ -205,7 +220,10 @@ export class AtivoService {
 
       return await tx.ativo.findUnique({
         where: { id },
-        include: { veiculo: true, animal: true }
+        include: {
+          veiculo: { include: { categoria: true } },
+          animal: { include: { especie: true } }
+        }
       });
     });
   }
@@ -250,5 +268,17 @@ export class AtivoService {
     });
 
     return tipos.map(t => t.tipoAtivo);
+  }
+
+  async listarCategoriasVeiculo() {
+    return await prisma.categoriaVeiculo.findMany({
+      orderBy: { descricao: 'asc' }
+    });
+  }
+
+  async listarEspeciesAnimal() {
+    return await prisma.especieAnimal.findMany({
+      orderBy: { descricao: 'asc' }
+    });
   }
 }

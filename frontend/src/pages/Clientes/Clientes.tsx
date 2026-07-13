@@ -28,6 +28,8 @@ export function Clientes() {
   const [ativos, setAtivos] = useState<any[]>([]);
   const [loadingAtivos, setLoadingAtivos] = useState(false);
   const [tiposAtivoPermitidos, setTiposAtivoPermitidos] = useState<any[]>([]);
+  const [categoriasVeiculo, setCategoriasVeiculo] = useState<any[]>([]);
+  const [especiesAnimal, setEspeciesAnimal] = useState<any[]>([]);
 
   // Ativo Form State
   const [ativoEditingId, setAtivoEditingId] = useState<number | null>(null);
@@ -37,10 +39,10 @@ export function Clientes() {
   const [veiculoPlaca, setVeiculoPlaca] = useState('');
   const [veiculoCor, setVeiculoCor] = useState('');
   const [veiculoAno, setVeiculoAno] = useState<number | ''>('');
-  const [animalEspecie, setAnimalEspecie] = useState('');
+  const [animalEspecie, setAnimalEspecie] = useState<number | ''>('');
   const [animalRaca, setAnimalRaca] = useState('');
   const [animalPorte, setAnimalPorte] = useState('');
-  const [veiculoCategoria, setVeiculoCategoria] = useState('CARRO');
+  const [veiculoCategoria, setVeiculoCategoria] = useState<number | ''>('');
 
   const isBarbearia = user?.tipoEmpresa?.toLowerCase() === 'barbearia';
 
@@ -160,14 +162,21 @@ export function Clientes() {
     resetAtivoForm();
     try {
       setLoadingAtivos(true);
-      const [ativosRes, tiposRes] = await Promise.all([
+      const [ativosRes, tiposRes, categoriasRes, especiesRes] = await Promise.all([
         api.get(`/clientes/${cliente.id}/ativos`),
-        api.get('/tipos-ativo')
+        api.get('/tipos-ativo'),
+        api.get('/categorias-veiculo'),
+        api.get('/especies-animal')
       ]);
       setAtivos(ativosRes.data);
       setTiposAtivoPermitidos(tiposRes.data);
+      setCategoriasVeiculo(categoriasRes.data);
+      setEspeciesAnimal(especiesRes.data);
       if (tiposRes.data && tiposRes.data.length > 0) {
         setAtivoTipoId(tiposRes.data[0].id);
+      }
+      if (categoriasRes.data && categoriasRes.data.length > 0) {
+        setVeiculoCategoria(categoriasRes.data[0].id);
       }
     } catch (e) {
       console.error(e);
@@ -190,7 +199,7 @@ export function Clientes() {
     setVeiculoPlaca('');
     setVeiculoCor('');
     setVeiculoAno('');
-    setVeiculoCategoria('CARRO');
+    setVeiculoCategoria(categoriasVeiculo.length > 0 ? categoriasVeiculo[0].id : '');
     setAnimalEspecie('');
     setAnimalRaca('');
     setAnimalPorte('');
@@ -205,16 +214,16 @@ export function Clientes() {
       setVeiculoPlaca(ativo.veiculo.placa || '');
       setVeiculoCor(ativo.veiculo.cor || '');
       setVeiculoAno(ativo.veiculo.ano || '');
-      setVeiculoCategoria(ativo.veiculo.categoria || 'CARRO');
+      setVeiculoCategoria(ativo.veiculo.categoriaId || '');
     } else {
       setVeiculoModelo('');
       setVeiculoPlaca('');
       setVeiculoCor('');
       setVeiculoAno('');
-      setVeiculoCategoria('CARRO');
+      setVeiculoCategoria(categoriasVeiculo.length > 0 ? categoriasVeiculo[0].id : '');
     }
     if (ativo.animal) {
-      setAnimalEspecie(ativo.animal.especie || '');
+      setAnimalEspecie(ativo.animal.especieId || '');
       setAnimalRaca(ativo.animal.raca || '');
       setAnimalPorte(ativo.animal.porte || '');
     } else {
@@ -253,13 +262,13 @@ export function Clientes() {
         nome: ativoNome,
         detalhesVeiculo: isVeiculo ? {
           modelo: veiculoModelo,
-          categoria: veiculoCategoria,
+          categoriaId: Number(veiculoCategoria),
           ano: veiculoAno !== '' ? Number(veiculoAno) : undefined,
           cor: veiculoCor || undefined,
           placa: veiculoPlaca || undefined
         } : undefined,
         detalhesAnimal: isAnimal ? {
-          especie: animalEspecie,
+          especieId: Number(animalEspecie),
           raca: animalRaca || undefined,
           porte: animalPorte || undefined
         } : undefined
@@ -485,6 +494,7 @@ export function Clientes() {
                         {ativo.veiculo && (
                           <div className="mt-2 text-xs text-[var(--color-text)]/60 space-y-0.5">
                             <p>Modelo: {ativo.veiculo.modelo}</p>
+                            <p>Categoria: {ativo.veiculo.categoria?.descricao || '-'}</p>
                             {ativo.veiculo.placa && <p>Placa: {ativo.veiculo.placa}</p>}
                             {ativo.veiculo.cor && <p>Cor: {ativo.veiculo.cor}</p>}
                             {ativo.veiculo.ano && <p>Ano: {ativo.veiculo.ano}</p>}
@@ -492,7 +502,7 @@ export function Clientes() {
                         )}
                         {ativo.animal && (
                           <div className="mt-2 text-xs text-[var(--color-text)]/60 space-y-0.5">
-                            <p>Espécie: {ativo.animal.especie}</p>
+                            <p>Espécie: {ativo.animal.especie?.descricao || '-'}</p>
                             {ativo.animal.raca && <p>Raça: {ativo.animal.raca}</p>}
                             {ativo.animal.porte && <p>Porte: {ativo.animal.porte}</p>}
                           </div>
@@ -556,12 +566,12 @@ export function Clientes() {
                     <select
                       required
                       value={veiculoCategoria}
-                      onChange={e => setVeiculoCategoria(e.target.value)}
+                      onChange={e => setVeiculoCategoria(Number(e.target.value))}
                       className="w-full px-3 py-2 bg-[var(--color-background)] text-[var(--color-text)] rounded border border-[var(--color-primary)]/20 focus:outline-none focus:border-[var(--color-primary)] text-sm cursor-pointer"
                     >
-                      <option value="CARRO">Carro</option>
-                      <option value="MOTO">Moto</option>
-                      <option value="CAMINHAO">Caminhão</option>
+                      {categoriasVeiculo.map(c => (
+                        <option key={c.id} value={c.id}>{c.descricao}</option>
+                      ))}
                     </select>
                   </div>
                   <div className="space-y-1">
@@ -604,14 +614,13 @@ export function Clientes() {
                     <select
                       required
                       value={animalEspecie}
-                      onChange={e => setAnimalEspecie(e.target.value)}
+                      onChange={e => setAnimalEspecie(e.target.value ? Number(e.target.value) : '')}
                       className="w-full px-3 py-2 bg-[var(--color-background)] text-[var(--color-text)] rounded border border-[var(--color-primary)]/20 focus:outline-none focus:border-[var(--color-primary)] text-sm cursor-pointer"
                     >
                       <option value="">Selecione...</option>
-                      <option value="CACHORRO">Cachorro</option>
-                      <option value="GATO">Gato</option>
-                      <option value="AVE">Ave</option>
-                      <option value="OUTROS">Outros</option>
+                      {especiesAnimal.map(e => (
+                        <option key={e.id} value={e.id}>{e.descricao}</option>
+                      ))}
                     </select>
                   </div>
                   <div className="space-y-1">

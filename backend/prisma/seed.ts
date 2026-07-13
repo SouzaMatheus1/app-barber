@@ -52,6 +52,45 @@ async function main() {
     skipDuplicates: true
   });
 
+  console.log('Populando CategoriaVeiculo...');
+  const catCarro = await prisma.categoriaVeiculo.upsert({
+    where: { descricao: 'CARRO' },
+    update: {},
+    create: { descricao: 'CARRO' },
+  });
+  await prisma.categoriaVeiculo.upsert({
+    where: { descricao: 'MOTO' },
+    update: {},
+    create: { descricao: 'MOTO' },
+  });
+  await prisma.categoriaVeiculo.upsert({
+    where: { descricao: 'CAMINHAO' },
+    update: {},
+    create: { descricao: 'CAMINHAO' },
+  });
+
+  console.log('Populando EspecieAnimal...');
+  const espCachorro = await prisma.especieAnimal.upsert({
+    where: { descricao: 'CACHORRO' },
+    update: {},
+    create: { descricao: 'CACHORRO' },
+  });
+  await prisma.especieAnimal.upsert({
+    where: { descricao: 'GATO' },
+    update: {},
+    create: { descricao: 'GATO' },
+  });
+  await prisma.especieAnimal.upsert({
+    where: { descricao: 'AVE' },
+    update: {},
+    create: { descricao: 'AVE' },
+  });
+  await prisma.especieAnimal.upsert({
+    where: { descricao: 'OUTROS' },
+    update: {},
+    create: { descricao: 'OUTROS' },
+  });
+
   // --- 2. MULTI-VERTICAL DICTIONARY ---
   console.log('Populando TipoAtivo...');
   const tipoVeiculo = await prisma.tipoAtivo.upsert({
@@ -244,7 +283,7 @@ async function main() {
       data: {
         ativoId: ativoLR.id,
         modelo: 'Corolla',
-        categoria: 'CARRO',
+        categoriaId: catCarro.id,
         placa: 'XYZ-9876',
         cor: 'Preto',
         ano: 2022
@@ -311,7 +350,7 @@ async function main() {
     await prisma.ativoAnimal.create({
       data: {
         ativoId: ativoPet.id,
-        especie: 'CACHORRO',
+        especieId: espCachorro.id,
         raca: 'Golden Retriever',
         porte: 'Grande'
       }

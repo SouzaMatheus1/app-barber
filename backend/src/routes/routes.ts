@@ -51,6 +51,8 @@ routes.post('/ativos', isAuth, ativoController.criar);
 routes.put('/ativos/:id', isAuth, ativoController.atualizar);
 routes.delete('/ativos/:id', isAuth, ativoController.desativar);
 routes.get('/tipos-ativo', isAuth, ativoController.listarTiposPermitidos);
+routes.get('/categorias-veiculo', isAuth, ativoController.listarCategoriasVeiculo);
+routes.get('/especies-animal', isAuth, ativoController.listarEspeciesAnimal);
 
 
 // item catalogo

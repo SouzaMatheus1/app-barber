@@ -83,4 +83,22 @@ export class AtivoController {
       return res.status(400).json({ error: error.message });
     }
   }
+
+  listarCategoriasVeiculo = async (req: Request, res: Response) => {
+    try {
+      const result = await this.ativoService.listarCategoriasVeiculo();
+      return res.status(200).json(result);
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
+    }
+  }
+
+  listarEspeciesAnimal = async (req: Request, res: Response) => {
+    try {
+      const result = await this.ativoService.listarEspeciesAnimal();
+      return res.status(200).json(result);
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
+    }
+  }
 }

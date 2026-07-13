@@ -81,7 +81,6 @@ describe('Página de Transações', () => {
     const user = userEvent.setup();
     const selects = screen.getAllByRole('combobox');
     const selectProfissional = selects[0]; // O primeiro select é o profissional
-    const selectFormaPagamento = selects[1];
     const selectItemInicial = selects[2]; // O terceiro é o primeiro item do catalogo
     
     // Seleciona profissional

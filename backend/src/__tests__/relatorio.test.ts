@@ -13,7 +13,7 @@ app.use((req, res, next) => {
     if (authHeader) {
         const token = authHeader.split(' ')[1];
         try {
-            const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as any;
+            const decoded = jwt.verify(token as string, process.env.JWT_SECRET as string) as any;
             tenantStorage.run({ empresaId: decoded.empresaId }, () => {
                 next();
             });

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../../../services/api';
 import { User, Calendar, Clock, ChevronRight, ChevronLeft, Check, Sparkles, Loader2, MessageSquare } from 'lucide-react';
+import { usePortalAuth } from '../../../contexts/PortalAuthContext';
 
 interface Servico {
   id: number;
@@ -38,6 +39,12 @@ interface AssinaturaAtiva {
 export default function PortalAgendar() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const { cliente } = usePortalAuth();
+
+  // Ativos do cliente
+  const [ativos, setAtivos] = useState<any[]>([]);
+  const [selectedAtivoId, setSelectedAtivoId] = useState<number | ''>('');
+  const [tipoEmpresa, setTipoEmpresa] = useState<string>('');
 
   // Wizard Steps: 'SERVICOS' -> 'PROFISSIONAL' -> 'DATA_HORA' -> 'CONFIRMAR'
   const [step, setStep] = useState<'SERVICOS' | 'PROFISSIONAL' | 'DATA_HORA' | 'CONFIRMAR'>('SERVICOS');
@@ -84,6 +91,26 @@ export default function PortalAgendar() {
     }
   }, [selectedServices, assinatura]);
 
+  useEffect(() => {
+    async function loadAtivos() {
+      if (cliente?.id && tipoEmpresa && tipoEmpresa.toLowerCase() !== 'barbearia') {
+        try {
+          const res = await api.get(`/clientes/${cliente.id}/ativos`);
+          const clientAtivos = res.data;
+          setAtivos(clientAtivos);
+          if (clientAtivos.length === 1) {
+            setSelectedAtivoId(clientAtivos[0].id);
+          } else {
+            setSelectedAtivoId('');
+          }
+        } catch (error) {
+          console.error("Erro ao carregar ativos do portal:", error);
+        }
+      }
+    }
+    loadAtivos();
+  }, [cliente?.id, tipoEmpresa]);
+
   const checkCreditosDisponiveis = () => {
     if (!assinatura || selectedServices.length === 0) return false;
     
@@ -107,11 +134,15 @@ export default function PortalAgendar() {
       setLoadingServices(true);
       setLoadingProfissionais(true);
 
-      const [resCat, resProf, resAssinatura] = await Promise.all([
+      const [resCat, resProf, resAssinatura, resEmpresa] = await Promise.all([
         api.get('/itens'),
         api.get('/profissionais'),
         api.get('/portal/minha-assinatura').catch(err => {
           console.log("Sem assinatura ativa:", err);
+          return { data: null };
+        }),
+        api.get(`/portal/${slug}/empresa`).catch(err => {
+          console.log("Erro ao carregar empresa:", err);
           return { data: null };
         })
       ]);
@@ -122,6 +153,9 @@ export default function PortalAgendar() {
       setProfissionais(resProf.data);
       if (resAssinatura.data) {
         setAssinatura(resAssinatura.data);
+      }
+      if (resEmpresa.data?.tipo?.descricao) {
+        setTipoEmpresa(resEmpresa.data.tipo.descricao);
       }
     } catch (error) {
       console.error('Erro ao carregar dados de agendamento:', error);
@@ -190,7 +224,8 @@ export default function PortalAgendar() {
         dataHoraInicio: startDateTime.toISOString(),
         dataHoraFim: endDateTime.toISOString(),
         observacao: observacao || 'Agendado via Portal do Cliente',
-        usarCreditos
+        usarCreditos,
+        ativoId: selectedAtivoId !== '' ? selectedAtivoId : undefined
       });
 
       setSuccess(true);
@@ -596,6 +631,25 @@ export default function PortalAgendar() {
                   />
                   <div className="w-9 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-400 after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[var(--color-primary)] peer-checked:after:bg-[var(--color-background)]"></div>
                 </label>
+              </div>
+            )}
+
+            {/* Campo Ativo do Cliente (Multi-Vertical) */}
+            {tipoEmpresa && tipoEmpresa.toLowerCase() !== 'barbearia' && ativos.length > 1 && (
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-[var(--color-text)]/40 uppercase tracking-widest block ml-1">Selecione o Ativo</label>
+                <select 
+                  value={selectedAtivoId} 
+                  onChange={e => setSelectedAtivoId(e.target.value ? Number(e.target.value) : '')} 
+                  className="w-full px-4 py-3.5 bg-[var(--color-surface)]/60 text-sm text-[var(--color-text)] rounded-2xl border border-[var(--color-primary)]/5 focus:border-[var(--color-primary)]/40 transition-all outline-none cursor-pointer text-xs"
+                >
+                  <option value="">Selecione o ativo...</option>
+                  {ativos.map(a => (
+                    <option key={a.id} value={a.id}>
+                      {a.nome} ({a.veiculo ? 'Veículo' : 'Animal de Estimação'})
+                    </option>
+                  ))}
+                </select>
               </div>
             )}
 

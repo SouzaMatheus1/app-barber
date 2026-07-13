@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar as Clock, User, X, CheckCircle2, Ban, Scissors } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface Agendamento {
   id: number;
@@ -43,6 +44,7 @@ const statusMap: Record<string, string> = {
 };
 
 export function Agenda() {
+  const { user } = useAuth();
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
   const [profissionais, setProfissionais] = useState<Profissional[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -52,6 +54,10 @@ export function Agenda() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedProfissional, setSelectedProfissional] = useState<number>(0); // 0 = todos
   const navigate = useNavigate();
+
+  // Ativos para agendamento
+  const [novoAgendamentoAtivos, setNovoAgendamentoAtivos] = useState<any[]>([]);
+  const [novoAgendamentoAtivoId, setNovoAgendamentoAtivoId] = useState<number | ''>('');
 
   // Modais Control
   const [isNovoAgendamentoModalOpen, setIsNovoAgendamentoModalOpen] = useState(false);
@@ -80,6 +86,29 @@ export function Agenda() {
   useEffect(() => {
     loadAgenda();
   }, [selectedDate, selectedProfissional]);
+
+  useEffect(() => {
+    async function loadClientAtivos() {
+      if (novoAgendamentoClienteId !== '' && user?.tipoEmpresa?.toLowerCase() !== 'barbearia') {
+        try {
+          const res = await api.get(`/clientes/${novoAgendamentoClienteId}/ativos`);
+          const clientAtivos = res.data;
+          setNovoAgendamentoAtivos(clientAtivos);
+          if (clientAtivos.length === 1) {
+            setNovoAgendamentoAtivoId(clientAtivos[0].id);
+          } else {
+            setNovoAgendamentoAtivoId('');
+          }
+        } catch (error) {
+          console.error('Erro ao carregar ativos do cliente:', error);
+        }
+      } else {
+        setNovoAgendamentoAtivos([]);
+        setNovoAgendamentoAtivoId('');
+      }
+    }
+    loadClientAtivos();
+  }, [novoAgendamentoClienteId, user?.tipoEmpresa]);
 
   const loadBasics = async () => {
     try {
@@ -147,6 +176,7 @@ export function Agenda() {
       await api.post('/agendamentos', {
         profissionalId: novoAgendamentoProfissional,
         clienteId: novoAgendamentoClienteId !== '' ? novoAgendamentoClienteId : undefined,
+        ativoId: novoAgendamentoAtivoId !== '' ? novoAgendamentoAtivoId : undefined,
         servicosIds: [], // Agora a escolha de serviço é só no checkout na tela de Transações
         dataHoraInicio: dataInicio.toISOString(),
         dataHoraFim: dataFim.toISOString(),
@@ -158,6 +188,8 @@ export function Agenda() {
       setNovoAgendamentoClienteSearch('');
       setNovoAgendamentoHora('');
       setNovoAgendamentoDuracao(30);
+      setNovoAgendamentoAtivoId('');
+      setNovoAgendamentoAtivos([]);
       await loadAgenda();
     } catch (error: any) {
       const errMsg = error.response?.data?.error || error.message || "Erro desconhecido";
@@ -501,6 +533,24 @@ export function Agenda() {
                   </div>
                 )}
               </div>
+
+              {user?.tipoEmpresa?.toLowerCase() !== 'barbearia' && novoAgendamentoAtivos.length > 1 && (
+                <div>
+                  <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase">Ativo do Cliente</label>
+                  <select 
+                    value={novoAgendamentoAtivoId} 
+                    onChange={e => setNovoAgendamentoAtivoId(e.target.value ? Number(e.target.value) : '')} 
+                    className="w-full mt-1 bg-[var(--color-background)] text-[var(--color-text)] border border-[var(--color-primary)]/30 rounded-lg px-4 py-2 outline-none cursor-pointer"
+                  >
+                    <option value="">Selecione o ativo...</option>
+                    {novoAgendamentoAtivos.map(a => (
+                      <option key={a.id} value={a.id}>
+                        {a.nome} ({a.veiculo ? 'Veículo' : 'Animal de Estimação'})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div>
                 <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase">Tempo Previsto (em minutos)</label>

@@ -7,9 +7,10 @@ datasource db {
 }
 
 model TipoEmpresa {
-  id        Int       @id @default(autoincrement())
-  descricao String    @unique
-  empresas  Empresa[]
+  id                Int                @id @default(autoincrement())
+  descricao         String             @unique
+  empresas          Empresa[]
+  tipoEmpresaAtivos TipoEmpresaAtivo[]
 
   @@map("TipoEmpresa")
 }
@@ -33,6 +34,7 @@ model Empresa {
   itensTransacao ItemTransacao[]
   creditosAssinatura CreditoAssinatura[]
   agendamentos    Agendamento[]
+  ativos          Ativo[]
 
   @@index([tipoEmpresaId])
   @@map("Empresa")
@@ -79,6 +81,7 @@ model Cliente {
   assinaturas Assinatura[]
   transacoes  Transacao[]
   agendamentos Agendamento[]
+  ativos      Ativo[]
 
   @@index([empresaId])
   @@map("Cliente")
@@ -296,16 +299,19 @@ model Agendamento {
   status          StatusAgendamento @default(CONFIRMADO)
   criadoEm        DateTime          @default(now())
   observacao      String?
+  ativoId         Int?
 
   empresa         Empresa           @relation(fields: [empresaId], references: [id])
   cliente         Cliente?          @relation(fields: [clienteId], references: [id])
   profissional    Profissional      @relation(fields: [profissionalId], references: [id])
   servicos        ServicoAgendamento[]
+  ativo           Ativo?            @relation(fields: [ativoId], references: [id])
 
   @@index([empresaId])
   @@index([clienteId])
   @@index([profissionalId])
   @@index([dataHoraInicio, dataHoraFim])
+  @@index([ativoId])
 }
 
 model ServicoAgendamento {
@@ -326,4 +332,71 @@ enum StatusAgendamento {
   NO_SHOW
   INDISPONIVEL
 }
+
+model TipoAtivo {
+  id                 Int                @id @default(autoincrement())
+  chave              String             @unique
+  descricao          String
+  ativos             Ativo[]
+  tipoEmpresasAtivos TipoEmpresaAtivo[]
+
+  @@map("TipoAtivo")
+}
+
+model TipoEmpresaAtivo {
+  tipoEmpresaId Int
+  tipoAtivoId   Int
+
+  tipoEmpresa   TipoEmpresa @relation(fields: [tipoEmpresaId], references: [id])
+  tipoAtivo     TipoAtivo   @relation(fields: [tipoAtivoId], references: [id])
+
+  @@id([tipoEmpresaId, tipoAtivoId])
+  @@map("TipoEmpresaAtivo")
+}
+
+model Ativo {
+  id           Int           @id @default(autoincrement())
+  empresaId    Int           @default(1)
+  clienteId    Int
+  tipoAtivoId  Int
+  nome         String
+  ativo        Boolean       @default(true)
+  criadoEm     DateTime      @default(now())
+
+  empresa      Empresa       @relation(fields: [empresaId], references: [id])
+  cliente      Cliente       @relation(fields: [clienteId], references: [id])
+  tipoAtivo    TipoAtivo     @relation(fields: [tipoAtivoId], references: [id])
+  veiculo      AtivoVeiculo?
+  animal       AtivoAnimal?
+  agendamentos Agendamento[]
+
+  @@index([empresaId])
+  @@index([clienteId])
+  @@index([tipoAtivoId])
+  @@map("Ativo")
+}
+
+model AtivoVeiculo {
+  ativoId Int     @id
+  modelo  String
+  ano     Int?
+  cor     String?
+  placa   String?
+
+  ativo   Ativo   @relation(fields: [ativoId], references: [id], onDelete: Cascade)
+
+  @@map("AtivoVeiculo")
+}
+
+model AtivoAnimal {
+  ativoId Int     @id
+  especie String
+  raca    String?
+  porte   String?
+
+  ativo   Ativo   @relation(fields: [ativoId], references: [id], onDelete: Cascade)
+
+  @@map("AtivoAnimal")
+}
+
 

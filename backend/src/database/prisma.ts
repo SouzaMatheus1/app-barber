@@ -26,7 +26,8 @@ const TENANT_MODELS = [
   'CategoriaCusto',
   'ItemTransacao',
   'CreditoAssinatura',
-  'Agendamento'
+  'Agendamento',
+  'Ativo'
 ];
 
 export const prisma = systemPrisma.$extends({

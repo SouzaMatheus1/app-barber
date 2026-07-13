@@ -32,7 +32,8 @@ export class AgendamentoService {
             include: {
                 cliente: { select: { id: true, nome: true, telefone: true } },
                 profissional: { select: { id: true, nome: true } },
-                servicos: { include: { item: true } }
+                servicos: { include: { item: true } },
+                ativo: { include: { veiculo: true, animal: true } }
             },
             orderBy: { dataHoraInicio: 'asc' }
         });
@@ -54,6 +55,7 @@ export class AgendamentoService {
         status?: StatusAgendamento;
         ignorarAntecedencia?: boolean;
         usarCreditos?: boolean;
+        ativoId?: number;
     }) {
         const datetimeInicio = new Date(data.dataHoraInicio);
         const datetimeFim = new Date(data.dataHoraFim);
@@ -127,6 +129,19 @@ export class AgendamentoService {
                 observacaoComCreditos = observacaoComCreditos ? `${tag} ${observacaoComCreditos}` : tag;
             }
 
+            // Validar e vincular ativo se fornecido
+            if (data.ativoId) {
+                if (!data.clienteId) {
+                    throw new Error('Cliente é obrigatório para vincular um ativo ao agendamento.');
+                }
+                const ativo = await tx.ativo.findFirst({
+                    where: { id: data.ativoId, clienteId: data.clienteId }
+                });
+                if (!ativo) {
+                    throw new Error('O ativo informado não pertence ao cliente.');
+                }
+            }
+
             // 2. Criar agendamento e vincular serviços nxn
             const novoAgendamento = await tx.agendamento.create({
                 data: {
@@ -137,6 +152,7 @@ export class AgendamentoService {
                     profissionalId: data.profissionalId,
                     status: data.status || 'CONFIRMADO',
                     observacao: observacaoComCreditos,
+                    ativoId: data.ativoId,
                     servicos: {
                         create: data.servicosIds.map(itemId => ({
                             item: { connect: { id: itemId } }

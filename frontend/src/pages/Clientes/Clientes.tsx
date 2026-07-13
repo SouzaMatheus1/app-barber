@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit2, Loader2, User, Users } from 'lucide-react';
+import { Plus, Trash2, Edit2, Loader2, User, Users, Car, Box, X } from 'lucide-react';
 import { ClienteService } from '../../services/ClienteService';
 import { assinaturaService } from '../../services/AssinaturaService';
 import { useAuth } from '../../contexts/AuthContext';
+import { api } from '../../services/api';
 import type { Cliente } from '../../services/ClienteService';
 
 const clienteService = new ClienteService();
@@ -21,6 +22,26 @@ export function Clientes() {
   const [telefone, setTelefone] = useState('');
   const [planoId, setPlanoId] = useState<number | ''>('');
   const [planos, setPlanos] = useState<any[]>([]);
+
+  // Ativos States
+  const [selectedClientForAtivos, setSelectedClientForAtivos] = useState<Cliente | null>(null);
+  const [ativos, setAtivos] = useState<any[]>([]);
+  const [loadingAtivos, setLoadingAtivos] = useState(false);
+  const [tiposAtivoPermitidos, setTiposAtivoPermitidos] = useState<any[]>([]);
+
+  // Ativo Form State
+  const [ativoEditingId, setAtivoEditingId] = useState<number | null>(null);
+  const [ativoNome, setAtivoNome] = useState('');
+  const [ativoTipoId, setAtivoTipoId] = useState<number | ''>('');
+  const [veiculoModelo, setVeiculoModelo] = useState('');
+  const [veiculoPlaca, setVeiculoPlaca] = useState('');
+  const [veiculoCor, setVeiculoCor] = useState('');
+  const [veiculoAno, setVeiculoAno] = useState<number | ''>('');
+  const [animalEspecie, setAnimalEspecie] = useState('');
+  const [animalRaca, setAnimalRaca] = useState('');
+  const [animalPorte, setAnimalPorte] = useState('');
+
+  const isBarbearia = user?.tipoEmpresa?.toLowerCase() === 'barbearia';
 
   useEffect(() => {
     loadClientes();
@@ -109,6 +130,135 @@ export function Clientes() {
     setNome('');
     setTelefone('');
     setPlanoId('');
+  };
+
+  const loadAtivos = async (clienteId: number) => {
+    try {
+      setLoadingAtivos(true);
+      const res = await api.get(`/clientes/${clienteId}/ativos`);
+      setAtivos(res.data);
+    } catch (e) {
+      console.error(e);
+      alert('Erro ao buscar ativos do cliente');
+    } finally {
+      setLoadingAtivos(false);
+    }
+  };
+
+  const loadTiposAtivo = async () => {
+    try {
+      const res = await api.get('/tipos-ativo');
+      setTiposAtivoPermitidos(res.data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const openAtivosModal = async (cliente: Cliente) => {
+    setSelectedClientForAtivos(cliente);
+    resetAtivoForm();
+    await Promise.all([
+      loadAtivos(Number(cliente.id)),
+      loadTiposAtivo()
+    ]);
+  };
+
+  const resetAtivoForm = () => {
+    setAtivoEditingId(null);
+    setAtivoNome('');
+    setAtivoTipoId('');
+    setVeiculoModelo('');
+    setVeiculoPlaca('');
+    setVeiculoCor('');
+    setVeiculoAno('');
+    setAnimalEspecie('');
+    setAnimalRaca('');
+    setAnimalPorte('');
+  };
+
+  const handleEditAtivo = (ativo: any) => {
+    setAtivoEditingId(ativo.id);
+    setAtivoNome(ativo.nome);
+    setAtivoTipoId(ativo.tipoAtivoId);
+    if (ativo.veiculo) {
+      setVeiculoModelo(ativo.veiculo.modelo || '');
+      setVeiculoPlaca(ativo.veiculo.placa || '');
+      setVeiculoCor(ativo.veiculo.cor || '');
+      setVeiculoAno(ativo.veiculo.ano || '');
+    } else {
+      setVeiculoModelo('');
+      setVeiculoPlaca('');
+      setVeiculoCor('');
+      setVeiculoAno('');
+    }
+    if (ativo.animal) {
+      setAnimalEspecie(ativo.animal.especie || '');
+      setAnimalRaca(ativo.animal.raca || '');
+      setAnimalPorte(ativo.animal.porte || '');
+    } else {
+      setAnimalEspecie('');
+      setAnimalRaca('');
+      setAnimalPorte('');
+    }
+  };
+
+  const handleDeleteAtivo = async (id: number) => {
+    if (!window.confirm('Deseja realmente excluir este ativo?')) return;
+    try {
+      setLoadingAtivos(true);
+      await api.delete(`/ativos/${id}`);
+      if (selectedClientForAtivos) {
+        await loadAtivos(Number(selectedClientForAtivos.id));
+      }
+    } catch (e: any) {
+      alert(e.response?.data?.error || 'Erro ao excluir ativo.');
+    } finally {
+      setLoadingAtivos(false);
+    }
+  };
+
+  const handleSaveAtivo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedClientForAtivos) return;
+    try {
+      setLoadingAtivos(true);
+      const isVeiculo = ativoTipoId === 1;
+      const isAnimal = ativoTipoId === 2;
+
+      const payload = {
+        clienteId: Number(selectedClientForAtivos.id),
+        tipoAtivoId: Number(ativoTipoId),
+        nome: ativoNome,
+        detalhesVeiculo: isVeiculo ? {
+          modelo: veiculoModelo,
+          ano: veiculoAno !== '' ? Number(veiculoAno) : undefined,
+          cor: veiculoCor || undefined,
+          placa: veiculoPlaca || undefined
+        } : undefined,
+        detalhesAnimal: isAnimal ? {
+          especie: animalEspecie,
+          raca: animalRaca || undefined,
+          porte: animalPorte || undefined
+        } : undefined
+      };
+
+      if (ativoEditingId) {
+        await api.put(`/ativos/${ativoEditingId}`, {
+          nome: ativoNome,
+          detalhesVeiculo: payload.detalhesVeiculo,
+          detalhesAnimal: payload.detalhesAnimal
+        });
+      } else {
+        await api.post('/ativos', payload);
+      }
+
+      resetAtivoForm();
+      await loadAtivos(Number(selectedClientForAtivos.id));
+    } catch (e: any) {
+      alert(e.response?.data?.error || 'Erro ao salvar ativo.');
+    } finally {
+      setLoadingAtivos(false);
+    }
   };
 
   if (loading && clientes.length === 0) {
@@ -242,6 +392,15 @@ export function Clientes() {
                     </td>
                     <td className="py-4 px-6 text-[var(--color-text)]/80">{cliente.assinaturas?.[0]?.plano.nome || '-'}</td>
                     <td className="py-4 px-6 text-right space-x-3">
+                      {!isBarbearia && (
+                        <button 
+                          onClick={() => openAtivosModal(cliente)}
+                          className="text-[var(--color-text)]/50 hover:text-[var(--color-primary)] transition-colors p-1"
+                          title="Ativos"
+                        >
+                          <Car size={18} />
+                        </button>
+                      )}
                       <button 
                         onClick={() => editClient(cliente)}
                         className="text-[var(--color-text)]/50 hover:text-[var(--color-primary)] transition-colors p-1"
@@ -264,6 +423,218 @@ export function Clientes() {
           </table>
         </div>
       </div>
+
+      {/* Modal de Ativos */}
+      {selectedClientForAtivos && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[var(--color-surface)] border border-[var(--color-primary)]/30 rounded-xl p-6 w-full max-w-2xl shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button 
+              type="button" 
+              onClick={() => setSelectedClientForAtivos(null)} 
+              className="absolute top-4 right-4 text-[var(--color-text)]/50 hover:text-[var(--color-text)]"
+            >
+              <X size={24} />
+            </button>
+            <h2 className="text-xl font-bold text-[var(--color-primary)] mb-6 flex items-center gap-2">
+              <Car size={20} /> Ativos de {selectedClientForAtivos.nome}
+            </h2>
+
+            {/* Listagem de Ativos do Cliente */}
+            <div className="mb-8 space-y-3">
+              <h3 className="text-sm font-semibold text-[var(--color-text)]/85 uppercase tracking-wider">Ativos Cadastrados</h3>
+              {loadingAtivos && ativos.length === 0 ? (
+                <div className="flex justify-center py-4">
+                  <Loader2 className="w-6 h-6 animate-spin text-[var(--color-primary)]" />
+                </div>
+              ) : ativos.length === 0 ? (
+                <p className="text-xs text-[var(--color-text)]/40 italic">Nenhum ativo cadastrado para este cliente.</p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {ativos.map(ativo => (
+                    <div key={ativo.id} className="bg-[var(--color-background)] border border-[var(--color-primary)]/10 rounded-lg p-4 flex flex-col justify-between relative group hover:border-[var(--color-primary)]/30 transition-all">
+                      <div>
+                        <div className="flex justify-between items-start">
+                          <strong className="text-sm text-[var(--color-text)] font-semibold">{ativo.nome}</strong>
+                          <span className="text-[9px] bg-[var(--color-primary)]/10 text-[var(--color-primary)] px-2 py-0.5 rounded font-bold uppercase tracking-wider">
+                            {ativo.tipoAtivoId === 1 ? 'Veículo' : 'Animal'}
+                          </span>
+                        </div>
+                        {ativo.veiculo && (
+                          <div className="mt-2 text-xs text-[var(--color-text)]/60 space-y-0.5">
+                            <p>Modelo: {ativo.veiculo.modelo}</p>
+                            {ativo.veiculo.placa && <p>Placa: {ativo.veiculo.placa}</p>}
+                            {ativo.veiculo.cor && <p>Cor: {ativo.veiculo.cor}</p>}
+                            {ativo.veiculo.ano && <p>Ano: {ativo.veiculo.ano}</p>}
+                          </div>
+                        )}
+                        {ativo.animal && (
+                          <div className="mt-2 text-xs text-[var(--color-text)]/60 space-y-0.5">
+                            <p>Espécie: {ativo.animal.especie}</p>
+                            {ativo.animal.raca && <p>Raça: {ativo.animal.raca}</p>}
+                            {ativo.animal.porte && <p>Porte: {ativo.animal.porte}</p>}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex gap-2 justify-end mt-4 pt-2 border-t border-[var(--color-primary)]/5">
+                        <button 
+                          onClick={() => handleEditAtivo(ativo)} 
+                          className="text-xs text-[var(--color-text)]/40 hover:text-[var(--color-primary)] transition-colors"
+                        >
+                          Editar
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteAtivo(ativo.id)} 
+                          className="text-xs text-[var(--color-text)]/40 hover:text-red-500 transition-colors"
+                        >
+                          Excluir
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Formulário de Cadastro/Edição de Ativo */}
+            <form onSubmit={handleSaveAtivo} className="border-t border-[var(--color-primary)]/20 pt-6 space-y-4">
+              <h3 className="text-sm font-semibold text-[var(--color-text)]/85 uppercase tracking-wider">
+                {ativoEditingId ? 'Editar Ativo' : 'Adicionar Novo Ativo'}
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-semibold text-[var(--color-text)]/80 uppercase">Nome/Identificação</label>
+                  <input
+                    type="text"
+                    required
+                    value={ativoNome}
+                    onChange={e => setAtivoNome(e.target.value)}
+                    className="w-full px-3 py-2 bg-[var(--color-background)] text-[var(--color-text)] rounded border border-[var(--color-primary)]/20 focus:outline-none focus:border-[var(--color-primary)] text-sm"
+                    placeholder="Ex: Civic Prata ou Rex"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-semibold text-[var(--color-text)]/80 uppercase">Tipo de Ativo</label>
+                  <select
+                    required
+                    disabled={!!ativoEditingId}
+                    value={ativoTipoId}
+                    onChange={e => setAtivoTipoId(e.target.value ? Number(e.target.value) : '')}
+                    className="w-full px-3 py-2 bg-[var(--color-background)] text-[var(--color-text)] rounded border border-[var(--color-primary)]/20 focus:outline-none focus:border-[var(--color-primary)] text-sm cursor-pointer"
+                  >
+                    <option value="">Selecione o tipo...</option>
+                    {tiposAtivoPermitidos.map(t => (
+                      <option key={t.id} value={t.id}>{t.descricao}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Campos dinâmicos baseados no tipo do ativo */}
+              {ativoTipoId === 1 && ( // Veículo
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-[var(--color-background)]/50 p-4 rounded-lg border border-[var(--color-primary)]/10">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-semibold text-[var(--color-text)]/70 uppercase">Modelo *</label>
+                    <input
+                      type="text"
+                      required
+                      value={veiculoModelo}
+                      onChange={e => setVeiculoModelo(e.target.value)}
+                      className="w-full px-3 py-2 bg-[var(--color-background)] text-[var(--color-text)] rounded border border-[var(--color-primary)]/20 focus:outline-none focus:border-[var(--color-primary)] text-sm"
+                      placeholder="Ex: Civic"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-semibold text-[var(--color-text)]/70 uppercase">Placa</label>
+                    <input
+                      type="text"
+                      value={veiculoPlaca}
+                      onChange={e => setVeiculoPlaca(e.target.value)}
+                      className="w-full px-3 py-2 bg-[var(--color-background)] text-[var(--color-text)] rounded border border-[var(--color-primary)]/20 focus:outline-none focus:border-[var(--color-primary)] text-sm"
+                      placeholder="Ex: ABC-1234"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-semibold text-[var(--color-text)]/70 uppercase">Cor</label>
+                    <input
+                      type="text"
+                      value={veiculoCor}
+                      onChange={e => setVeiculoCor(e.target.value)}
+                      className="w-full px-3 py-2 bg-[var(--color-background)] text-[var(--color-text)] rounded border border-[var(--color-primary)]/20 focus:outline-none focus:border-[var(--color-primary)] text-sm"
+                      placeholder="Ex: Cinza"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-semibold text-[var(--color-text)]/70 uppercase">Ano</label>
+                    <input
+                      type="number"
+                      value={veiculoAno === '' ? '' : veiculoAno}
+                      onChange={e => setVeiculoAno(e.target.value ? Number(e.target.value) : '')}
+                      className="w-full px-3 py-2 bg-[var(--color-background)] text-[var(--color-text)] rounded border border-[var(--color-primary)]/20 focus:outline-none focus:border-[var(--color-primary)] text-sm"
+                      placeholder="Ex: 2020"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {ativoTipoId === 2 && ( // Animal de Estimação
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-[var(--color-background)]/50 p-4 rounded-lg border border-[var(--color-primary)]/10">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-semibold text-[var(--color-text)]/70 uppercase">Espécie *</label>
+                    <input
+                      type="text"
+                      required
+                      value={animalEspecie}
+                      onChange={e => setAnimalEspecie(e.target.value)}
+                      className="w-full px-3 py-2 bg-[var(--color-background)] text-[var(--color-text)] rounded border border-[var(--color-primary)]/20 focus:outline-none focus:border-[var(--color-primary)] text-sm"
+                      placeholder="Ex: Cão ou Gato"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-semibold text-[var(--color-text)]/70 uppercase">Raça</label>
+                    <input
+                      type="text"
+                      value={animalRaca}
+                      onChange={e => setAnimalRaca(e.target.value)}
+                      className="w-full px-3 py-2 bg-[var(--color-background)] text-[var(--color-text)] rounded border border-[var(--color-primary)]/20 focus:outline-none focus:border-[var(--color-primary)] text-sm"
+                      placeholder="Ex: Labrador"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-semibold text-[var(--color-text)]/70 uppercase">Porte</label>
+                    <input
+                      type="text"
+                      value={animalPorte}
+                      onChange={e => setAnimalPorte(e.target.value)}
+                      className="w-full px-3 py-2 bg-[var(--color-background)] text-[var(--color-text)] rounded border border-[var(--color-primary)]/20 focus:outline-none focus:border-[var(--color-primary)] text-sm"
+                      placeholder="Ex: Grande"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-3 justify-end pt-4">
+                {ativoEditingId && (
+                  <button 
+                    type="button" 
+                    onClick={resetAtivoForm}
+                    className="px-4 py-2 text-xs text-[var(--color-text)]/60 hover:text-[var(--color-text)] transition-colors uppercase font-bold"
+                  >
+                    Cancelar Edição
+                  </button>
+                )}
+                <button 
+                  type="submit" 
+                  disabled={loadingAtivos}
+                  className="px-6 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] text-[var(--color-background)] font-bold rounded uppercase tracking-wider text-xs transition-all disabled:opacity-50 flex items-center gap-2"
+                >
+                  {loadingAtivos && <Loader2 size={12} className="animate-spin" />}
+                  {ativoEditingId ? 'Salvar Alterações' : 'Adicionar Ativo'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

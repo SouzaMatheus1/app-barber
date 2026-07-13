@@ -14,6 +14,8 @@ import { FinanceiroController } from '../controllers/FinanceiroController';
 import { RelatorioController } from '../controllers/RelatorioController';
 import { AgendamentoController } from '../controllers/AgendamentoController';
 import { PortalAuthController } from '../controllers/PortalAuthController';
+import { AtivoController } from '../controllers/AtivoController';
+
 
 const routes = Router();
 const profissionalController = new ProfissionalController();
@@ -29,6 +31,8 @@ const financeiroController = new FinanceiroController();
 const relatorioController = new RelatorioController();
 const agendamentoController = new AgendamentoController();
 const portalAuthController = new PortalAuthController();
+const ativoController = new AtivoController();
+
 
 // profissional
 routes.get('/profissionais', isAuth, profissionalController.listar);
@@ -42,6 +46,12 @@ routes.get('/clientes', isAuth, clienteController.listar);
 routes.post('/clientes', isAuth, clienteController.criar);
 routes.put('/clientes/:id', isAuth, clienteController.editar);
 routes.delete('/clientes/:id', isAuth, clienteController.deletar);
+routes.get('/clientes/:clienteId/ativos', isAuth, ativoController.listarPorCliente);
+routes.post('/ativos', isAuth, ativoController.criar);
+routes.put('/ativos/:id', isAuth, ativoController.atualizar);
+routes.delete('/ativos/:id', isAuth, ativoController.desativar);
+routes.get('/tipos-ativo', isAuth, ativoController.listarTiposPermitidos);
+
 
 // item catalogo
 routes.get('/itens', isAuth, itemCatalogoController.listar);

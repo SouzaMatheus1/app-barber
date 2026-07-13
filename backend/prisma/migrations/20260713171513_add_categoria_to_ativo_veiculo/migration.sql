@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `AtivoVeiculo` ADD COLUMN `categoria` VARCHAR(191) NOT NULL DEFAULT 'CARRO';

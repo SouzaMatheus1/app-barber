@@ -40,6 +40,7 @@ export function Clientes() {
   const [animalEspecie, setAnimalEspecie] = useState('');
   const [animalRaca, setAnimalRaca] = useState('');
   const [animalPorte, setAnimalPorte] = useState('');
+  const [veiculoCategoria, setVeiculoCategoria] = useState('CARRO');
 
   const isBarbearia = user?.tipoEmpresa?.toLowerCase() === 'barbearia';
 
@@ -157,20 +158,39 @@ export function Clientes() {
   const openAtivosModal = async (cliente: Cliente) => {
     setSelectedClientForAtivos(cliente);
     resetAtivoForm();
-    await Promise.all([
-      loadAtivos(Number(cliente.id)),
-      loadTiposAtivo()
-    ]);
+    try {
+      setLoadingAtivos(true);
+      const [ativosRes, tiposRes] = await Promise.all([
+        api.get(`/clientes/${cliente.id}/ativos`),
+        api.get('/tipos-ativo')
+      ]);
+      setAtivos(ativosRes.data);
+      setTiposAtivoPermitidos(tiposRes.data);
+      if (tiposRes.data && tiposRes.data.length > 0) {
+        setAtivoTipoId(tiposRes.data[0].id);
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Erro ao carregar ativos.');
+    } finally {
+      setLoadingAtivos(false);
+    }
   };
 
   const resetAtivoForm = () => {
     setAtivoEditingId(null);
     setAtivoNome('');
-    setAtivoTipoId('');
+    // Manter o tipoAtivoId se houver tipos permitidos para evitar resetar o select invisível
+    if (tiposAtivoPermitidos.length > 0) {
+      setAtivoTipoId(tiposAtivoPermitidos[0].id);
+    } else {
+      setAtivoTipoId('');
+    }
     setVeiculoModelo('');
     setVeiculoPlaca('');
     setVeiculoCor('');
     setVeiculoAno('');
+    setVeiculoCategoria('CARRO');
     setAnimalEspecie('');
     setAnimalRaca('');
     setAnimalPorte('');
@@ -185,11 +205,13 @@ export function Clientes() {
       setVeiculoPlaca(ativo.veiculo.placa || '');
       setVeiculoCor(ativo.veiculo.cor || '');
       setVeiculoAno(ativo.veiculo.ano || '');
+      setVeiculoCategoria(ativo.veiculo.categoria || 'CARRO');
     } else {
       setVeiculoModelo('');
       setVeiculoPlaca('');
       setVeiculoCor('');
       setVeiculoAno('');
+      setVeiculoCategoria('CARRO');
     }
     if (ativo.animal) {
       setAnimalEspecie(ativo.animal.especie || '');
@@ -231,6 +253,7 @@ export function Clientes() {
         nome: ativoNome,
         detalhesVeiculo: isVeiculo ? {
           modelo: veiculoModelo,
+          categoria: veiculoCategoria,
           ano: veiculoAno !== '' ? Number(veiculoAno) : undefined,
           cor: veiculoCor || undefined,
           placa: veiculoPlaca || undefined
@@ -500,7 +523,7 @@ export function Clientes() {
               <h3 className="text-sm font-semibold text-[var(--color-text)]/85 uppercase tracking-wider">
                 {ativoEditingId ? 'Editar Ativo' : 'Adicionar Novo Ativo'}
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-1">
                   <label className="text-[10px] font-semibold text-[var(--color-text)]/80 uppercase">Nome/Identificação</label>
                   <input
@@ -512,26 +535,11 @@ export function Clientes() {
                     placeholder="Ex: Civic Prata ou Rex"
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-semibold text-[var(--color-text)]/80 uppercase">Tipo de Ativo</label>
-                  <select
-                    required
-                    disabled={!!ativoEditingId}
-                    value={ativoTipoId}
-                    onChange={e => setAtivoTipoId(e.target.value ? Number(e.target.value) : '')}
-                    className="w-full px-3 py-2 bg-[var(--color-background)] text-[var(--color-text)] rounded border border-[var(--color-primary)]/20 focus:outline-none focus:border-[var(--color-primary)] text-sm cursor-pointer"
-                  >
-                    <option value="">Selecione o tipo...</option>
-                    {tiposAtivoPermitidos.map(t => (
-                      <option key={t.id} value={t.id}>{t.descricao}</option>
-                    ))}
-                  </select>
-                </div>
               </div>
 
               {/* Campos dinâmicos baseados no tipo do ativo */}
               {ativoTipoId === 1 && ( // Veículo
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-[var(--color-background)]/50 p-4 rounded-lg border border-[var(--color-primary)]/10">
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 bg-[var(--color-background)]/50 p-4 rounded-lg border border-[var(--color-primary)]/10">
                   <div className="space-y-1">
                     <label className="text-[10px] font-semibold text-[var(--color-text)]/70 uppercase">Modelo *</label>
                     <input
@@ -542,6 +550,19 @@ export function Clientes() {
                       className="w-full px-3 py-2 bg-[var(--color-background)] text-[var(--color-text)] rounded border border-[var(--color-primary)]/20 focus:outline-none focus:border-[var(--color-primary)] text-sm"
                       placeholder="Ex: Civic"
                     />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-semibold text-[var(--color-text)]/70 uppercase">Categoria *</label>
+                    <select
+                      required
+                      value={veiculoCategoria}
+                      onChange={e => setVeiculoCategoria(e.target.value)}
+                      className="w-full px-3 py-2 bg-[var(--color-background)] text-[var(--color-text)] rounded border border-[var(--color-primary)]/20 focus:outline-none focus:border-[var(--color-primary)] text-sm cursor-pointer"
+                    >
+                      <option value="CARRO">Carro</option>
+                      <option value="MOTO">Moto</option>
+                      <option value="CAMINHAO">Caminhão</option>
+                    </select>
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-semibold text-[var(--color-text)]/70 uppercase">Placa</label>
@@ -577,17 +598,21 @@ export function Clientes() {
               )}
 
               {ativoTipoId === 2 && ( // Animal de Estimação
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-[var(--color-background)]/50 p-4 rounded-lg border border-[var(--color-primary)]/10">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 bg-[var(--color-background)]/50 p-4 rounded-lg border border-[var(--color-primary)]/10">
                   <div className="space-y-1">
                     <label className="text-[10px] font-semibold text-[var(--color-text)]/70 uppercase">Espécie *</label>
-                    <input
-                      type="text"
+                    <select
                       required
                       value={animalEspecie}
                       onChange={e => setAnimalEspecie(e.target.value)}
-                      className="w-full px-3 py-2 bg-[var(--color-background)] text-[var(--color-text)] rounded border border-[var(--color-primary)]/20 focus:outline-none focus:border-[var(--color-primary)] text-sm"
-                      placeholder="Ex: Cão ou Gato"
-                    />
+                      className="w-full px-3 py-2 bg-[var(--color-background)] text-[var(--color-text)] rounded border border-[var(--color-primary)]/20 focus:outline-none focus:border-[var(--color-primary)] text-sm cursor-pointer"
+                    >
+                      <option value="">Selecione...</option>
+                      <option value="CACHORRO">Cachorro</option>
+                      <option value="GATO">Gato</option>
+                      <option value="AVE">Ave</option>
+                      <option value="OUTROS">Outros</option>
+                    </select>
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-semibold text-[var(--color-text)]/70 uppercase">Raça</label>

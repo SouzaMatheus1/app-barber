@@ -10,6 +10,7 @@ export interface Ativo {
   criadoEm: string;
   veiculo?: {
     modelo: string;
+    categoria: string;
     ano?: number;
     cor?: string;
     placa?: string;

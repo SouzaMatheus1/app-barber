@@ -70,7 +70,7 @@ describe('Ativos API', () => {
       const mockTipoEmpresaAtivo = { id: 1, tipoEmpresaId: 2, tipoAtivoId: 1 };
       const mockCliente = { id: 10, nome: 'Cliente Teste' };
       const mockAtivo = { id: 100, clienteId: 10, tipoAtivoId: 1, nome: 'Civic', empresaId: 1 };
-      const mockAtivoCompleto = { ...mockAtivo, veiculo: { id: 50, ativoId: 100, modelo: 'Civic', placa: 'ABC-1234' } };
+      const mockAtivoCompleto = { ...mockAtivo, veiculo: { id: 50, ativoId: 100, modelo: 'Civic', categoria: 'CARRO', placa: 'ABC-1234' } };
 
       (prisma.empresa.findUnique as jest.Mock).mockResolvedValueOnce(mockEmpresa);
       (prisma.tipoEmpresaAtivo.findFirst as jest.Mock).mockResolvedValueOnce(mockTipoEmpresaAtivo);
@@ -88,6 +88,7 @@ describe('Ativos API', () => {
           nome: 'Civic',
           detalhesVeiculo: {
             modelo: 'Civic',
+            categoria: 'CARRO',
             placa: 'ABC-1234'
           }
         });
@@ -95,6 +96,58 @@ describe('Ativos API', () => {
       expect(res.status).toBe(201);
       expect(res.body.nome).toBe('Civic');
       expect(res.body.veiculo.placa).toBe('ABC-1234');
+    });
+
+    it('deve retornar erro 400 se a categoria do veiculo for invalida', async () => {
+      const mockEmpresa = { id: 1, tipoEmpresaId: 2 };
+      const mockTipoEmpresaAtivo = { id: 1, tipoEmpresaId: 2, tipoAtivoId: 1 };
+      const mockCliente = { id: 10, nome: 'Cliente Teste' };
+
+      (prisma.empresa.findUnique as jest.Mock).mockResolvedValueOnce(mockEmpresa);
+      (prisma.tipoEmpresaAtivo.findFirst as jest.Mock).mockResolvedValueOnce(mockTipoEmpresaAtivo);
+      (prisma.cliente.findUnique as jest.Mock).mockResolvedValueOnce(mockCliente);
+
+      const res = await request(app)
+        .post('/ativos')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          clienteId: 10,
+          tipoAtivoId: 1,
+          nome: 'Civic',
+          detalhesVeiculo: {
+            modelo: 'Civic',
+            categoria: 'AVIAO',
+            placa: 'ABC-1234'
+          }
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain('Categoria de veículo inválida');
+    });
+
+    it('deve retornar erro 400 se a especie do animal for invalida', async () => {
+      const mockEmpresa = { id: 1, tipoEmpresaId: 3 }; // Pet shop
+      const mockTipoEmpresaAtivo = { id: 2, tipoEmpresaId: 3, tipoAtivoId: 2 };
+      const mockCliente = { id: 10, nome: 'Cliente Teste' };
+
+      (prisma.empresa.findUnique as jest.Mock).mockResolvedValueOnce(mockEmpresa);
+      (prisma.tipoEmpresaAtivo.findFirst as jest.Mock).mockResolvedValueOnce(mockTipoEmpresaAtivo);
+      (prisma.cliente.findUnique as jest.Mock).mockResolvedValueOnce(mockCliente);
+
+      const res = await request(app)
+        .post('/ativos')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          clienteId: 10,
+          tipoAtivoId: 2,
+          nome: 'Rex',
+          detalhesAnimal: {
+            especie: 'DRAGAO'
+          }
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain('Espécie de animal inválida');
     });
 
     it('deve retornar erro 400 se o tipo de ativo nao for permitido para a empresa', async () => {
@@ -110,7 +163,7 @@ describe('Ativos API', () => {
           clienteId: 10,
           tipoAtivoId: 2, // Animal
           nome: 'Rex',
-          detalhesAnimal: { especie: 'Cachorro' }
+          detalhesAnimal: { especie: 'CACHORRO' }
         });
 
       expect(res.status).toBe(400);

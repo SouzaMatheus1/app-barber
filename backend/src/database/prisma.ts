@@ -68,7 +68,16 @@ export const prisma = systemPrisma.$extends({
           }
 
           // Operações baseadas em ID ou filtros únicos
-          if (['findUnique', 'update', 'delete'].includes(operation)) {
+          if (['findUnique', 'update', 'delete', 'upsert'].includes(operation)) {
+            if (operation === 'upsert') {
+              if (a.create && !a.create.empresaId && !a.create.empresa) {
+                a.create = { ...a.create, empresaId: bId };
+              }
+              if (a.update && !a.update.empresaId && !a.update.empresa) {
+                a.update = { ...a.update, empresaId: bId };
+              }
+            }
+
             if (a.where) {
               const modelNameLower = model.charAt(0).toLowerCase() + model.slice(1);
               

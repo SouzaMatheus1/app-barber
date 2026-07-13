@@ -7,6 +7,7 @@ interface CriarAtivoInput {
   nome: string;
   detalhesVeiculo?: {
     modelo: string;
+    categoria: string;
     ano?: number;
     cor?: string;
     placa?: string;
@@ -22,6 +23,7 @@ interface AtualizarAtivoInput {
   nome?: string;
   detalhesVeiculo?: {
     modelo: string;
+    categoria?: string;
     ano?: number;
     cor?: string;
     placa?: string;
@@ -68,7 +70,24 @@ export class AtivoService {
       throw new Error('Cliente não encontrado.');
     }
 
-    // 4. Salvar dentro de uma transação
+    // 4. Validar e normalizar subcategorias
+    if (dados.detalhesVeiculo) {
+      const cat = dados.detalhesVeiculo.categoria?.toUpperCase();
+      if (!cat || !['CARRO', 'MOTO', 'CAMINHAO'].includes(cat)) {
+        throw new Error('Categoria de veículo inválida. Opções: CARRO, MOTO, CAMINHAO.');
+      }
+      dados.detalhesVeiculo.categoria = cat;
+    }
+
+    if (dados.detalhesAnimal) {
+      const esp = dados.detalhesAnimal.especie?.toUpperCase();
+      if (!esp || !['CACHORRO', 'GATO', 'AVE', 'OUTROS'].includes(esp)) {
+        throw new Error('Espécie de animal inválida. Opções: CACHORRO, GATO, AVE, OUTROS.');
+      }
+      dados.detalhesAnimal.especie = esp;
+    }
+
+    // 5. Salvar dentro de uma transação
     return await prisma.$transaction(async (tx) => {
       const novoAtivo = await tx.ativo.create({
         data: {
@@ -84,6 +103,7 @@ export class AtivoService {
           data: {
             ativoId: novoAtivo.id,
             modelo: dados.detalhesVeiculo.modelo,
+            categoria: dados.detalhesVeiculo.categoria,
             ano: dados.detalhesVeiculo.ano,
             cor: dados.detalhesVeiculo.cor,
             placa: dados.detalhesVeiculo.placa
@@ -130,6 +150,29 @@ export class AtivoService {
       throw new Error('Ativo não encontrado.');
     }
 
+    // Validar e normalizar subcategorias para atualização
+    let validatedCategory: string | undefined;
+    if (dados.detalhesVeiculo && ativo.veiculo) {
+      const cat = dados.detalhesVeiculo.categoria?.toUpperCase();
+      if (cat) {
+        if (!['CARRO', 'MOTO', 'CAMINHAO'].includes(cat)) {
+          throw new Error('Categoria de veículo inválida. Opções: CARRO, MOTO, CAMINHAO.');
+        }
+        validatedCategory = cat;
+      }
+    }
+
+    let validatedEspecie: string | undefined;
+    if (dados.detalhesAnimal && ativo.animal) {
+      const esp = dados.detalhesAnimal.especie?.toUpperCase();
+      if (esp) {
+        if (!['CACHORRO', 'GATO', 'AVE', 'OUTROS'].includes(esp)) {
+          throw new Error('Espécie de animal inválida. Opções: CACHORRO, GATO, AVE, OUTROS.');
+        }
+        validatedEspecie = esp;
+      }
+    }
+
     return await prisma.$transaction(async (tx) => {
       await tx.ativo.update({
         where: { id },
@@ -143,6 +186,7 @@ export class AtivoService {
           where: { ativoId: id },
           data: {
             modelo: dados.detalhesVeiculo.modelo,
+            categoria: validatedCategory || ativo.veiculo.categoria,
             ano: dados.detalhesVeiculo.ano,
             cor: dados.detalhesVeiculo.cor,
             placa: dados.detalhesVeiculo.placa
@@ -152,7 +196,7 @@ export class AtivoService {
         await tx.ativoAnimal.update({
           where: { ativoId: id },
           data: {
-            especie: dados.detalhesAnimal.especie,
+            especie: validatedEspecie || ativo.animal.especie,
             raca: dados.detalhesAnimal.raca,
             porte: dados.detalhesAnimal.porte
           }

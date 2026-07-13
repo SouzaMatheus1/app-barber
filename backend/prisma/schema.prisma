@@ -377,11 +377,12 @@ model Ativo {
 }
 
 model AtivoVeiculo {
-  ativoId Int     @id
-  modelo  String
-  ano     Int?
-  cor     String?
-  placa   String?
+  ativoId   Int     @id
+  modelo    String
+  categoria String  @default("CARRO")
+  ano       Int?
+  cor       String?
+  placa     String?
 
   ativo   Ativo   @relation(fields: [ativoId], references: [id], onDelete: Cascade)
 

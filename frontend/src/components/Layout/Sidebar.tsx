@@ -1,7 +1,8 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Scissors, Users, BookOpen, DollarSign, LogOut, X, Crown, UserCog, TrendingDown, Calendar } from 'lucide-react';
+import { LayoutDashboard, Users, BookOpen, DollarSign, LogOut, X, Crown, UserCog, TrendingDown, Calendar } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { getIconePorSegmento } from '../../utils/labelsPorSegmento';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -16,10 +17,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
     window.location.href = '/';
   }
 
+  const IconeTransacoes = getIconePorSegmento(user?.tipoEmpresa);
+
   const navLinks = [
     { to: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
     { to: '/agenda', label: 'Agenda', icon: <Calendar size={20} /> },
-    { to: '/transacoes', label: 'Transações', icon: <Scissors size={20} /> },
+    { to: '/transacoes', label: 'Transações', icon: <IconeTransacoes size={20} /> },
     { to: '/clientes', label: 'Clientes', icon: <Users size={20} /> },
     { to: '/profissionais', label: 'Profissionais', icon: <UserCog size={20} /> },
     { to: '/catalogo', label: 'Catálogo', icon: <BookOpen size={20} /> },

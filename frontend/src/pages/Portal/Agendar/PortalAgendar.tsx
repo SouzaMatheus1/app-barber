@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../../../services/api';
+import { getLabelPorSegmento } from '../../../utils/labelsPorSegmento';
 import { User, Calendar, Clock, ChevronRight, ChevronLeft, Check, Sparkles, Loader2, MessageSquare } from 'lucide-react';
+import { usePortalAuth } from '../../../contexts/PortalAuthContext';
 
 interface Servico {
   id: number;
@@ -38,6 +40,12 @@ interface AssinaturaAtiva {
 export default function PortalAgendar() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const { cliente } = usePortalAuth();
+
+  // Ativos do cliente
+  const [ativos, setAtivos] = useState<any[]>([]);
+  const [selectedAtivoId, setSelectedAtivoId] = useState<number | ''>('');
+  const [tipoEmpresa, setTipoEmpresa] = useState<string>('');
 
   // Wizard Steps: 'SERVICOS' -> 'PROFISSIONAL' -> 'DATA_HORA' -> 'CONFIRMAR'
   const [step, setStep] = useState<'SERVICOS' | 'PROFISSIONAL' | 'DATA_HORA' | 'CONFIRMAR'>('SERVICOS');
@@ -84,6 +92,26 @@ export default function PortalAgendar() {
     }
   }, [selectedServices, assinatura]);
 
+  useEffect(() => {
+    async function loadAtivos() {
+      if (cliente?.id && tipoEmpresa && tipoEmpresa.toLowerCase() !== 'barbearia') {
+        try {
+          const res = await api.get(`/clientes/${cliente.id}/ativos`);
+          const clientAtivos = res.data;
+          setAtivos(clientAtivos);
+          if (clientAtivos.length === 1) {
+            setSelectedAtivoId(clientAtivos[0].id);
+          } else {
+            setSelectedAtivoId('');
+          }
+        } catch (error) {
+          console.error("Erro ao carregar ativos do portal:", error);
+        }
+      }
+    }
+    loadAtivos();
+  }, [cliente?.id, tipoEmpresa]);
+
   const checkCreditosDisponiveis = () => {
     if (!assinatura || selectedServices.length === 0) return false;
     
@@ -107,11 +135,15 @@ export default function PortalAgendar() {
       setLoadingServices(true);
       setLoadingProfissionais(true);
 
-      const [resCat, resProf, resAssinatura] = await Promise.all([
+      const [resCat, resProf, resAssinatura, resEmpresa] = await Promise.all([
         api.get('/itens'),
         api.get('/profissionais'),
         api.get('/portal/minha-assinatura').catch(err => {
           console.log("Sem assinatura ativa:", err);
+          return { data: null };
+        }),
+        api.get(`/portal/${slug}/empresa`).catch(err => {
+          console.log("Erro ao carregar empresa:", err);
           return { data: null };
         })
       ]);
@@ -122,6 +154,9 @@ export default function PortalAgendar() {
       setProfissionais(resProf.data);
       if (resAssinatura.data) {
         setAssinatura(resAssinatura.data);
+      }
+      if (resEmpresa.data?.tipo?.descricao) {
+        setTipoEmpresa(resEmpresa.data.tipo.descricao);
       }
     } catch (error) {
       console.error('Erro ao carregar dados de agendamento:', error);
@@ -190,7 +225,8 @@ export default function PortalAgendar() {
         dataHoraInicio: startDateTime.toISOString(),
         dataHoraFim: endDateTime.toISOString(),
         observacao: observacao || 'Agendado via Portal do Cliente',
-        usarCreditos
+        usarCreditos,
+        ativoId: selectedAtivoId !== '' ? selectedAtivoId : undefined
       });
 
       setSuccess(true);
@@ -292,7 +328,7 @@ export default function PortalAgendar() {
         </button>
         <span className="text-sm font-semibold tracking-wider uppercase ml-2 text-[var(--color-text)]/80">
           {step === 'SERVICOS' && 'Escolha os Serviços'}
-          {step === 'PROFISSIONAL' && 'Escolha o Barbeiro'}
+          {step === 'PROFISSIONAL' && getLabelPorSegmento(tipoEmpresa, 'escolha_barbeiro')}
           {step === 'DATA_HORA' && 'Escolha a Data e Hora'}
           {step === 'CONFIRMAR' && 'Resumo do Agendamento'}
         </span>
@@ -382,7 +418,7 @@ export default function PortalAgendar() {
             </div>
 
             {loadingProfissionais ? (
-              <div className="py-16 text-center text-sm text-[var(--color-primary)]/50 animate-pulse">Carregando barbeiros...</div>
+              <div className="py-16 text-center text-sm text-[var(--color-primary)]/50 animate-pulse">{getLabelPorSegmento(tipoEmpresa, 'carregando_barbeiros')}</div>
             ) : profissionais.length === 0 ? (
               <div className="py-16 text-center text-xs text-[var(--color-text)]/40 italic">Nenhum profissional disponível.</div>
             ) : (
@@ -436,7 +472,7 @@ export default function PortalAgendar() {
                   onClick={() => setStep('DATA_HORA')}
                   className="w-full py-4 bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] text-[var(--color-background)] font-bold rounded-2xl flex items-center justify-between px-6 transition-all shadow-[0_4px_25px_var(--color-primary)]/20"
                 >
-                  <span className="text-sm font-bold">Barbeiro: {selectedProfissional.nome}</span>
+                  <span className="text-sm font-bold">{getLabelPorSegmento(tipoEmpresa, 'barbeiro')}: {selectedProfissional.nome}</span>
                   <div className="flex items-center gap-1.5 uppercase tracking-widest text-xs">
                     Próximo <ChevronRight size={16} />
                   </div>
@@ -480,11 +516,11 @@ export default function PortalAgendar() {
               {loadingSlots ? (
                 <div className="py-12 flex flex-col justify-center items-center gap-3">
                   <Loader2 className="animate-spin text-[var(--color-primary)]" size={24} />
-                  <span className="text-xs text-[var(--color-primary)]/60">Verificando agenda do barbeiro...</span>
+                  <span className="text-xs text-[var(--color-primary)]/60">{getLabelPorSegmento(tipoEmpresa, 'agenda_barbeiro')}</span>
                 </div>
               ) : slotsDisponiveis.length === 0 ? (
                 <div className="bg-[var(--color-surface)]/30 border border-[var(--color-primary)]/5 rounded-2xl p-8 text-center text-xs text-[var(--color-text)]/40 italic">
-                  Infelizmente não há horários livres para este barbeiro na data selecionada. Tente outro dia ou profissional.
+                  {getLabelPorSegmento(tipoEmpresa, 'sem_horarios_barbeiro')}
                 </div>
               ) : (
                 <div className="grid grid-cols-4 gap-2.5">
@@ -596,6 +632,29 @@ export default function PortalAgendar() {
                   />
                   <div className="w-9 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-400 after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[var(--color-primary)] peer-checked:after:bg-[var(--color-background)]"></div>
                 </label>
+              </div>
+            )}
+
+            {/* Campo Ativo do Cliente (Multi-Vertical) */}
+            {tipoEmpresa && tipoEmpresa.toLowerCase() !== 'barbearia' && ativos.length > 1 && (
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-[var(--color-text)]/40 uppercase tracking-widest block ml-1">
+                  {tipoEmpresa.toLowerCase().includes('pet') ? 'Selecione o Animal' : 'Selecione o Veículo'}
+                </label>
+                <select 
+                  value={selectedAtivoId} 
+                  onChange={e => setSelectedAtivoId(e.target.value ? Number(e.target.value) : '')} 
+                  className="w-full px-4 py-3.5 bg-[var(--color-surface)]/60 text-sm text-[var(--color-text)] rounded-2xl border border-[var(--color-primary)]/5 focus:border-[var(--color-primary)]/40 transition-all outline-none cursor-pointer text-xs"
+                >
+                  <option value="">
+                    {tipoEmpresa.toLowerCase().includes('pet') ? 'Selecione o animal...' : 'Selecione o veículo...'}
+                  </option>
+                  {ativos.map(a => (
+                    <option key={a.id} value={a.id}>
+                      {a.nome} ({a.veiculo ? 'Veículo' : 'Animal de Estimação'})
+                    </option>
+                  ))}
+                </select>
               </div>
             )}
 

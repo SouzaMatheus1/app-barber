@@ -14,7 +14,7 @@ export class TransacaoController {
     }
 
     criar = async (req: Request, res: Response) => {
-        const { tipoTransacaoId, descricao, profissionalId, clienteId, itens, formaPagamentoId, data, valorTotal, categoriaCustoId } = req.body;
+        const { tipoTransacaoId, descricao, profissionalId, clienteId, itens, formaPagamentoId, data, valorTotal, categoriaCustoId, ativoId } = req.body;
 
         try {
             const result = await this.transacaoService.create({
@@ -26,7 +26,8 @@ export class TransacaoController {
                 data,
                 itens,
                 valorTotal,
-                categoriaCustoId
+                categoriaCustoId,
+                ativoId: ativoId ? Number(ativoId) : undefined
             });
 
             return res.status(201).json(result);

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar as Clock, User, X, CheckCircle2, Ban, Scissors } from 'lucide-react';
+import { Calendar as Clock, User, X, CheckCircle2, Ban } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
+import { getLabelPorSegmento, getIconePorSegmento } from '../../utils/labelsPorSegmento';
 
 interface Agendamento {
   id: number;
@@ -9,6 +11,7 @@ interface Agendamento {
   dataHoraFim: string;
   clienteId?: number | null;
   profissionalId: number;
+  ativoId?: number | null;
   status: string;
   observacao?: string;
   cliente?: { id: number; nome: string; telefone: string };
@@ -43,6 +46,8 @@ const statusMap: Record<string, string> = {
 };
 
 export function Agenda() {
+  const { user } = useAuth();
+  const IconeAgendamento = getIconePorSegmento(user?.tipoEmpresa);
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
   const [profissionais, setProfissionais] = useState<Profissional[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -52,6 +57,10 @@ export function Agenda() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedProfissional, setSelectedProfissional] = useState<number>(0); // 0 = todos
   const navigate = useNavigate();
+
+  // Ativos para agendamento
+  const [novoAgendamentoAtivos, setNovoAgendamentoAtivos] = useState<any[]>([]);
+  const [novoAgendamentoAtivoId, setNovoAgendamentoAtivoId] = useState<number | ''>('');
 
   // Modais Control
   const [isNovoAgendamentoModalOpen, setIsNovoAgendamentoModalOpen] = useState(false);
@@ -80,6 +89,29 @@ export function Agenda() {
   useEffect(() => {
     loadAgenda();
   }, [selectedDate, selectedProfissional]);
+
+  useEffect(() => {
+    async function loadClientAtivos() {
+      if (novoAgendamentoClienteId !== '' && user?.tipoEmpresa?.toLowerCase() !== 'barbearia') {
+        try {
+          const res = await api.get(`/clientes/${novoAgendamentoClienteId}/ativos`);
+          const clientAtivos = res.data;
+          setNovoAgendamentoAtivos(clientAtivos);
+          if (clientAtivos.length === 1) {
+            setNovoAgendamentoAtivoId(clientAtivos[0].id);
+          } else {
+            setNovoAgendamentoAtivoId('');
+          }
+        } catch (error) {
+          console.error('Erro ao carregar ativos do cliente:', error);
+        }
+      } else {
+        setNovoAgendamentoAtivos([]);
+        setNovoAgendamentoAtivoId('');
+      }
+    }
+    loadClientAtivos();
+  }, [novoAgendamentoClienteId, user?.tipoEmpresa]);
 
   const loadBasics = async () => {
     try {
@@ -147,6 +179,7 @@ export function Agenda() {
       await api.post('/agendamentos', {
         profissionalId: novoAgendamentoProfissional,
         clienteId: novoAgendamentoClienteId !== '' ? novoAgendamentoClienteId : undefined,
+        ativoId: novoAgendamentoAtivoId !== '' ? novoAgendamentoAtivoId : undefined,
         servicosIds: [], // Agora a escolha de serviço é só no checkout na tela de Transações
         dataHoraInicio: dataInicio.toISOString(),
         dataHoraFim: dataFim.toISOString(),
@@ -158,6 +191,8 @@ export function Agenda() {
       setNovoAgendamentoClienteSearch('');
       setNovoAgendamentoHora('');
       setNovoAgendamentoDuracao(30);
+      setNovoAgendamentoAtivoId('');
+      setNovoAgendamentoAtivos([]);
       await loadAgenda();
     } catch (error: any) {
       const errMsg = error.response?.data?.error || error.message || "Erro desconhecido";
@@ -199,7 +234,7 @@ export function Agenda() {
       <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end border-b border-[var(--color-primary)]/20 pb-4 gap-4">
         <div>
           <h1 className="text-3xl font-serif font-bold text-[var(--color-primary)]">Agenda Diária</h1>
-          <p className="text-[var(--color-text)]/60 mt-1">Gerencie os horários dos profissionais em tempo real.</p>
+           <p className="text-[var(--color-text)]/60 mt-1">Gerencie os horários dos {getLabelPorSegmento(user?.tipoEmpresa, 'barbeiros').toLowerCase()} em tempo real.</p>
         </div>
         
         <div className="flex flex-wrap gap-3 w-full lg:w-auto">
@@ -208,7 +243,7 @@ export function Agenda() {
             onChange={e => setSelectedProfissional(Number(e.target.value))}
             className="bg-[var(--color-background)] text-[var(--color-text)] border border-[var(--color-primary)]/30 rounded-lg px-4 py-2 outline-none"
           >
-            <option value={0}>Todos os Profissionais</option>
+            <option value={0}>{getLabelPorSegmento(user?.tipoEmpresa, 'todos_profissionais')}</option>
             {profissionais.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
           </select>
 
@@ -228,7 +263,7 @@ export function Agenda() {
           onClick={() => { setIsNovoAgendamentoModalOpen(true); setNovoAgendamentoData(selectedDate); }}
           className="bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] text-[var(--color-background)] font-bold px-5 py-2.5 rounded-lg flex items-center gap-2 transition-colors uppercase text-sm tracking-widest"
         >
-          <Scissors size={18} /> Novo Agendamento
+          <IconeAgendamento size={18} /> Novo Agendamento
         </button>  
         <button 
           onClick={() => { setIsBlockModalOpen(true); setBlockData(selectedDate); }}
@@ -279,7 +314,7 @@ export function Agenda() {
                                             </strong>
                                             <span className="text-[10px] bg-red-500/10 text-red-500 px-2 py-0.5 rounded font-bold">{statusMap[ag.status] || ag.status}</span>
                                           </div>
-                                          <span className="text-xs text-[var(--color-text)]/50 mt-1">Barbeiro: {ag.profissional?.nome || `ID ${ag.profissionalId}`} | Motivo: {ag.observacao}</span>
+                                          <span className="text-xs text-[var(--color-text)]/50 mt-1">{getLabelPorSegmento(user?.tipoEmpresa, 'barbeiro')}: {ag.profissional?.nome || `ID ${ag.profissionalId}`} | Motivo: {ag.observacao}</span>
                                        </div>
                                        <button onClick={() => handleUpdateStatus(ag.id, 'CANCELADO')} className="text-xs border border-red-500/30 px-3 py-1 rounded text-red-400 hover:bg-red-500/20">Remover Bloqueio</button>
                                     </div>
@@ -317,7 +352,7 @@ export function Agenda() {
                                                   <span className="font-medium text-xs sm:text-sm">{ag.cliente?.nome || ag.observacao || 'Cliente Avulso'}</span>
                                                 </div>
                                                 <span className="text-[10px] text-[var(--color-primary)]/50 hidden sm:block">•</span>
-                                                <span className="text-xs text-[var(--color-text)]/40">Barbeiro: {ag.profissional?.nome || ag.profissionalId}</span>
+                                                <span className="text-xs text-[var(--color-text)]/40">{getLabelPorSegmento(user?.tipoEmpresa, 'barbeiro')}: {ag.profissional?.nome || ag.profissionalId}</span>
                                             </div>
                                             
                                             <div className="flex flex-wrap gap-2 mt-2">
@@ -355,6 +390,9 @@ export function Agenda() {
                                                         if (ag.servicos && ag.servicos.length > 0) {
                                                           const ids = ag.servicos.map(s => s.item.id).join(',');
                                                           params.set('itensIds', ids);
+                                                        }
+                                                        if (ag.ativoId) {
+                                                          params.set('ativoId', String(ag.ativoId));
                                                         }
                                                         
                                                         // Enviar para transações pra finalizar e receber
@@ -402,7 +440,7 @@ export function Agenda() {
 
             <div className="space-y-4">
               <div>
-                <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase">Profissional</label>
+                <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase">{getLabelPorSegmento(user?.tipoEmpresa, 'barbeiro')}</label>
                 <select required value={blockProfissional} onChange={e => setBlockProfissional(Number(e.target.value))} className="w-full mt-1 bg-[var(--color-background)] text-[var(--color-text)] border border-red-500/30 focus:border-red-500 rounded-lg px-4 py-2 outline-none">
                   <option value="">Selecione...</option>
                   {profissionais.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
@@ -428,9 +466,10 @@ export function Agenda() {
               </div>
             </div>
 
-            <button type="submit" className="w-full mt-8 bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-lg uppercase tracking-wider transition-colors">
-              Bloquear Tempo Agora
-            </button>
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" onClick={() => setIsBlockModalOpen(false)} className="px-4 py-2 border border-[var(--color-text)]/20 text-[var(--color-text)]/80 rounded-lg hover:bg-[var(--color-background)]">Cancelar</button>
+              <button type="submit" className="px-4 py-2 bg-red-500 text-white font-bold rounded-lg hover:bg-red-600 transition-colors uppercase tracking-wider text-sm flex items-center gap-2">Confirmar Bloqueio</button>
+            </div>
           </form>
         </div>
       )}
@@ -443,12 +482,12 @@ export function Agenda() {
               <X size={24} />
             </button>
             <h2 className="text-xl font-bold text-[var(--color-primary)] mb-6 flex items-center gap-2">
-              <Scissors size={20} /> Agendar Serviço
+              <IconeAgendamento size={20} /> Agendar Serviço
             </h2>
 
             <div className="space-y-4">
               <div>
-                <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase">Profissional</label>
+                <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase">{getLabelPorSegmento(user?.tipoEmpresa, 'barbeiro')}</label>
                 <select required value={novoAgendamentoProfissional} onChange={e => setNovoAgendamentoProfissional(Number(e.target.value))} className="w-full mt-1 bg-[var(--color-background)] text-[var(--color-text)] border border-[var(--color-primary)]/30 rounded-lg px-4 py-2 outline-none">
                   <option value="">Selecione...</option>
                   {profissionais.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
@@ -501,6 +540,24 @@ export function Agenda() {
                   </div>
                 )}
               </div>
+
+              {user?.tipoEmpresa?.toLowerCase() !== 'barbearia' && novoAgendamentoAtivos.length > 1 && (
+                <div>
+                  <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase">Ativo do Cliente</label>
+                  <select 
+                    value={novoAgendamentoAtivoId} 
+                    onChange={e => setNovoAgendamentoAtivoId(e.target.value ? Number(e.target.value) : '')} 
+                    className="w-full mt-1 bg-[var(--color-background)] text-[var(--color-text)] border border-[var(--color-primary)]/30 rounded-lg px-4 py-2 outline-none cursor-pointer"
+                  >
+                    <option value="">Selecione o ativo...</option>
+                    {novoAgendamentoAtivos.map(a => (
+                      <option key={a.id} value={a.id}>
+                        {a.nome} ({a.veiculo ? 'Veículo' : 'Animal de Estimação'})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div>
                 <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase">Tempo Previsto (em minutos)</label>

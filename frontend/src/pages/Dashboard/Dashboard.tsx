@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TrendingUp, Users, Scissors, DollarSign, Loader2 } from 'lucide-react';
+import { TrendingUp, Users, DollarSign, Loader2 } from 'lucide-react';
 import { dashboardService } from '../../services/dashboardService';
 import { useAuth } from '../../contexts/AuthContext';
+import { getIconePorSegmento } from '../../utils/labelsPorSegmento';
 import FluxoCaixaTab from './FluxoCaixaTab';
 import VendasTab from './VendasTab';
 
@@ -33,9 +34,11 @@ const Dashboard: React.FC = () => {
         const ticketMedio = totalTx > 0 ? totalFaturamento / totalTx : 0;
         const clientesCount = clientes.length || 0;
 
+        const IconeHoje = getIconePorSegmento(user?.tipoEmpresa);
+
         setMetrics([
           { id: 1, title: 'Faturamento do Dia', value: `R$ ${totalFaturamento.toFixed(2).replace('.', ',')}`, icon: <TrendingUp size={24} />, trend: '' },
-          { id: 2, title: 'Atendimentos Hoje', value: totalTx.toString(), icon: <Scissors size={24} />, trend: '' },
+          { id: 2, title: 'Atendimentos Hoje', value: totalTx.toString(), icon: <IconeHoje size={24} />, trend: '' },
           { id: 3, title: 'Ticket Médio', value: `R$ ${ticketMedio.toFixed(2).replace('.', ',')}`, icon: <DollarSign size={24} />, trend: '' },
           { id: 4, title: 'Total de Clientes', value: clientesCount.toString(), icon: <Users size={24} />, trend: '' },
         ]);
@@ -74,33 +77,35 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <header>
-        <h1 className="text-3xl font-serif font-bold text-[var(--color-primary)]">{ user?.nomeFantasia || 'Seja bem-vindo' }</h1>
-        <p className="text-[#000000]/60 mt-1">Visão geral e relatórios financeiros do seu negócio.</p>
-      </header>
+      <div className="bg-[var(--color-surface)] border border-[var(--color-primary)]/10 shadow-lg rounded-xl overflow-hidden pt-6 px-6">
+        <header className="mb-6">
+          <h1 className="text-3xl font-serif font-bold text-[var(--color-primary)]">{ user?.nomeFantasia || 'Seja bem-vindo' }</h1>
+          <p className="text-gray-300 mt-1">Visão geral e relatórios financeiros do seu negócio.</p>
+        </header>
 
-      <div className="flex border-b border-[var(--color-primary)]/20 mb-6">
-        <button
-          className={`py-3 px-6 font-semibold text-sm transition-colors relative ${activeTab === 'geral' ? 'text-[var(--color-primary)]' : 'text-[var(--color-text)]/60 hover:text-[var(--color-primary)]/80'}`}
-          onClick={() => setActiveTab('geral')}
-        >
-          Visão Geral
-          {activeTab === 'geral' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[var(--color-primary)]"></span>}
-        </button>
-        <button
-          className={`py-3 px-6 font-semibold text-sm transition-colors relative ${activeTab === 'fluxo' ? 'text-[var(--color-primary)]' : 'text-[var(--color-text)]/60 hover:text-[var(--color-primary)]/80'}`}
-          onClick={() => setActiveTab('fluxo')}
-        >
-          Fluxo de Caixa
-          {activeTab === 'fluxo' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[var(--color-primary)]"></span>}
-        </button>
-        <button
-          className={`py-3 px-6 font-semibold text-sm transition-colors relative ${activeTab === 'vendas' ? 'text-[var(--color-primary)]' : 'text-[var(--color-text)]/60 hover:text-[var(--color-primary)]/80'}`}
-          onClick={() => setActiveTab('vendas')}
-        >
-          Vendas de Produtos
-          {activeTab === 'vendas' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[var(--color-primary)]"></span>}
-        </button>
+        <div className="flex border-b border-[var(--color-primary)]/20">
+          <button
+            className={`py-3 px-6 font-semibold text-sm transition-colors relative ${activeTab === 'geral' ? 'text-[var(--color-primary)] font-bold' : 'text-gray-400 hover:text-[var(--color-primary)]/80'}`}
+            onClick={() => setActiveTab('geral')}
+          >
+            Visão Geral
+            {activeTab === 'geral' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[var(--color-primary)]"></span>}
+          </button>
+          <button
+            className={`py-3 px-6 font-semibold text-sm transition-colors relative ${activeTab === 'fluxo' ? 'text-[var(--color-primary)] font-bold' : 'text-gray-400 hover:text-[var(--color-primary)]/80'}`}
+            onClick={() => setActiveTab('fluxo')}
+          >
+            Fluxo de Caixa
+            {activeTab === 'fluxo' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[var(--color-primary)]"></span>}
+          </button>
+          <button
+            className={`py-3 px-6 font-semibold text-sm transition-colors relative ${activeTab === 'vendas' ? 'text-[var(--color-primary)] font-bold' : 'text-gray-400 hover:text-[var(--color-primary)]/80'}`}
+            onClick={() => setActiveTab('vendas')}
+          >
+            Vendas de Produtos
+            {activeTab === 'vendas' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[var(--color-primary)]"></span>}
+          </button>
+        </div>
       </div>
 
       {activeTab === 'geral' && (

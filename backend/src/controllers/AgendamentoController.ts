@@ -29,7 +29,7 @@ export class AgendamentoController {
 
     criar = async (req: Request, res: Response) => {
         try {
-            const { dataHoraInicio, dataHoraFim, clienteId, profissionalId, servicosIds, observacao, status, usarCreditos } = req.body;
+            const { dataHoraInicio, dataHoraFim, clienteId, profissionalId, servicosIds, observacao, status, usarCreditos, ativoId } = req.body;
 
             if (!dataHoraInicio || !dataHoraFim || !profissionalId || !Array.isArray(servicosIds)) {
                 return res.status(400).json({ error: 'Faltam parâmetros obrigatórios para o agendamento.' });
@@ -51,7 +51,8 @@ export class AgendamentoController {
                 observacao: isPortal ? (observacao || 'Agendado via Portal') : observacao,
                 status: finalStatus,
                 ignorarAntecedencia: finalIgnorarAntecedencia,
-                usarCreditos: !!usarCreditos
+                usarCreditos: !!usarCreditos,
+                ativoId: ativoId ? Number(ativoId) : undefined
             });
 
             return res.status(201).json(novoAgendamento);

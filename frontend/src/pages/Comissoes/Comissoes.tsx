@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Loader2, Calendar, DollarSign, WalletCards } from 'lucide-react';
 import { comissaoService } from '../../services/ComissaoService';
 import { profissionalService } from '../../services/ProfissionalService';
+import { useAuth } from '../../contexts/AuthContext';
+import { getLabelPorSegmento } from '../../utils/labelsPorSegmento';
 
 export function Comissoes() {
+  const { user } = useAuth();
   const [profissionais, setProfissionais] = useState<any[]>([]);
   const [loadingProfissionais, setLoadingProfissionais] = useState(true);
   
@@ -66,7 +69,7 @@ export function Comissoes() {
     <div className="space-y-8 animate-in fade-in duration-500 max-w-5xl mx-auto">
       <header>
         <h1 className="text-3xl font-serif font-bold text-[var(--color-primary)]">Relatório de Comissões</h1>
-        <p className="text-[var(--color-text)]/60 mt-1">Gere extratos de repasses financeiros para os profissionais.</p>
+        <p className="text-[var(--color-text)]/60 mt-1">Gere extratos de repasses financeiros para os {getLabelPorSegmento(user?.tipoEmpresa, 'barbeiros').toLowerCase()}.</p>
       </header>
 
       {/* Bloco de Filtros */}
@@ -78,7 +81,7 @@ export function Comissoes() {
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase tracking-wider">Profissional</label>
+            <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase tracking-wider">{getLabelPorSegmento(user?.tipoEmpresa, 'barbeiro')}</label>
             <div className="relative">
               <select
                 required
@@ -86,8 +89,8 @@ export function Comissoes() {
                 onChange={e => setProfissionalId(e.target.value)}
                 className="w-full px-4 py-3 bg-[var(--color-background)] text-[var(--color-text)] rounded-lg border border-[var(--color-primary)]/20 focus:outline-none focus:border-[var(--color-primary)] transition-colors appearance-none cursor-pointer"
               >
-                <option value="" disabled>Selecione um barbeiro</option>
-                <option value="0">Todos os profissionais</option>
+                <option value="" disabled>{getLabelPorSegmento(user?.tipoEmpresa, 'selecione_um_barbeiro')}</option>
+                <option value="0">{getLabelPorSegmento(user?.tipoEmpresa, 'todos_profissionais')}</option>
                 {profissionais.map(p => (
                   <option key={p.id} value={p.id}>{p.nome}</option>
                 ))}

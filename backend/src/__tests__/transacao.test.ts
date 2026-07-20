@@ -23,6 +23,9 @@ jest.mock('../database/prisma', () => ({
     itemTransacao: {
       deleteMany: jest.fn(),
     },
+    ativo: {
+      findFirst: jest.fn(),
+    },
     assinatura: {
       findFirst: jest.fn(),
       update: jest.fn(),
@@ -64,6 +67,7 @@ describe('Transação API', () => {
     (prisma.transacao.update as jest.Mock).mockReset();
     (prisma.transacao.delete as jest.Mock).mockReset();
     (prisma.creditoAssinatura.update as jest.Mock).mockReset();
+    (prisma.ativo.findFirst as jest.Mock).mockReset();
   });
 
   describe('GET /transacoes', () => {
@@ -288,6 +292,60 @@ describe('Transação API', () => {
 
       expect(res.status).toBe(400);
       expect(res.body.error).toBe('Saldo insuficiente para o serviço: Corte Simples. Restante: 0');
+    });
+
+    it('deve retornar erro 400 se o ativo informado não pertencer ao cliente', async () => {
+      const mockNovoItemBd = [{ id: 1, preco: 25.0 }];
+      (prisma.itemCatalogo.findMany as jest.Mock).mockResolvedValueOnce(mockNovoItemBd);
+      (prisma.ativo.findFirst as jest.Mock).mockResolvedValueOnce(null);
+
+      const res = await request(app)
+        .post('/transacoes')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          tipoTransacaoId: 1,
+          descricao: 'Corte com Ativo Inválido',
+          profissionalId: 1,
+          clienteId: 2,
+          ativoId: 99,
+          itens: [{ itemId: 1, quantidade: 1 }]
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('O ativo informado não pertence ao cliente.');
+    });
+
+    it('deve criar uma nova transação com ativo com sucesso se pertencer ao cliente', async () => {
+      const mockNovoItemBd = [{ id: 1, preco: 25.0 }];
+      const mockNovaTransacao = {
+        id: 1,
+        valorTotal: 25.0,
+        tipoTransacaoId: 1,
+        profissionalId: 1,
+        clienteId: 2,
+        ativoId: 10,
+        data: new Date()
+      };
+
+      (prisma.itemCatalogo.findMany as jest.Mock).mockResolvedValueOnce(mockNovoItemBd);
+      (prisma.ativo.findFirst as jest.Mock).mockResolvedValueOnce({ id: 10, clienteId: 2, nome: 'Ativo 10' });
+      (prisma.transacao.create as jest.Mock).mockResolvedValueOnce(mockNovaTransacao);
+      (prisma.transacao.findMany as jest.Mock).mockResolvedValueOnce([]);
+
+      const res = await request(app)
+        .post('/transacoes')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          tipoTransacaoId: 1,
+          descricao: 'Corte com Ativo Válido',
+          profissionalId: 1,
+          clienteId: 2,
+          ativoId: 10,
+          itens: [{ itemId: 1, quantidade: 1 }]
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.ativoId).toBe(10);
     });
   });
 

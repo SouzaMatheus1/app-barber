@@ -168,7 +168,12 @@ export class PortalAuthController {
         select: {
           id: true,
           nomeFantasia: true,
-          slug: true
+          slug: true,
+          tipo: {
+            select: {
+              descricao: true
+            }
+          }
         }
       });
 

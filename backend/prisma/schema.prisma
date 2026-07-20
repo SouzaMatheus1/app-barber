@@ -136,6 +136,7 @@ model Transacao {
   tipoTransacaoId  Int
   formaPagamentoId Int?
   categoriaCustoId Int?
+  ativoId          Int?
 
   empresa         Empresa          @relation(fields: [empresaId], references: [id])
   itens           ItemTransacao[]
@@ -144,6 +145,7 @@ model Transacao {
   tipo            TipoTransacao    @relation(fields: [tipoTransacaoId], references: [id])
   metodoPagamento MetodoPagamento? @relation(fields: [formaPagamentoId], references: [id])
   categoriaCusto  CategoriaCusto?  @relation(fields: [categoriaCustoId], references: [id])
+  ativo           Ativo?           @relation(fields: [ativoId], references: [id])
 
   @@index([clienteId])
   @@index([profissionalId])
@@ -152,6 +154,7 @@ model Transacao {
   @@index([empresaId])
   @@index([categoriaCustoId])
   @@index([empresaId, data])
+  @@index([ativoId])
   @@map("Transacao")
 }
 
@@ -369,6 +372,7 @@ model Ativo {
   veiculo      AtivoVeiculo?
   animal       AtivoAnimal?
   agendamentos Agendamento[]
+  transacoes   Transacao[]
 
   @@index([empresaId])
   @@index([clienteId])

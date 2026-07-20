@@ -85,14 +85,28 @@ export class TransacaoService {
         clienteId?: number,
         categoriaCustoId?: number,
         valorTotal?: number, // Para despesas diretas
+        ativoId?: number,
         itens?: { itemId: number, quantidade: number, usouCreditoAssinatura?: boolean } []
     }){
-        const { descricao, tipoTransacaoId, profissionalId, clienteId, itens, formaPagamentoId, categoriaCustoId, valorTotal } = dataParams;
+        const { descricao, tipoTransacaoId, profissionalId, clienteId, itens, formaPagamentoId, categoriaCustoId, valorTotal, ativoId } = dataParams;
         const store = tenantStorage.getStore();
 
         // Validação: profissional é obrigatório para ENTRADAS (atendimento)
         if (tipoTransacaoId === 1 && !profissionalId) {
             throw new AppError("O profissional é obrigatório para registros de atendimento.", 400);
+        }
+
+        // Validação de titularidade do ativo
+        if (ativoId) {
+            if (!clienteId) {
+                throw new AppError("Cliente é obrigatório para vincular um ativo ao agendamento.", 400);
+            }
+            const ativo = await prisma.ativo.findFirst({
+                where: { id: ativoId, clienteId }
+            });
+            if (!ativo) {
+                throw new AppError("O ativo informado não pertence ao cliente.", 400);
+            }
         }
 
         const itensId = (itens || []).map(item => item.itemId);
@@ -196,6 +210,7 @@ export class TransacaoService {
                     clienteId: clienteId || null,
                     formaPagamentoId: formaPagamentoId || null,
                     categoriaCustoId: categoriaCustoId || null,
+                    ativoId: ativoId || null,
                     itens: {
                         create: itensSelecionados
                     }

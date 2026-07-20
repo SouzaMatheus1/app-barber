@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Trash2, Edit2, Loader2, UserCog, Plus } from 'lucide-react';
 import { profissionalService } from '../../services/ProfissionalService';
 import { useAuth } from '../../contexts/AuthContext';
+import { getLabelPorSegmento } from '../../utils/labelsPorSegmento';
 
 export function Profissionais() {
   const { user } = useAuth();
@@ -100,7 +101,7 @@ export function Profissionais() {
       <header className="flex justify-between items-end border-b border-[var(--color-primary)]/20 pb-4">
         <div>
           <h1 className="text-3xl font-serif font-bold text-[var(--color-primary)]">Profissionais</h1>
-          <p className="text-[var(--color-text)]/60 mt-1">Gerencie a equipe de barbeiros e administradores.</p>
+          <p className="text-[var(--color-text)]/60 mt-1">{getLabelPorSegmento(user?.tipoEmpresa, 'gerencie_barbeiros')}</p>
         </div>
         {!isEditing && (
           <button 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit2, Loader2, User, Users, Car, Box, X } from 'lucide-react';
+import { Plus, Trash2, Edit2, Loader2, User, Users, Car, X, PawPrint } from 'lucide-react';
 import { ClienteService } from '../../services/ClienteService';
 import { assinaturaService } from '../../services/AssinaturaService';
 import { useAuth } from '../../contexts/AuthContext';
@@ -45,6 +45,7 @@ export function Clientes() {
   const [veiculoCategoria, setVeiculoCategoria] = useState<number | ''>('');
 
   const isBarbearia = user?.tipoEmpresa?.toLowerCase() === 'barbearia';
+  const isPetshop = user?.tipoEmpresa?.toLowerCase().includes('pet');
 
   useEffect(() => {
     loadClientes();
@@ -148,14 +149,7 @@ export function Clientes() {
     }
   };
 
-  const loadTiposAtivo = async () => {
-    try {
-      const res = await api.get('/tipos-ativo');
-      setTiposAtivoPermitidos(res.data);
-    } catch (e) {
-      console.error(e);
-    }
-  };
+
 
   const openAtivosModal = async (cliente: Cliente) => {
     setSelectedClientForAtivos(cliente);
@@ -428,9 +422,9 @@ export function Clientes() {
                         <button 
                           onClick={() => openAtivosModal(cliente)}
                           className="text-[var(--color-text)]/50 hover:text-[var(--color-primary)] transition-colors p-1"
-                          title="Ativos"
+                          title={isPetshop ? "Animais de Estimação" : "Veículos"}
                         >
-                          <Car size={18} />
+                          {isPetshop ? <PawPrint size={18} /> : <Car size={18} />}
                         </button>
                       )}
                       <button 
@@ -467,8 +461,8 @@ export function Clientes() {
             >
               <X size={24} />
             </button>
-            <h2 className="text-xl font-bold text-[var(--color-primary)] mb-6 flex items-center gap-2">
-              <Car size={20} /> Ativos de {selectedClientForAtivos.nome}
+             <h2 className="text-xl font-bold text-[var(--color-primary)] mb-6 flex items-center gap-2">
+              {isPetshop ? <PawPrint size={20} /> : <Car size={20} />} Ativos de {selectedClientForAtivos.nome}
             </h2>
 
             {/* Listagem de Ativos do Cliente */}
@@ -542,7 +536,6 @@ export function Clientes() {
                     value={ativoNome}
                     onChange={e => setAtivoNome(e.target.value)}
                     className="w-full px-3 py-2 bg-[var(--color-background)] text-[var(--color-text)] rounded border border-[var(--color-primary)]/20 focus:outline-none focus:border-[var(--color-primary)] text-sm"
-                    placeholder="Ex: Civic Prata ou Rex"
                   />
                 </div>
               </div>
@@ -635,13 +628,16 @@ export function Clientes() {
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-semibold text-[var(--color-text)]/70 uppercase">Porte</label>
-                    <input
-                      type="text"
+                    <select
                       value={animalPorte}
                       onChange={e => setAnimalPorte(e.target.value)}
-                      className="w-full px-3 py-2 bg-[var(--color-background)] text-[var(--color-text)] rounded border border-[var(--color-primary)]/20 focus:outline-none focus:border-[var(--color-primary)] text-sm"
-                      placeholder="Ex: Grande"
-                    />
+                      className="w-full px-3 py-2 bg-[var(--color-background)] text-[var(--color-text)] rounded border border-[var(--color-primary)]/20 focus:outline-none focus:border-[var(--color-primary)] text-sm cursor-pointer"
+                    >
+                      <option value="">Selecione o porte...</option>
+                      <option value="Pequeno">Pequeno</option>
+                      <option value="Médio">Médio</option>
+                      <option value="Grande">Grande</option>
+                    </select>
                   </div>
                 </div>
               )}

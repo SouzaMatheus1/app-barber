@@ -504,7 +504,7 @@ const Transacoes: React.FC = () => {
                 className="w-full px-4 py-3 bg-[var(--color-background)] text-[var(--color-text)] rounded-lg border border-[var(--color-primary)]/20 focus:border-[var(--color-primary)] outline-none"
                 required
               >
-                <option value="" disabled>Selecione o barbeiro</option>
+                <option value="" disabled>Selecione o profissional</option>
                 {profissionais.map(p => (
                   <option key={p.id} value={p.id}>{p.nome}</option>
                 ))}

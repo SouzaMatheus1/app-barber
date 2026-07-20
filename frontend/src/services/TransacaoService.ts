@@ -22,6 +22,7 @@ export const transacaoService = {
     data?: string;
     valorTotal?: number;
     categoriaCustoId?: number | null;
+    ativoId?: number | null;
     itens?: { itemId: number; quantidade: number; usouCreditoAssinatura: boolean }[];
   }) => {
     const response = await api.post('/transacoes', data);

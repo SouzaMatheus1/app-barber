@@ -27,7 +27,8 @@ const TENANT_MODELS = [
   'ItemTransacao',
   'CreditoAssinatura',
   'Agendamento',
-  'Ativo'
+  'Ativo',
+  'TemaEmpresa'
 ];
 
 export async function tenantQueryExtension({ args, query, model, operation }: any) {

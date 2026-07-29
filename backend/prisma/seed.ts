@@ -124,6 +124,54 @@ async function main() {
     create: { id: 3, descricao: 'Pet Shop' },
   });
 
+  console.log('Populando TemaPadrao Barbearia...');
+  await prisma.temaPadrao.upsert({
+    where: { tipoEmpresaId: tipoBarbearia.id },
+    update: {},
+    create: {
+      tipoEmpresaId: tipoBarbearia.id,
+      corPrimaria: '#C9A84C',
+      corSecundaria: '#E2C175',
+      corFundo: '#0A0A0A',
+      corSuperficie: '#111111',
+      corTexto: '#F5F5F5',
+      logoUrl: null,
+      faviconUrl: null
+    }
+  });
+
+  console.log('Populando TemaPadrao Lava Rápido...');
+  await prisma.temaPadrao.upsert({
+    where: { tipoEmpresaId: tipoLavaRapido.id },
+    update: {},
+    create: {
+      tipoEmpresaId: tipoLavaRapido.id,
+      corPrimaria: '#3B82F6',
+      corSecundaria: '#60A5FA',
+      corFundo: '#0B0F19',
+      corSuperficie: '#1F2937',
+      corTexto: '#F3F4F6',
+      logoUrl: null,
+      faviconUrl: null
+    }
+  });
+
+  console.log('Populando TemaPadrao Pet Shop...');
+  await prisma.temaPadrao.upsert({
+    where: { tipoEmpresaId: tipoPetShop.id },
+    update: {},
+    create: {
+      tipoEmpresaId: tipoPetShop.id,
+      corPrimaria: '#10B981',
+      corSecundaria: '#34D399',
+      corFundo: '#0A0D14',
+      corSuperficie: '#161B26',
+      corTexto: '#F9FAFB',
+      logoUrl: null,
+      faviconUrl: null
+    }
+  });
+
   console.log('Associando ativos aos tipos de empresa...');
   await prisma.tipoEmpresaAtivo.upsert({
     where: {

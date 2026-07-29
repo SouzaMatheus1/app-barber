@@ -11,6 +11,7 @@ model TipoEmpresa {
   descricao         String             @unique
   empresas          Empresa[]
   tipoEmpresaAtivos TipoEmpresaAtivo[]
+  temaPadrao        TemaPadrao?
 
   @@map("TipoEmpresa")
 }
@@ -35,6 +36,7 @@ model Empresa {
   creditosAssinatura CreditoAssinatura[]
   agendamentos    Agendamento[]
   ativos          Ativo[]
+  temaEmpresa     TemaEmpresa?
 
   @@index([tipoEmpresaId])
   @@map("Empresa")
@@ -424,6 +426,37 @@ model EspecieAnimal {
   animais AtivoAnimal[]
 
   @@map("EspecieAnimal")
+}
+
+model TemaPadrao {
+  id            Int    @id @default(autoincrement())
+  tipoEmpresaId Int    @unique
+  corPrimaria   String
+  corSecundaria String
+  corFundo      String
+  corSuperficie String
+  corTexto      String
+  logoUrl       String?
+  faviconUrl    String?
+
+  tipoEmpresa TipoEmpresa @relation(fields: [tipoEmpresaId], references: [id])
+
+  @@map("TemaPadrao")
+}
+
+model TemaEmpresa {
+  empresaId     Int     @id
+  corPrimaria   String?
+  corSecundaria String?
+  corFundo      String?
+  corSuperficie String?
+  corTexto      String?
+  logoUrl       String?
+  faviconUrl    String?
+
+  empresa Empresa @relation(fields: [empresaId], references: [id])
+
+  @@map("TemaEmpresa")
 }
 
 

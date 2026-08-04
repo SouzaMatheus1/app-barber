@@ -16,6 +16,13 @@ describe('labelsPorSegmento utility', () => {
     expect(getLabelPorSegmento('LAVA', 'todos_profissionais')).toBe('Todos os Lavadores');
   });
 
+  it('should return correct labels for nail salon business vertical', () => {
+    expect(getLabelPorSegmento('unhas', 'barbeiro')).toBe('Nail Designer');
+    expect(getLabelPorSegmento('Alongamento de Unhas', 'barbeiros')).toBe('Nail Designers');
+    expect(getLabelPorSegmento('nail', 'selecione_um_barbeiro')).toBe('Selecione um nail designer');
+    expect(getLabelPorSegmento('UNHAS', 'todos_profissionais')).toBe('Todos os Nail Designers');
+  });
+
   it('should return correct labels for barbearia business vertical by default', () => {
     expect(getLabelPorSegmento('barbearia', 'barbeiro')).toBe('Barbeiro');
     expect(getLabelPorSegmento(undefined, 'barbeiros')).toBe('Barbeiros');

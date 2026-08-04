@@ -124,6 +124,12 @@ async function main() {
     create: { id: 3, descricao: 'Pet Shop' },
   });
 
+  const tipoUnhas = await prisma.tipoEmpresa.upsert({
+    where: { descricao: 'Alongamento de Unhas' },
+    update: {},
+    create: { id: 4, descricao: 'Alongamento de Unhas' },
+  });
+
   console.log('Associando ativos aos tipos de empresa...');
   await prisma.tipoEmpresaAtivo.upsert({
     where: {
@@ -185,6 +191,17 @@ async function main() {
       nomeFantasia: 'Pet Shop Fofura',
       slug: 'pet-shop',
       tipoEmpresaId: tipoPetShop.id,
+    },
+  });
+
+  await prisma.empresa.upsert({
+    where: { id: 4 },
+    update: {},
+    create: {
+      id: 4,
+      nomeFantasia: 'Espaço Nails',
+      slug: 'espaco-nails',
+      tipoEmpresaId: tipoUnhas.id,
     },
   });
 
@@ -375,6 +392,54 @@ async function main() {
     });
   });
 
+  // --- TENANT 4: Alongamento de Unhas ---
+  console.log('Seeding Espaço Nails...');
+  await tenantStorage.run({ empresaId: 4 }, async () => {
+    const admin = await prisma.profissional.upsert({
+      where: { email: 'admin@espaconails.com' },
+      update: { senha: senhaHash },
+      create: {
+        nome: 'Gerente Espaço Nails',
+        email: 'admin@espaconails.com',
+        senha: senhaHash,
+        perfilId: perfilAdmin.id,
+      },
+    });
+
+    const profissional1 = await prisma.profissional.upsert({
+      where: { email: 'designer1@espaconails.com' },
+      update: { senha: senhaHash },
+      create: {
+        nome: 'Bianca Nail Designer',
+        email: 'designer1@espaconails.com',
+        senha: senhaHash,
+        perfilId: perfilProfissional.id,
+      },
+    });
+
+    const clienteUnhas = await prisma.cliente.create({
+      data: { nome: 'Fernanda Alves', telefone: '11966666666' },
+    });
+
+    const alongamentoGel = await prisma.itemCatalogo.create({
+      data: {
+        nome: 'Alongamento em Gel',
+        preco: 120.00,
+        comissao: 40.00,
+        tipoItemId: tipoServico.id,
+      },
+    });
+
+    const manutencaoAlongamento = await prisma.itemCatalogo.create({
+      data: {
+        nome: 'Manutenção de Alongamento',
+        preco: 70.00,
+        comissao: 40.00,
+        tipoItemId: tipoServico.id,
+      },
+    });
+  });
+
   console.log('\n✅ Seeding completo e concluído com sucesso!');
   console.log('--------------------------------------------------');
   console.log(' Credenciais de Teste Geradas:');
@@ -384,6 +449,8 @@ async function main() {
   console.log('    Login Admin Painel: admin@lavarapido.com / admin123');
   console.log(' 3. Pet Shop (http://localhost:5173/portal/pet-shop)');
   console.log('    Login Admin Painel: admin@petshop.com / admin123');
+  console.log(' 4. Espaço Nails (http://localhost:5173/portal/espaco-nails)');
+  console.log('    Login Admin Painel: admin@espaconails.com / admin123');
   console.log('--------------------------------------------------');
 }
 

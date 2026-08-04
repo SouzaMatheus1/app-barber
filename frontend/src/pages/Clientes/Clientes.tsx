@@ -3,6 +3,7 @@ import { Plus, Trash2, Edit2, Loader2, User, Users, Car, X, PawPrint } from 'luc
 import { ClienteService } from '../../services/ClienteService';
 import { assinaturaService } from '../../services/AssinaturaService';
 import { useAuth } from '../../contexts/AuthContext';
+import { usaAtivoPorSegmento } from '../../utils/labelsPorSegmento';
 import { api } from '../../services/api';
 import type { Cliente } from '../../services/ClienteService';
 
@@ -44,7 +45,7 @@ export function Clientes() {
   const [animalPorte, setAnimalPorte] = useState('');
   const [veiculoCategoria, setVeiculoCategoria] = useState<number | ''>('');
 
-  const isBarbearia = user?.tipoEmpresa?.toLowerCase() === 'barbearia';
+  const usaAtivo = usaAtivoPorSegmento(user?.tipoEmpresa);
   const isPetshop = user?.tipoEmpresa?.toLowerCase().includes('pet');
 
   useEffect(() => {
@@ -418,7 +419,7 @@ export function Clientes() {
                     </td>
                     <td className="py-4 px-6 text-[var(--color-text)]/80">{cliente.assinaturas?.[0]?.plano.nome || '-'}</td>
                     <td className="py-4 px-6 text-right space-x-3">
-                      {!isBarbearia && (
+                      {usaAtivo && (
                         <button 
                           onClick={() => openAtivosModal(cliente)}
                           className="text-[var(--color-text)]/50 hover:text-[var(--color-primary)] transition-colors p-1"

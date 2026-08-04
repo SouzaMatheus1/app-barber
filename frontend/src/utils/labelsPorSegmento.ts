@@ -1,5 +1,5 @@
 import React from 'react';
-import { Scissors, PawPrint, Car } from 'lucide-react';
+import { Scissors, PawPrint, Car, Sparkles } from 'lucide-react';
 
 export function getIconePorSegmento(tipoEmpresa: string | undefined): React.ComponentType<any> {
   const tipo = tipoEmpresa?.toLowerCase() || '';
@@ -9,7 +9,16 @@ export function getIconePorSegmento(tipoEmpresa: string | undefined): React.Comp
   if (tipo.includes('lava') || tipo.includes('car')) {
     return Car;
   }
+  if (tipo.includes('unha') || tipo.includes('nail')) {
+    return Sparkles;
+  }
   return Scissors;
+}
+
+// Segmentos cujos clientes têm "Ativos" (veículo/animal) — Barbearia e Unhas não usam esse conceito.
+export function usaAtivoPorSegmento(tipoEmpresa: string | undefined): boolean {
+  const tipo = tipoEmpresa?.toLowerCase() || '';
+  return tipo.includes('pet') || tipo.includes('lava') || tipo.includes('car');
 }
 
 export function getLabelPorSegmento(
@@ -79,6 +88,33 @@ export function getLabelPorSegmento(
         return 'Todos os Lavadores';
       default:
         return 'Lavador';
+    }
+  }
+
+  if (tipo.includes('unha') || tipo.includes('nail')) {
+    switch (context) {
+      case 'selecione_barbeiro':
+        return 'Selecione o nail designer';
+      case 'selecione_um_barbeiro':
+        return 'Selecione um nail designer';
+      case 'barbeiro':
+        return 'Nail Designer';
+      case 'barbeiros':
+        return 'Nail Designers';
+      case 'gerencie_barbeiros':
+        return 'Gerencie a equipe de nail designers e administradores.';
+      case 'escolha_barbeiro':
+        return 'Escolha o Nail Designer';
+      case 'carregando_barbeiros':
+        return 'Carregando nail designers...';
+      case 'agenda_barbeiro':
+        return 'Verificando agenda do nail designer...';
+      case 'sem_horarios_barbeiro':
+        return 'Infelizmente não há horários livres para este nail designer na data selecionada. Tente outro dia ou profissional.';
+      case 'todos_profissionais':
+        return 'Todos os Nail Designers';
+      default:
+        return 'Nail Designer';
     }
   }
 

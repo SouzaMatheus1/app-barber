@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../../../services/api';
-import { getLabelPorSegmento } from '../../../utils/labelsPorSegmento';
+import { getLabelPorSegmento, usaAtivoPorSegmento } from '../../../utils/labelsPorSegmento';
 import { User, Calendar, Clock, ChevronRight, ChevronLeft, Check, Sparkles, Loader2, MessageSquare } from 'lucide-react';
 import { usePortalAuth } from '../../../contexts/PortalAuthContext';
 
@@ -94,7 +94,7 @@ export default function PortalAgendar() {
 
   useEffect(() => {
     async function loadAtivos() {
-      if (cliente?.id && tipoEmpresa && tipoEmpresa.toLowerCase() !== 'barbearia') {
+      if (cliente?.id && usaAtivoPorSegmento(tipoEmpresa)) {
         try {
           const res = await api.get(`/clientes/${cliente.id}/ativos`);
           const clientAtivos = res.data;
@@ -636,7 +636,7 @@ export default function PortalAgendar() {
             )}
 
             {/* Campo Ativo do Cliente (Multi-Vertical) */}
-            {tipoEmpresa && tipoEmpresa.toLowerCase() !== 'barbearia' && ativos.length > 1 && (
+            {tipoEmpresa && usaAtivoPorSegmento(tipoEmpresa) && ativos.length > 1 && (
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-[var(--color-text)]/40 uppercase tracking-widest block ml-1">
                   {tipoEmpresa.toLowerCase().includes('pet') ? 'Selecione o Animal' : 'Selecione o Veículo'}

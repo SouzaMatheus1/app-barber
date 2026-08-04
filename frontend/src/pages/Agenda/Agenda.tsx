@@ -3,7 +3,7 @@ import { Calendar as Clock, User, X, CheckCircle2, Ban } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
-import { getLabelPorSegmento, getIconePorSegmento } from '../../utils/labelsPorSegmento';
+import { getLabelPorSegmento, getIconePorSegmento, usaAtivoPorSegmento } from '../../utils/labelsPorSegmento';
 
 interface Agendamento {
   id: number;
@@ -92,7 +92,7 @@ export function Agenda() {
 
   useEffect(() => {
     async function loadClientAtivos() {
-      if (novoAgendamentoClienteId !== '' && user?.tipoEmpresa?.toLowerCase() !== 'barbearia') {
+      if (novoAgendamentoClienteId !== '' && usaAtivoPorSegmento(user?.tipoEmpresa)) {
         try {
           const res = await api.get(`/clientes/${novoAgendamentoClienteId}/ativos`);
           const clientAtivos = res.data;
@@ -541,7 +541,7 @@ export function Agenda() {
                 )}
               </div>
 
-              {user?.tipoEmpresa?.toLowerCase() !== 'barbearia' && novoAgendamentoAtivos.length > 1 && (
+              {usaAtivoPorSegmento(user?.tipoEmpresa) && novoAgendamentoAtivos.length > 1 && (
                 <div>
                   <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase">Ativo do Cliente</label>
                   <select 

@@ -31,7 +31,7 @@ jest.mock('../database/prisma', () => ({
       update: jest.fn(),
     },
     creditoAssinatura: {
-      update: jest.fn(),
+      updateMany: jest.fn(),
     },
     fechamentoCaixa: {
       upsert: jest.fn(),
@@ -66,7 +66,7 @@ describe('Transação API', () => {
     (prisma.transacao.findUnique as jest.Mock).mockReset();
     (prisma.transacao.update as jest.Mock).mockReset();
     (prisma.transacao.delete as jest.Mock).mockReset();
-    (prisma.creditoAssinatura.update as jest.Mock).mockReset();
+    (prisma.creditoAssinatura.updateMany as jest.Mock).mockReset();
     (prisma.ativo.findFirst as jest.Mock).mockReset();
   });
 
@@ -191,6 +191,7 @@ describe('Transação API', () => {
       (prisma.itemCatalogo.findMany as jest.Mock).mockResolvedValueOnce(mockItem);
       (prisma.assinatura.findFirst as jest.Mock).mockResolvedValueOnce(mockAssinatura);
       (prisma.transacao.create as jest.Mock).mockResolvedValueOnce(mockNovaTransacao);
+      (prisma.creditoAssinatura.updateMany as jest.Mock).mockResolvedValueOnce({ count: 1 });
       (prisma.transacao.findMany as jest.Mock).mockResolvedValueOnce([]); // Para syncFechamentoCaixa
 
       const res = await request(app)
@@ -206,10 +207,51 @@ describe('Transação API', () => {
 
       expect(res.status).toBe(201);
       expect(res.body.valorTotal).toBe(0.0);
-      expect(prisma.creditoAssinatura.update).toHaveBeenCalledWith({
-        where: { id: 101 },
-        data: { quantidadeRestante: 2 }
+      expect(prisma.creditoAssinatura.updateMany).toHaveBeenCalledWith({
+        where: { id: 101, quantidadeRestante: { gte: 1 } },
+        data: { quantidadeRestante: { decrement: 1 } }
       });
+    });
+
+    it('deve retornar erro 409 e reverter a transação se o crédito for consumido/renovado durante o processamento', async () => {
+      const mockItem = [{ id: 1, nome: 'Corte Simples', preco: 40.0 }];
+      const mockAssinatura = {
+        id: 5,
+        clienteId: 2,
+        status: 'ATIVA',
+        creditos: [{ id: 101, itemId: 1, quantidadeRestante: 3 }],
+        plano: {
+          valorMensal: 100,
+          itens: [{ itemId: 1, quantidade: 4 }]
+        }
+      };
+      const mockNovaTransacao = {
+        id: 10,
+        valorTotal: 0.0,
+        tipoTransacaoId: 1,
+        profissionalId: 1,
+        data: new Date()
+      };
+
+      (prisma.itemCatalogo.findMany as jest.Mock).mockResolvedValueOnce(mockItem);
+      (prisma.assinatura.findFirst as jest.Mock).mockResolvedValueOnce(mockAssinatura);
+      (prisma.transacao.create as jest.Mock).mockResolvedValueOnce(mockNovaTransacao);
+      // Simula que o crédito foi apagado/renovado (ou zerado) entre a leitura e a escrita: nenhuma linha afetada.
+      (prisma.creditoAssinatura.updateMany as jest.Mock).mockResolvedValueOnce({ count: 0 });
+
+      const res = await request(app)
+        .post('/transacoes')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          tipoTransacaoId: 1,
+          descricao: 'Uso de Crédito Concorrente',
+          profissionalId: 1,
+          clienteId: 2,
+          itens: [{ itemId: 1, quantidade: 1, usouCreditoAssinatura: true }]
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('O saldo de créditos da assinatura foi alterado (renovado ou já consumido) durante o processamento. Tente novamente.');
     });
 
     it('deve retornar erro 400 se cliente usar crédito de assinatura mas não tiver plano ativo', async () => {

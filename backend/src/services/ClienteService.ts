@@ -1,6 +1,7 @@
 import { prisma } from '../database/prisma';
 import { AssinaturaService } from './AssinaturaService';
 import { statusAssinatura } from '@prisma/client';
+import { normalizarTelefone, validarTelefone } from '../utils/validacaoTelefone';
 
 export class ClienteService {
     async listAll() {
@@ -51,9 +52,15 @@ export class ClienteService {
     }
 
     async create(data: { nome: string, telefone?: string, planoId?: number }) {
-        const { nome, telefone, planoId } = data;
+        const { nome, planoId } = data;
+        let telefone = data.telefone;
 
         if (telefone && telefone.trim() !== '') {
+            if (!validarTelefone(telefone)) {
+                throw new Error('Telefone inválido. Informe DDD + número (10 ou 11 dígitos).');
+            }
+            telefone = normalizarTelefone(telefone);
+
             const clienteExistente = await prisma.cliente.findFirst({
                 where: {
                     telefone,
@@ -104,6 +111,11 @@ export class ClienteService {
             throw new Error('Cliente não encontrado');
 
         if (data.telefone && data.telefone.trim() !== '') {
+            if (!validarTelefone(data.telefone)) {
+                throw new Error('Telefone inválido. Informe DDD + número (10 ou 11 dígitos).');
+            }
+            data.telefone = normalizarTelefone(data.telefone);
+
             const clienteExistente = await prisma.cliente.findFirst({
                 where: {
                     telefone: data.telefone,

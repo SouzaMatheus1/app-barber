@@ -1,5 +1,6 @@
 import { prisma } from '../database/prisma';
 import { tenantStorage } from '../database/tenantContext';
+import { normalizarPlaca, validarPlaca } from '../utils/validacaoVeiculo';
 
 interface CriarAtivoInput {
   clienteId: number;
@@ -97,6 +98,15 @@ export class AtivoService {
       }
     }
 
+    // Placa é opcional; só validamos/normalizamos se um valor foi de fato enviado.
+    let placaNormalizada: string | undefined;
+    if (dados.detalhesVeiculo?.placa) {
+      if (!validarPlaca(dados.detalhesVeiculo.placa)) {
+        throw new Error('Placa inválida. Use o formato antigo (ABC1234) ou Mercosul (ABC1B34).');
+      }
+      placaNormalizada = normalizarPlaca(dados.detalhesVeiculo.placa);
+    }
+
     // 5. Salvar dentro de uma transação
     return await prisma.$transaction(async (tx) => {
       const novoAtivo = await tx.ativo.create({
@@ -116,7 +126,7 @@ export class AtivoService {
             categoriaId: dados.detalhesVeiculo.categoriaId,
             ano: dados.detalhesVeiculo.ano,
             cor: dados.detalhesVeiculo.cor,
-            placa: dados.detalhesVeiculo.placa
+            placa: placaNormalizada
           }
         });
       } else if (dados.detalhesAnimal) {
@@ -188,6 +198,14 @@ export class AtivoService {
       }
     }
 
+    let placaNormalizada: string | undefined;
+    if (dados.detalhesVeiculo?.placa) {
+      if (!validarPlaca(dados.detalhesVeiculo.placa)) {
+        throw new Error('Placa inválida. Use o formato antigo (ABC1234) ou Mercosul (ABC1B34).');
+      }
+      placaNormalizada = normalizarPlaca(dados.detalhesVeiculo.placa);
+    }
+
     return await prisma.$transaction(async (tx) => {
       await tx.ativo.update({
         where: { id },
@@ -204,7 +222,7 @@ export class AtivoService {
             categoriaId: dados.detalhesVeiculo.categoriaId || ativo.veiculo.categoriaId,
             ano: dados.detalhesVeiculo.ano,
             cor: dados.detalhesVeiculo.cor,
-            placa: dados.detalhesVeiculo.placa
+            placa: placaNormalizada
           }
         });
       } else if (dados.detalhesAnimal && ativo.animal) {

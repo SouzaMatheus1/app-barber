@@ -6,6 +6,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { usaAtivoPorSegmento } from '../../utils/labelsPorSegmento';
 import { api } from '../../services/api';
 import type { Cliente } from '../../services/ClienteService';
+import { normalizarPlaca, validarPlaca, formatarPlaca } from '../../utils/validacaoVeiculo';
+import { formatarTelefone, normalizarTelefone } from '../../utils/validacaoTelefone';
 
 const clienteService = new ClienteService();
 
@@ -38,6 +40,7 @@ export function Clientes() {
   const [ativoTipoId, setAtivoTipoId] = useState<number | ''>('');
   const [veiculoModelo, setVeiculoModelo] = useState('');
   const [veiculoPlaca, setVeiculoPlaca] = useState('');
+  const [veiculoPlacaErro, setVeiculoPlacaErro] = useState('');
   const [veiculoCor, setVeiculoCor] = useState('');
   const [veiculoAno, setVeiculoAno] = useState<number | ''>('');
   const [animalEspecie, setAnimalEspecie] = useState<number | ''>('');
@@ -78,17 +81,18 @@ export function Clientes() {
     e.preventDefault();
     setLoadingAction(true);
     try {
+      const telefoneNormalizado = normalizarTelefone(telefone);
       if (editingId) {
-        await clienteService.editar(editingId, { 
-          nome, 
-          telefone, 
-          planoId: planoId === '' ? 0 : Number(planoId) 
+        await clienteService.editar(editingId, {
+          nome,
+          telefone: telefoneNormalizado,
+          planoId: planoId === '' ? 0 : Number(planoId)
         });
       } else {
-        await clienteService.criar({ 
-          nome, 
-          telefone, 
-          planoId: planoId === '' ? 0 : Number(planoId) 
+        await clienteService.criar({
+          nome,
+          telefone: telefoneNormalizado,
+          planoId: planoId === '' ? 0 : Number(planoId)
         });
       }
       resetForm();
@@ -121,7 +125,7 @@ export function Clientes() {
     setIsEditing(true);
     setEditingId(Number(cliente.id)); // o banco as vezes traz Number object
     setNome(cliente.nome);
-    setTelefone(cliente.telefone || '');
+    setTelefone(formatarTelefone(cliente.telefone || ''));
     if (cliente.assinaturas && cliente.assinaturas.length > 0) {
       setPlanoId(cliente.assinaturas[0].planoId);
     } else {
@@ -192,6 +196,7 @@ export function Clientes() {
     }
     setVeiculoModelo('');
     setVeiculoPlaca('');
+    setVeiculoPlacaErro('');
     setVeiculoCor('');
     setVeiculoAno('');
     setVeiculoCategoria(categoriasVeiculo.length > 0 ? categoriasVeiculo[0].id : '');
@@ -204,9 +209,10 @@ export function Clientes() {
     setAtivoEditingId(ativo.id);
     setAtivoNome(ativo.nome);
     setAtivoTipoId(ativo.tipoAtivoId);
+    setVeiculoPlacaErro('');
     if (ativo.veiculo) {
       setVeiculoModelo(ativo.veiculo.modelo || '');
-      setVeiculoPlaca(ativo.veiculo.placa || '');
+      setVeiculoPlaca(formatarPlaca(ativo.veiculo.placa || ''));
       setVeiculoCor(ativo.veiculo.cor || '');
       setVeiculoAno(ativo.veiculo.ano || '');
       setVeiculoCategoria(ativo.veiculo.categoriaId || '');
@@ -246,10 +252,18 @@ export function Clientes() {
   const handleSaveAtivo = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedClientForAtivos) return;
+
+    const isVeiculo = ativoTipoId === 1;
+    const isAnimal = ativoTipoId === 2;
+
+    if (isVeiculo && veiculoPlaca && !validarPlaca(veiculoPlaca)) {
+      setVeiculoPlacaErro('Placa inválida. Use o formato antigo (ABC1234) ou Mercosul (ABC1B34).');
+      return;
+    }
+    setVeiculoPlacaErro('');
+
     try {
       setLoadingAtivos(true);
-      const isVeiculo = ativoTipoId === 1;
-      const isAnimal = ativoTipoId === 2;
 
       const payload = {
         clienteId: Number(selectedClientForAtivos.id),
@@ -260,7 +274,7 @@ export function Clientes() {
           categoriaId: Number(veiculoCategoria),
           ano: veiculoAno !== '' ? Number(veiculoAno) : undefined,
           cor: veiculoCor || undefined,
-          placa: veiculoPlaca || undefined
+          placa: veiculoPlaca ? normalizarPlaca(veiculoPlaca) : undefined
         } : undefined,
         detalhesAnimal: isAnimal ? {
           especieId: Number(animalEspecie),
@@ -344,7 +358,7 @@ export function Clientes() {
               <input
                 type="text"
                 value={telefone}
-                onChange={e => setTelefone(e.target.value)}
+                onChange={e => setTelefone(formatarTelefone(e.target.value))}
                 className="w-full px-4 py-3 bg-[var(--color-background)] text-[var(--color-text)] rounded-lg border border-[var(--color-primary)]/20 focus:outline-none focus:border-[var(--color-primary)] transition-colors"
                 placeholder="Ex: 11999999999"
               />
@@ -413,7 +427,7 @@ export function Clientes() {
                 clientes.map((cliente) => (
                   <tr key={cliente.id.toString()} className="hover:bg-[var(--color-primary)]/5 transition-colors group">
                     <td className="py-4 px-6 text-[var(--color-text)] font-medium">{cliente.nome}</td>
-                    <td className="py-4 px-6 text-[var(--color-text)]/80">{cliente.telefone || '-'}</td>
+                    <td className="py-4 px-6 text-[var(--color-text)]/80">{cliente.telefone ? formatarTelefone(cliente.telefone) : '-'}</td>
                     <td className="py-4 px-6 text-[var(--color-text)]/60 text-sm">
                       {new Date(cliente.criadoEm).toLocaleDateString('pt-BR')}
                     </td>
@@ -573,10 +587,23 @@ export function Clientes() {
                     <input
                       type="text"
                       value={veiculoPlaca}
-                      onChange={e => setVeiculoPlaca(e.target.value)}
-                      className="w-full px-3 py-2 bg-[var(--color-background)] text-[var(--color-text)] rounded border border-[var(--color-primary)]/20 focus:outline-none focus:border-[var(--color-primary)] text-sm"
-                      placeholder="Ex: ABC-1234"
+                      onChange={e => {
+                        setVeiculoPlaca(formatarPlaca(e.target.value));
+                        if (veiculoPlacaErro) setVeiculoPlacaErro('');
+                      }}
+                      onBlur={() => {
+                        if (veiculoPlaca && !validarPlaca(veiculoPlaca)) {
+                          setVeiculoPlacaErro('Placa inválida. Use o formato antigo (ABC1234) ou Mercosul (ABC1B34).');
+                        } else {
+                          setVeiculoPlacaErro('');
+                        }
+                      }}
+                      className={`w-full px-3 py-2 bg-[var(--color-background)] text-[var(--color-text)] rounded border text-sm focus:outline-none ${veiculoPlacaErro ? 'border-red-500' : 'border-[var(--color-primary)]/20 focus:border-[var(--color-primary)]'}`}
+                      placeholder="Ex: ABC-1234 ou ABC1B34"
                     />
+                    {veiculoPlacaErro && (
+                      <p className="text-[10px] text-red-500">{veiculoPlacaErro}</p>
+                    )}
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-semibold text-[var(--color-text)]/70 uppercase">Cor</label>

@@ -53,7 +53,7 @@ function PortalIndex() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-950 text-zinc-400 p-6 text-center">
       <h1 className="text-xl font-bold mb-2 text-zinc-200">Portal do Cliente</h1>
-      <p className="text-sm">Por favor, acesse utilizando o link direto da sua barbearia (ex: portal.localhost/sua-barbearia).</p>
+      <p className="text-sm">Por favor, acesse utilizando o link direto do estabelecimento (ex: portal.lambda-m.duckdns.org/link-estabelecimento).</p>
     </div>
   );
 }

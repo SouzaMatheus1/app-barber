@@ -1,5 +1,6 @@
 import { prisma } from '../database/prisma';
 import { statusAssinatura } from '@prisma/client';
+import { tenantStorage } from '../database/tenantContext';
 
 export class AssinaturaService {
     // Planos
@@ -66,7 +67,10 @@ export class AssinaturaService {
 
     // Assinaturas
     async subscribe(clienteId: number, planoId: number, profissionalIdParaTransacao: number) {
-        const plano = await prisma.plano.findUnique({ 
+        const store = tenantStorage.getStore();
+        const empresaIdAtual = store?.empresaId ?? 1;
+
+        const plano = await prisma.plano.findUnique({
             where: { id: planoId },
             include: { itens: true }
         });
@@ -97,7 +101,8 @@ export class AssinaturaService {
                 creditos: {
                     create: plano.itens.map(i => ({
                         itemId: i.itemId,
-                        quantidadeRestante: i.quantidade
+                        quantidadeRestante: i.quantidade,
+                        empresaId: empresaIdAtual
                     }))
                 }
             },
@@ -123,6 +128,9 @@ export class AssinaturaService {
     }
 
     async renewSubscription(assinaturaId: number, profissionalIdParaTransacao: number) {
+        const store = tenantStorage.getStore();
+        const empresaIdAtual = store?.empresaId ?? 1;
+
         const assinatura = await prisma.assinatura.findUnique({
             where: { id: assinaturaId },
             include: { plano: { include: { itens: true } } }
@@ -148,7 +156,8 @@ export class AssinaturaService {
                     deleteMany: {},
                     create: assinatura.plano.itens.map(i => ({
                         itemId: i.itemId,
-                        quantidadeRestante: i.quantidade
+                        quantidadeRestante: i.quantidade,
+                        empresaId: empresaIdAtual
                     }))
                 }
             },

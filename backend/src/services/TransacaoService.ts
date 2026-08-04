@@ -90,6 +90,7 @@ export class TransacaoService {
     }){
         const { descricao, tipoTransacaoId, profissionalId, clienteId, itens, formaPagamentoId, categoriaCustoId, valorTotal, ativoId } = dataParams;
         const store = tenantStorage.getStore();
+        const empresaIdAtual = store?.empresaId ?? 1;
 
         // Validação: profissional é obrigatório para ENTRADAS (atendimento)
         if (tipoTransacaoId === 1 && !profissionalId) {
@@ -111,94 +112,87 @@ export class TransacaoService {
 
         const itensId = (itens || []).map(item => item.itemId);
 
-        const itensBd = itensId.length > 0 
+        const itensBd = itensId.length > 0
             ? await prisma.itemCatalogo.findMany({ where: { id: { in: itensId } } })
             : [];
 
         if (itens && itens.length !== itensBd.length)
             throw new AppError("Um ou mais itens não estão cadastrados no catálogo.", 400);
 
-        let totalVenda = valorTotal || 0;
-        let requiresCredits = false;
-        
-        let assinaturaAtiva = null;
-        if (clienteId) {
-            assinaturaAtiva = await prisma.assinatura.findFirst({
-                where: { clienteId, status: statusAssinatura.ATIVA },
-                include: { 
-                    creditos: true,
-                    plano: { include: { itens: true } }
-                }
-            });
-        }
-
-        const creditosParaAtualizar: { id: number, novaQuantidade: number }[] = [];
-
-        const itensSelecionados = (itens || []).map(itemRegistrado => {
-            const itemSalvo = itensBd.find((itemBd: any) => itemBd.id == itemRegistrado.itemId);
-            let valorItem = Number(itemSalvo?.preco);
-            
-            const usouCredito = itemRegistrado.usouCreditoAssinatura || false;
-            
-            if (usouCredito) {
-               requiresCredits = true;
-               if (!assinaturaAtiva) {
-                   throw new AppError("O cliente marcou o uso de crédito mas não possui assinatura ativa no momento.", 400);
-               }
-               
-               const creditoEncontrado = assinaturaAtiva.creditos.find(c => c.itemId === itemRegistrado.itemId);
-               
-               if (!creditoEncontrado) {
-                   throw new AppError(`O plano do cliente não inclui o serviço: ${itemSalvo?.nome}`, 400);
-               }
-
-               if (creditoEncontrado.quantidadeRestante < itemRegistrado.quantidade) {
-                   throw new AppError(`Saldo insuficiente para o serviço: ${itemSalvo?.nome}. Restante: ${creditoEncontrado.quantidadeRestante}`, 400);
-               }
-
-               // Registrar para atualização posterior (dentro da transaction)
-               const jaRegistrado = creditosParaAtualizar.find(c => c.id === creditoEncontrado.id);
-               if (jaRegistrado) {
-                   jaRegistrado.novaQuantidade -= itemRegistrado.quantidade;
-               } else {
-                   creditosParaAtualizar.push({
-                       id: creditoEncontrado.id,
-                       novaQuantidade: creditoEncontrado.quantidadeRestante - itemRegistrado.quantidade
-                   });
-               }
-
-               // Cálculo proporcional: Mensalidade / Total de créditos no plano
-               const itensPlano = assinaturaAtiva.plano.itens || [];
-               const totalItensNoPlano = itensPlano.reduce((sum, ip) => sum + ip.quantidade, 0);
-               const mensalidade = Number(assinaturaAtiva.plano.valorMensal || 0);
-               
-               const valorProporcional = totalItensNoPlano > 0 ? mensalidade / totalItensNoPlano : 0;
-               valorItem = valorProporcional; // Usar valor proporcional p/ o ItemTransacao
-            }
-
-            // Para o totalVenda do Caixa, se usou crédito, a contribuição financeira é 0
-            if (!usouCredito) {
-                totalVenda += valorItem * itemRegistrado.quantidade;
-            }
-
-            return {
-                quantidade: itemRegistrado.quantidade,
-                precoUnitario: valorItem,
-                usouCreditoAssinatura: usouCredito,
-                itemId: itemRegistrado.itemId,
-                empresaId: store?.empresaId ?? 1
-            }
-        });
-
-        const empresaIdAtual = store?.empresaId ?? 1;
-
         /**
          * @function Execução do Fluxo Contábil (Transaction)
          * - Esta transação garante integridade (ACID). Se falhar durante a criação, o saldo do cliente não é retirado de forma fantasma.
-         * - Se existirem créditos para serem descontados, atualizamos a entidade 'CreditoAssinatura' para não permitir dupla redução do saldo limitando o total para os próximos pedidos.
+         * - A assinatura/créditos do cliente são lidos e debitados INTEIRAMENTE dentro desta transação (via `tx`), não antes dela.
+         *   Ler fora e escrever dentro abre uma janela para uma renovação concorrente (`AssinaturaService.renewSubscription`, que
+         *   apaga e recria os créditos) invalidar o id lido, quebrando o update com "Record not found".
+         * - O débito usa `updateMany` com uma guarda (`quantidadeRestante: { gte }`) que só afeta o registro se ele ainda existir
+         *   E tiver saldo suficiente NO MOMENTO da escrita. Se `count` vier 0, abortamos com um erro claro e toda a transação
+         *   (incluindo a criação da Transacao) é revertida — nunca ficamos com uma venda registrada sem o crédito correspondente.
          * - Utilizamos valores proporcionais para o item quando `usouCredito` for preenchido a fim de estipularmos no Demonstrativo Financeiro (Caixa) que o serviço teve um custo fixado da mensalidade embutido, em vez de ser estritamente 'R$ 0.00'.
          */
         const transacao = await prisma.$transaction(async (tx) => {
+            let assinaturaAtiva = null;
+            if (clienteId) {
+                assinaturaAtiva = await tx.assinatura.findFirst({
+                    where: { clienteId, status: statusAssinatura.ATIVA },
+                    include: {
+                        creditos: true,
+                        plano: { include: { itens: true } }
+                    }
+                });
+            }
+
+            let totalVenda = valorTotal || 0;
+            let requiresCredits = false;
+            const consumoPorCredito = new Map<number, number>(); // creditoId -> quantidade total a debitar
+
+            const itensSelecionados = (itens || []).map(itemRegistrado => {
+                const itemSalvo = itensBd.find((itemBd: any) => itemBd.id == itemRegistrado.itemId);
+                let valorItem = Number(itemSalvo?.preco);
+
+                const usouCredito = itemRegistrado.usouCreditoAssinatura || false;
+
+                if (usouCredito) {
+                   requiresCredits = true;
+                   if (!assinaturaAtiva) {
+                       throw new AppError("O cliente marcou o uso de crédito mas não possui assinatura ativa no momento.", 400);
+                   }
+
+                   const creditoEncontrado = assinaturaAtiva.creditos.find(c => c.itemId === itemRegistrado.itemId);
+
+                   if (!creditoEncontrado) {
+                       throw new AppError(`O plano do cliente não inclui o serviço: ${itemSalvo?.nome}`, 400);
+                   }
+
+                   const jaConsumido = consumoPorCredito.get(creditoEncontrado.id) || 0;
+                   if (creditoEncontrado.quantidadeRestante - jaConsumido < itemRegistrado.quantidade) {
+                       throw new AppError(`Saldo insuficiente para o serviço: ${itemSalvo?.nome}. Restante: ${creditoEncontrado.quantidadeRestante - jaConsumido}`, 400);
+                   }
+                   consumoPorCredito.set(creditoEncontrado.id, jaConsumido + itemRegistrado.quantidade);
+
+                   // Cálculo proporcional: Mensalidade / Total de créditos no plano
+                   const itensPlano = assinaturaAtiva.plano.itens || [];
+                   const totalItensNoPlano = itensPlano.reduce((sum, ip) => sum + ip.quantidade, 0);
+                   const mensalidade = Number(assinaturaAtiva.plano.valorMensal || 0);
+
+                   const valorProporcional = totalItensNoPlano > 0 ? mensalidade / totalItensNoPlano : 0;
+                   valorItem = valorProporcional; // Usar valor proporcional p/ o ItemTransacao
+                }
+
+                // Para o totalVenda do Caixa, se usou crédito, a contribuição financeira é 0
+                if (!usouCredito) {
+                    totalVenda += valorItem * itemRegistrado.quantidade;
+                }
+
+                return {
+                    quantidade: itemRegistrado.quantidade,
+                    precoUnitario: valorItem,
+                    usouCreditoAssinatura: usouCredito,
+                    itemId: itemRegistrado.itemId,
+                    empresaId: empresaIdAtual
+                }
+            });
+
             const trx = await tx.transacao.create({
                 data: {
                     empresaId: empresaIdAtual,
@@ -216,13 +210,22 @@ export class TransacaoService {
                     }
                 }
             });
-            
-            if (requiresCredits && creditosParaAtualizar.length > 0) {
-                for (const cred of creditosParaAtualizar) {
-                    await tx.creditoAssinatura.update({
-                        where: { id: cred.id },
-                        data: { quantidadeRestante: cred.novaQuantidade }
+
+            if (requiresCredits) {
+                for (const [creditoId, quantidade] of consumoPorCredito) {
+                    const resultado = await tx.creditoAssinatura.updateMany({
+                        where: {
+                            id: creditoId,
+                            quantidadeRestante: { gte: quantidade }
+                        },
+                        data: {
+                            quantidadeRestante: { decrement: quantidade }
+                        }
                     });
+
+                    if (resultado.count === 0) {
+                        throw new AppError("O saldo de créditos da assinatura foi alterado (renovado ou já consumido) durante o processamento. Tente novamente.", 400);
+                    }
                 }
             }
 

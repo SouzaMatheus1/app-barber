@@ -3,6 +3,7 @@ import { Smartphone, Lock, User, Mail, ChevronRight, Loader2, Sparkles } from 'l
 import { useNavigate, useParams } from 'react-router-dom';
 import { usePortalAuth } from '../../../contexts/PortalAuthContext';
 import { api } from '../../../services/api';
+import { formatarTelefone, normalizarTelefone } from '../../../utils/validacaoTelefone';
 
 export default function LoginPortal() {
   const [phone, setPhone] = useState('');
@@ -19,12 +20,12 @@ export default function LoginPortal() {
 
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (phone.length < 10) return;
-    
+    if (normalizarTelefone(phone).length < 10) return;
+
     setLoading(true);
     setServerMessage('');
     try {
-      const res = await api.post(`/portal/${slug}/auth/check-phone`, { telefone: phone });
+      const res = await api.post(`/portal/${slug}/auth/check-phone`, { telefone: normalizarTelefone(phone) });
       
       if (res.data.status === 'EXISTS_WITH_PASSWORD') {
         setStep('PASSWORD');
@@ -48,7 +49,7 @@ export default function LoginPortal() {
     setLoading(true);
     setServerMessage('');
     try {
-      const res = await api.post(`/portal/${slug}/auth/login`, { telefone: phone, senha });
+      const res = await api.post(`/portal/${slug}/auth/login`, { telefone: normalizarTelefone(phone), senha });
       login(res.data.token, res.data.cliente);
       navigate(`/${slug}/home`);
     } catch (error: any) {
@@ -63,7 +64,7 @@ export default function LoginPortal() {
     setLoading(true);
     setServerMessage('');
     try {
-      const res = await api.post(`/portal/${slug}/auth/register`, { telefone: phone, senha, nome, email });
+      const res = await api.post(`/portal/${slug}/auth/register`, { telefone: normalizarTelefone(phone), senha, nome, email });
       login(res.data.token, res.data.cliente);
       navigate(`/${slug}/home`);
     } catch (error: any) {
@@ -109,7 +110,7 @@ export default function LoginPortal() {
                   <input
                     type="tel"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={(e) => setPhone(formatarTelefone(e.target.value))}
                     className="w-full pl-12 pr-4 py-4 bg-[var(--color-background)]/50 text-lg text-[var(--color-text)] rounded-2xl border border-transparent focus:border-[var(--color-primary)]/50 focus:bg-[var(--color-surface)] focus:ring-1 focus:ring-[var(--color-primary)]/50 transition-all outline-none"
                     placeholder="(11) 99999-9999"
                     autoFocus
@@ -118,7 +119,7 @@ export default function LoginPortal() {
                 </div>
               </div>
               <button 
-                disabled={loading || phone.length < 10}
+                disabled={loading || normalizarTelefone(phone).length < 10}
                 className="w-full py-4 bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] text-[var(--color-background)] font-bold rounded-2xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 transform hover:scale-[1.02] active:scale-[0.98]"
               >
                 {loading ? <Loader2 size={20} className="animate-spin" /> : 'Continuar'}

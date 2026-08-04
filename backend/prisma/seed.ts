@@ -176,6 +176,12 @@ async function main() {
       logoUrl: null,
       faviconUrl: null
     }
+  })
+  
+  const tipoUnhas = await prisma.tipoEmpresa.upsert({
+    where: { descricao: 'Alongamento de Unhas' },
+    update: {},
+    create: { id: 4, descricao: 'Alongamento de Unhas' },
   });
 
   console.log('Associando ativos aos tipos de empresa...');

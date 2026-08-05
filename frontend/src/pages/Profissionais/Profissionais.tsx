@@ -221,11 +221,15 @@ export function Profissionais() {
                     <td className="py-4 px-6 text-[var(--color-text)]/80">{profissional.email}</td>
                     <td className="py-4 px-6 text-[var(--color-text)]/80">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                        profissional.perfil?.descricao === 'ADMIN' 
+                        profissional.perfil?.descricao === 'ADMIN'
                         ? 'bg-[var(--color-background)] border-blue-500/30 text-blue-400'
                         : 'bg-[var(--color-background)] border-[var(--color-primary)]/30 text-[var(--color-primary)]'
                       }`}>
-                        {profissional.perfil?.descricao || '-'}
+                        {profissional.perfil?.descricao === 'ADMIN'
+                          ? 'Administrador'
+                          : profissional.perfil?.descricao
+                          ? getLabelPorSegmento(user?.tipoEmpresa, 'barbeiro')
+                          : '-'}
                       </span>
                     </td>
                     <td className="py-4 px-6 text-[var(--color-text)]/60 text-sm">

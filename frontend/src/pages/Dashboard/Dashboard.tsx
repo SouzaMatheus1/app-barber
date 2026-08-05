@@ -44,14 +44,20 @@ const Dashboard: React.FC = () => {
         ]);
 
         // Mapeia e pega apenas as 10 ultimas transacoes
-        const ultimas = transacoes.slice(0, 10).map((tx: any) => ({
-          id: tx.id,
-          client: tx.cliente?.nome || 'Cliente Avulso',
-          service: tx.itens && tx.itens.length > 0 ? tx.itens[0].item.nome + (tx.itens.length > 1 ? '...' : '') : 'Serviço',
-          value: `R$ ${Number(tx.valorTotal).toFixed(2).replace('.', ',')}`,
-          professional: tx.profissional?.nome || '-',
-          time: new Date(tx.data).toLocaleTimeString('pt-BR', { day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-        }));
+        const ultimas = transacoes.slice(0, 10).map((tx: any) => {
+          const isSaida = tx.tipoTransacaoId === 2;
+          return {
+            id: tx.id,
+            isSaida,
+            client: isSaida ? (tx.descricao || tx.categoriaCusto?.descricao || 'Despesa') : (tx.cliente?.nome || 'Cliente Avulso'),
+            service: isSaida
+              ? 'Saída de Caixa'
+              : (tx.itens && tx.itens.length > 0 ? tx.itens[0].item.nome + (tx.itens.length > 1 ? '...' : '') : 'Serviço'),
+            value: `${isSaida ? '- ' : ''}R$ ${Number(tx.valorTotal).toFixed(2).replace('.', ',')}`,
+            professional: tx.profissional?.nome || '-',
+            time: new Date(tx.data).toLocaleTimeString('pt-BR', { day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+          };
+        });
 
         setRecentTransactions(ultimas);
 
@@ -167,7 +173,7 @@ const Dashboard: React.FC = () => {
                     </span>
                   </td>
                   <td className="py-4 px-6 text-[var(--color-text)]/60 text-sm">{tx.time}</td>
-                  <td className="py-4 px-6 text-[var(--color-primary)] font-bold text-right">{tx.value}</td>
+                  <td className={`py-4 px-6 font-bold text-right ${tx.isSaida ? 'text-red-500' : 'text-[var(--color-primary)]'}`}>{tx.value}</td>
                 </tr>
               ))}
             </tbody>

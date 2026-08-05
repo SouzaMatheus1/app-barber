@@ -80,7 +80,7 @@ describe('PortalAuth API', () => {
         .send({ telefone: '123456789' });
 
       expect(res.status).toBe(404);
-      expect(res.body.error).toBe('Barbearia não encontrada.');
+      expect(res.body.error).toBe('Empresa não encontrada.');
     });
 
     it('deve retornar NOT_FOUND se cliente nao existir', async () => {

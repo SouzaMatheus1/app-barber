@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit2, Loader2, Scissors } from 'lucide-react';
+import { Plus, Trash2, Edit2, Loader2 } from 'lucide-react';
 import { itemCatalogoService } from '../../services/ItemCatalogoService';
+import { useAuth } from '../../contexts/AuthContext';
+import { getIconePorSegmento } from '../../utils/labelsPorSegmento';
 
 export function Catalogo() {
+  const { user } = useAuth();
+  const IconeCatalogo = getIconePorSegmento(user?.tipoEmpresa);
   const [itens, setItens] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingAction, setLoadingAction] = useState(false);
@@ -127,7 +131,7 @@ export function Catalogo() {
       {isEditing && (
         <form onSubmit={handleCreateOrUpdate} className="bg-[var(--color-surface)] rounded-xl p-6 border border-[var(--color-primary)]/30 shadow-lg space-y-6">
           <h2 className="text-xl font-bold text-[var(--color-text)] flex items-center gap-2">
-            <Scissors className="text-[var(--color-primary)]" size={20} />
+            <IconeCatalogo className="text-[var(--color-primary)]" size={20} />
             {editingId ? 'Editar Item do Catálogo' : 'Novo Item do Catálogo'}
           </h2>
           

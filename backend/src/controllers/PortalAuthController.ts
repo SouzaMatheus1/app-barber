@@ -19,7 +19,7 @@ export class PortalAuthController {
       });
 
       if (!empresa) {
-        return res.status(404).json({ error: 'Barbearia não encontrada.' });
+        return res.status(404).json({ error: 'Empresa não encontrada.' });
       }
 
       // Envolvemos a execução no contexto do tenant da empresa correspondente
@@ -63,7 +63,7 @@ export class PortalAuthController {
 
     try {
       const empresa = await prisma.empresa.findUnique({ where: { slug } });
-      if (!empresa) return res.status(404).json({ error: 'Barbearia não encontrada.' });
+      if (!empresa) return res.status(404).json({ error: 'Empresa não encontrada.' });
 
       return await tenantStorage.run({ empresaId: empresa.id }, async () => {
         const cliente = await prisma.cliente.findFirst({
@@ -112,7 +112,7 @@ export class PortalAuthController {
 
     try {
       const empresa = await prisma.empresa.findUnique({ where: { slug } });
-      if (!empresa) return res.status(404).json({ error: 'Barbearia não encontrada.' });
+      if (!empresa) return res.status(404).json({ error: 'Empresa não encontrada.' });
 
       const hashedSenha = await bcrypt.hash(senha, 10);
 
@@ -178,7 +178,7 @@ export class PortalAuthController {
       });
 
       if (!empresa) {
-        return res.status(404).json({ error: 'Barbearia não encontrada.' });
+        return res.status(404).json({ error: 'Empresa não encontrada.' });
       }
 
       return res.json(empresa);

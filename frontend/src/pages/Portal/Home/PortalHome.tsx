@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { usePortalAuth } from '../../../contexts/PortalAuthContext';
 import { api } from '../../../services/api';
-import { Calendar, Clock, Power, Sparkles, Scissors } from 'lucide-react';
+import { Calendar, Clock, Power, Sparkles } from 'lucide-react';
+import { getIconePorSegmento, getLabelPorSegmento } from '../../../utils/labelsPorSegmento';
 
 interface Servico {
   item: {
@@ -28,6 +29,9 @@ interface Empresa {
   id: number;
   nomeFantasia: string;
   slug: string;
+  tipo?: {
+    descricao: string;
+  };
 }
 
 interface Credito {
@@ -136,6 +140,8 @@ export default function PortalHome() {
     return servicos.reduce((acc, s) => acc + Number(s.item.preco), 0);
   };
 
+  const IconeAgendar = getIconePorSegmento(empresa?.tipo?.descricao);
+
   return (
     <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-text)] pb-24 relative overflow-x-hidden">
       {/* Background Decorativo */}
@@ -181,7 +187,7 @@ export default function PortalHome() {
                 onClick={() => navigate(`/${slug}/agendar`)}
                 className="w-full py-4 bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] text-[var(--color-background)] font-bold rounded-2xl flex items-center justify-center gap-2.5 transition-all shadow-[0_4px_20px_var(--color-primary)]/20 hover:shadow-[0_4px_25px_var(--color-primary)]/40 hover:scale-[1.01]"
               >
-                <Scissors size={20} /> Agendar Agora
+                <IconeAgendar size={20} /> Agendar Agora
               </button>
             </div>
 
@@ -287,7 +293,7 @@ export default function PortalHome() {
 
                     <div className="border-t border-[var(--color-primary)]/5 pt-3 space-y-2">
                       <p className="text-xs text-[var(--color-text)]/50">
-                        Profissional: <strong className="text-[var(--color-text)]/80">{ag.profissional.nome}</strong>
+                        {getLabelPorSegmento(empresa?.tipo?.descricao, 'barbeiro')}: <strong className="text-[var(--color-text)]/80">{ag.profissional.nome}</strong>
                       </p>
                       <div className="flex flex-wrap gap-1.5 pt-1">
                         {ag.servicos.map((s, idx) => (
@@ -340,7 +346,7 @@ export default function PortalHome() {
                           {ag.servicos.map(s => s.item.nome).join(', ') || 'Atendimento'}
                         </h4>
                         <p className="text-[10px] text-[var(--color-text)]/40 mt-0.5 truncate max-w-[200px]">
-                          Profissional: {ag.profissional.nome}
+                          {getLabelPorSegmento(empresa?.tipo?.descricao, 'barbeiro')}: {ag.profissional.nome}
                         </p>
                       </div>
 

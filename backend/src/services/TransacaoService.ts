@@ -11,6 +11,7 @@ export class TransacaoService {
                 metodoPagamento: true,
                 profissional: { select: { id: true, nome: true } },
                 cliente: { select: { id: true, nome: true } },
+                categoriaCusto: { select: { id: true, descricao: true } },
                 itens: {
                     include: { // para fazer o join
                         item: { select: { id: true, nome: true, tipo: true } }
@@ -95,6 +96,17 @@ export class TransacaoService {
         // Validação: profissional é obrigatório para ENTRADAS (atendimento)
         if (tipoTransacaoId === 1 && !profissionalId) {
             throw new AppError("O profissional é obrigatório para registros de atendimento.", 400);
+        }
+
+        // Validação de titularidade do profissional (a extensão de tenant já filtra por empresaId;
+        // se o id pertencer a outro tenant, a busca simplesmente não encontra nada)
+        if (profissionalId) {
+            const profissional = await prisma.profissional.findFirst({
+                where: { id: profissionalId }
+            });
+            if (!profissional) {
+                throw new AppError("O profissional informado não pertence a esta empresa.", 400);
+            }
         }
 
         // Validação de titularidade do ativo
@@ -253,6 +265,15 @@ export class TransacaoService {
         if(!transacao)
             throw new AppError('Registro não encontrado', 404);
 
+        if (dataParams.profissionalId) {
+            const profissional = await prisma.profissional.findFirst({
+                where: { id: dataParams.profissionalId }
+            });
+            if (!profissional) {
+                throw new AppError("O profissional informado não pertence a esta empresa.", 400);
+            }
+        }
+
         const result = await prisma.$transaction(async (tx) => {
             const updated = await tx.transacao.update({
                 where: { id },
@@ -276,9 +297,9 @@ export class TransacaoService {
             });
 
             await this.syncFechamentoCaixa(tx, updated.data);
-            
-            // Se a data mudou, também precisamos sincronizar a data antiga
-            if (dataParams.data && new Date(dataParams.data).getDate() !== transacao.data.getDate()) {
+
+            // Se a data mudou de dia (ano/mês/dia), também precisamos sincronizar a data antiga
+            if (dataParams.data) {
                 await this.syncFechamentoCaixa(tx, transacao.data);
             }
 

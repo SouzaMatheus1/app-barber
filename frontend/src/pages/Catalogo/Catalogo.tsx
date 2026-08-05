@@ -140,7 +140,7 @@ export function Catalogo() {
                 value={nome}
                 onChange={e => setNome(e.target.value)}
                 className="w-full px-4 py-3 bg-[var(--color-background)] text-[var(--color-text)] rounded-lg border border-[var(--color-primary)]/20 focus:outline-none focus:border-[var(--color-primary)] transition-colors"
-                placeholder="Ex: Corte Degrade ou Pomada"
+                placeholder="Ex: Nome do serviço ou produto"
               />
             </div>
             

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Scissors, PawPrint, Car } from 'lucide-react';
+import { Scissors, PawPrint, Car, UserCog } from 'lucide-react';
 
 export function getIconePorSegmento(tipoEmpresa: string | undefined): React.ComponentType<any> {
   const tipo = tipoEmpresa?.toLowerCase() || '';
@@ -9,7 +9,10 @@ export function getIconePorSegmento(tipoEmpresa: string | undefined): React.Comp
   if (tipo.includes('lava') || tipo.includes('car')) {
     return Car;
   }
-  return Scissors;
+  if (tipo.includes('barb')) {
+    return Scissors;
+  }
+  return UserCog;
 }
 
 export function getLabelPorSegmento(
@@ -82,29 +85,56 @@ export function getLabelPorSegmento(
     }
   }
 
-  // Padrão: Barbearia
+  if (tipo.includes('barb')) {
+    switch (context) {
+      case 'selecione_barbeiro':
+        return 'Selecione o barbeiro';
+      case 'selecione_um_barbeiro':
+        return 'Selecione um barbeiro';
+      case 'barbeiro':
+        return 'Barbeiro';
+      case 'barbeiros':
+        return 'Barbeiros';
+      case 'gerencie_barbeiros':
+        return 'Gerencie a equipe de barbeiros e administradores.';
+      case 'escolha_barbeiro':
+        return 'Escolha o Barbeiro';
+      case 'carregando_barbeiros':
+        return 'Carregando barbeiros...';
+      case 'agenda_barbeiro':
+        return 'Verificando agenda do barbeiro...';
+      case 'sem_horarios_barbeiro':
+        return 'Infelizmente não há horários livres para este barbeiro na data selecionada. Tente outro dia ou profissional.';
+      case 'todos_profissionais':
+        return 'Todos os Barbeiros';
+      default:
+        return 'Barbeiro';
+    }
+  }
+
+  // Padrão (segmentos não mapeados explicitamente, ex.: Alongamento de Unhas, ou tipoEmpresa vazio)
   switch (context) {
     case 'selecione_barbeiro':
-      return 'Selecione o barbeiro';
+      return 'Selecione o profissional';
     case 'selecione_um_barbeiro':
-      return 'Selecione um barbeiro';
+      return 'Selecione um profissional';
     case 'barbeiro':
-      return 'Barbeiro';
+      return 'Profissional';
     case 'barbeiros':
-      return 'Barbeiros';
+      return 'Profissionais';
     case 'gerencie_barbeiros':
-      return 'Gerencie a equipe de barbeiros e administradores.';
+      return 'Gerencie a equipe de profissionais e administradores.';
     case 'escolha_barbeiro':
-      return 'Escolha o Barbeiro';
+      return 'Escolha o Profissional';
     case 'carregando_barbeiros':
-      return 'Carregando barbeiros...';
+      return 'Carregando profissionais...';
     case 'agenda_barbeiro':
-      return 'Verificando agenda do barbeiro...';
+      return 'Verificando agenda do profissional...';
     case 'sem_horarios_barbeiro':
-      return 'Infelizmente não há horários livres para este barbeiro na data selecionada. Tente outro dia ou profissional.';
+      return 'Infelizmente não há horários livres para este profissional na data selecionada. Tente outro dia ou profissional.';
     case 'todos_profissionais':
-      return 'Todos os Barbeiros';
+      return 'Todos os Profissionais';
     default:
-      return 'Barbeiro';
+      return 'Profissional';
   }
 }

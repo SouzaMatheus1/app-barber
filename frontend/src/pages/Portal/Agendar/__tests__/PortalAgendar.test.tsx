@@ -87,7 +87,7 @@ describe('PortalAgendar Page', () => {
 
     fireEvent.click(screen.getByText('João Barbeiro'));
 
-    const btnNext2 = await screen.findByRole('button', { name: /Barbeiro: João Barbeiro/i });
+    const btnNext2 = await screen.findByRole('button', { name: /Profissional: João Barbeiro/i });
     fireEvent.click(btnNext2);
 
     await waitFor(() => {

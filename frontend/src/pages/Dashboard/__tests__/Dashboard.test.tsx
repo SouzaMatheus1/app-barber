@@ -72,6 +72,43 @@ describe('Página Dashboard', () => {
     });
   });
 
+  it('não deve exibir uma saída de caixa (despesa) como se fosse uma venda de cliente', async () => {
+    (dashboardService.getResumoDiario as any).mockResolvedValueOnce({
+      movimentoDia: { faturamentoTotal: 0 },
+      quantidadeTransacoes: 0,
+    });
+
+    (dashboardService.getTransacoes as any).mockResolvedValueOnce([
+      {
+        id: 2,
+        tipoTransacaoId: 2, // SAÍDA
+        descricao: 'Compra Vonixx lava autos',
+        categoriaCusto: { descricao: 'Produtos' },
+        cliente: null,
+        itens: [],
+        valorTotal: '12.00',
+        profissional: null,
+        data: new Date().toISOString()
+      }
+    ]);
+
+    (dashboardService.getClientes as any).mockResolvedValueOnce([]);
+
+    render(
+      <MemoryRouter>
+        <Dashboard />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Compra Vonixx lava autos')).toBeInTheDocument();
+      expect(screen.getByText('Saída de Caixa')).toBeInTheDocument();
+      expect(screen.getByText(/- R\$ 12,00/)).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText('Cliente Avulso')).not.toBeInTheDocument();
+  });
+
   it('deve lidar com falhas nos serviços amigavelmente (exibindo vazio ou console erro)', async () => {
     // Se der erro, ele faz console.error() e exibe metricas como zeros.
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });

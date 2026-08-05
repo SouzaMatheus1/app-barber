@@ -26,6 +26,9 @@ jest.mock('../database/prisma', () => ({
     ativo: {
       findFirst: jest.fn(),
     },
+    profissional: {
+      findFirst: jest.fn(),
+    },
     assinatura: {
       findFirst: jest.fn(),
       update: jest.fn(),
@@ -68,6 +71,8 @@ describe('Transação API', () => {
     (prisma.transacao.delete as jest.Mock).mockReset();
     (prisma.creditoAssinatura.updateMany as jest.Mock).mockReset();
     (prisma.ativo.findFirst as jest.Mock).mockReset();
+    (prisma.profissional.findFirst as jest.Mock).mockReset();
+    (prisma.profissional.findFirst as jest.Mock).mockResolvedValue({ id: 1, nome: 'Profissional' });
   });
 
   describe('GET /transacoes', () => {

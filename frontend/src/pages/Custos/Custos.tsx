@@ -249,11 +249,10 @@ const Custos: React.FC = () => {
                         onChange={(e) => setFormaPagamentoId(e.target.value)}
                         className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 px-4 text-white focus:outline-none focus:ring-2 focus:ring-red-500/50 transition-all"
                       >
-                        <option value="1">Dinheiro</option>
+                        <option value="1">PIX</option>
                         <option value="2">Cartão de Crédito</option>
                         <option value="3">Cartão de Débito</option>
-                        <option value="4">PIX</option>
-                        <option value="5">Transferência</option>
+                        <option value="4">Dinheiro</option>
                       </select>
                     </div>
                   </div>

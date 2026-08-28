@@ -80,18 +80,27 @@ export class TransacaoService {
     async create(dataParams: {
         descricao?: string,
         tipoTransacaoId: number,
-        profissionalId: number,
+        profissionalId?: number,
         formaPagamentoId?: number,
         data?: Date,
         clienteId?: number,
         categoriaCustoId?: number,
         valorTotal?: number, // Para despesas diretas
         ativoId?: number,
+        valorExtra?: number,
+        descricaoExtra?: string,
+        desconto?: number,
+        tipoDesconto?: 'PERCENTUAL' | 'FIXO',
+        descricaoDesconto?: string,
         itens?: { itemId: number, quantidade: number, usouCreditoAssinatura?: boolean } []
     }){
-        const { descricao, tipoTransacaoId, profissionalId, clienteId, itens, formaPagamentoId, categoriaCustoId, valorTotal, ativoId } = dataParams;
+        const { descricao, tipoTransacaoId, profissionalId, clienteId, itens, formaPagamentoId, categoriaCustoId, valorTotal, ativoId, valorExtra, descricaoExtra, desconto, tipoDesconto, descricaoDesconto } = dataParams;
         const store = tenantStorage.getStore();
         const empresaIdAtual = store?.empresaId ?? 1;
+
+        if (desconto && !tipoDesconto) {
+            throw new AppError("Informe o tipo do desconto (percentual ou fixo).", 400);
+        }
 
         // Validação: profissional é obrigatório para ENTRADAS (atendimento)
         if (tipoTransacaoId === 1 && !profissionalId) {
@@ -205,6 +214,13 @@ export class TransacaoService {
                 }
             });
 
+            totalVenda += valorExtra || 0;
+
+            if (desconto) {
+                const valorDesconto = tipoDesconto === 'PERCENTUAL' ? (totalVenda * desconto) / 100 : desconto;
+                totalVenda = Math.max(0, totalVenda - valorDesconto);
+            }
+
             const trx = await tx.transacao.create({
                 data: {
                     empresaId: empresaIdAtual,
@@ -217,6 +233,11 @@ export class TransacaoService {
                     formaPagamentoId: formaPagamentoId || null,
                     categoriaCustoId: categoriaCustoId || null,
                     ativoId: ativoId || null,
+                    valorExtra: valorExtra || null,
+                    descricaoExtra: descricaoExtra || null,
+                    desconto: desconto || null,
+                    tipoDesconto: desconto ? tipoDesconto : null,
+                    descricaoDesconto: desconto ? (descricaoDesconto || null) : null,
                     itens: {
                         create: itensSelecionados
                     }
@@ -256,8 +277,16 @@ export class TransacaoService {
         profissionalId?: number,
         formaPagamentoId?: number,
         clienteId?: number,
-        data?: Date
+        data?: Date,
+        valorExtra?: number,
+        descricaoExtra?: string,
+        desconto?: number,
+        tipoDesconto?: 'PERCENTUAL' | 'FIXO',
+        descricaoDesconto?: string
     }){
+        if (dataParams.desconto && !dataParams.tipoDesconto) {
+            throw new AppError("Informe o tipo do desconto (percentual ou fixo).", 400);
+        }
         const transacao = await prisma.transacao.findUnique({
             where: { id }
         });
@@ -284,7 +313,14 @@ export class TransacaoService {
                     ...(dataParams.profissionalId && { profissionalId: dataParams.profissionalId }),
                     ...(dataParams.clienteId && { clienteId: dataParams.clienteId }),
                     ...(dataParams.formaPagamentoId && { formaPagamentoId: dataParams.formaPagamentoId }),
-                    ...(dataParams.data && { data: new Date(dataParams.data) })
+                    ...(dataParams.data && { data: new Date(dataParams.data) }),
+                    ...(dataParams.valorExtra !== undefined && { valorExtra: dataParams.valorExtra || null }),
+                    ...(dataParams.descricaoExtra !== undefined && { descricaoExtra: dataParams.descricaoExtra || null }),
+                    ...(dataParams.desconto !== undefined && {
+                        desconto: dataParams.desconto || null,
+                        tipoDesconto: dataParams.desconto ? dataParams.tipoDesconto : null,
+                        descricaoDesconto: dataParams.desconto ? (dataParams.descricaoDesconto || null) : null
+                    })
                 },
                 select: {
                     descricao: true,

@@ -4,6 +4,7 @@ export class ItemCatalogoService {
     async listAll() {
         const itens = await prisma.itemCatalogo.findMany({
             where: { ativo: true },
+            orderBy: { nome: 'asc' },
             select: {
                 id: true,
                 nome: true,

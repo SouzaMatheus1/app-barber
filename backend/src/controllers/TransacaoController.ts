@@ -14,7 +14,7 @@ export class TransacaoController {
     }
 
     criar = async (req: Request, res: Response) => {
-        const { tipoTransacaoId, descricao, profissionalId, clienteId, itens, formaPagamentoId, data, valorTotal, categoriaCustoId, ativoId } = req.body;
+        const { tipoTransacaoId, descricao, profissionalId, clienteId, itens, formaPagamentoId, data, valorTotal, categoriaCustoId, ativoId, valorExtra, descricaoExtra, desconto, tipoDesconto, descricaoDesconto } = req.body;
 
         try {
             const result = await this.transacaoService.create({
@@ -27,7 +27,12 @@ export class TransacaoController {
                 itens,
                 valorTotal,
                 categoriaCustoId,
-                ativoId: ativoId ? Number(ativoId) : undefined
+                ativoId: ativoId ? Number(ativoId) : undefined,
+                valorExtra: valorExtra !== undefined ? Number(valorExtra) : undefined,
+                descricaoExtra,
+                desconto: desconto !== undefined ? Number(desconto) : undefined,
+                tipoDesconto,
+                descricaoDesconto
             });
 
             return res.status(201).json(result);
@@ -38,14 +43,19 @@ export class TransacaoController {
 
     editar = async (req: Request, res: Response) => {
         const id = Number(req.params.id);
-        const { descricao, valorTotal, formaPagamentoId, data } = req.body;
+        const { descricao, valorTotal, formaPagamentoId, data, valorExtra, descricaoExtra, desconto, tipoDesconto, descricaoDesconto } = req.body;
 
         try {
             const result = await this.transacaoService.edit(id, {
                 descricao,
                 valorTotal,
                 formaPagamentoId,
-                data
+                data,
+                valorExtra: valorExtra !== undefined ? Number(valorExtra) : undefined,
+                descricaoExtra,
+                desconto: desconto !== undefined ? Number(desconto) : undefined,
+                tipoDesconto,
+                descricaoDesconto
             });
             return res.status(200).json(result);
         } catch (error: any) {

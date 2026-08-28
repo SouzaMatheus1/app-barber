@@ -76,6 +76,12 @@ const Transacoes: React.FC = () => {
     { uuid: crypto.randomUUID(), itemId: undefined, name: '', quantity: 1, originalPrice: 0, usouCredito: false }
   ]);
 
+  const [valorExtra, setValorExtra] = useState<number | ''>('');
+  const [descricaoExtra, setDescricaoExtra] = useState('');
+  const [desconto, setDesconto] = useState<number | ''>('');
+  const [tipoDesconto, setTipoDesconto] = useState<'PERCENTUAL' | 'FIXO'>('FIXO');
+  const [descricaoDesconto, setDescricaoDesconto] = useState('');
+
   useEffect(() => {
     if (!descricaoDirty) {
       const itensNomes = cartItems
@@ -274,10 +280,16 @@ const Transacoes: React.FC = () => {
     return assinaturaAtiva?.valorProporcional ?? 0;
   }, [assinaturaAtiva]);
 
-  const totalAPagar = cartItems.reduce((acc, item) => {
+  const subtotalItens = cartItems.reduce((acc, item) => {
     if (item.usouCredito) return acc;
     return acc + item.originalPrice * item.quantity;
   }, 0);
+
+  const subtotalComExtra = subtotalItens + Number(valorExtra || 0);
+  const valorDescontoCalculado = desconto
+    ? (tipoDesconto === 'PERCENTUAL' ? (subtotalComExtra * Number(desconto)) / 100 : Number(desconto))
+    : 0;
+  const totalAPagar = Math.max(0, subtotalComExtra - valorDescontoCalculado);
 
   const isCreditToggleEnabled = (item: CartItem): boolean => {
     if (!assinaturaAtiva || !item.itemId || assinaturaAtiva.status !== 'ATIVA') return false;
@@ -299,8 +311,8 @@ const Transacoes: React.FC = () => {
 
     try {
       const itensValidos = cartItems.filter(i => i.itemId !== undefined);
-      if (itensValidos.length === 0) {
-        alert('Selecione ao menos um item válido do catálogo.');
+      if (itensValidos.length === 0 && !valorExtra) {
+        alert('Selecione ao menos um item válido do catálogo ou informe um valor extra.');
         return;
       }
 
@@ -316,6 +328,11 @@ const Transacoes: React.FC = () => {
           quantidade: i.quantity,
           usouCreditoAssinatura: i.usouCredito,
         })),
+        valorExtra: valorExtra ? Number(valorExtra) : undefined,
+        descricaoExtra: descricaoExtra.trim() || undefined,
+        desconto: desconto ? Number(desconto) : undefined,
+        tipoDesconto: desconto ? tipoDesconto : undefined,
+        descricaoDesconto: desconto ? (descricaoDesconto.trim() || undefined) : undefined,
       });
 
       setSuccess(true);
@@ -330,6 +347,11 @@ const Transacoes: React.FC = () => {
         setDescricaoDirty(false);
         setDescricao('Atendimento: Avulso');
         setCartItems([{ uuid: crypto.randomUUID(), itemId: undefined, name: '', quantity: 1, originalPrice: 0, usouCredito: false }]);
+        setValorExtra('');
+        setDescricaoExtra('');
+        setDesconto('');
+        setTipoDesconto('FIXO');
+        setDescricaoDesconto('');
       }, 2500);
     } catch (error) {
       console.error('Erro ao registrar transação', error);
@@ -345,7 +367,12 @@ const Transacoes: React.FC = () => {
       descricao: t.descricao || '',
       valorTotal: t.valorTotal,
       formaPagamentoId: t.formaPagamentoId || 1,
-      data: new Date(new Date(t.data).getTime() - new Date(t.data).getTimezoneOffset() * 60000).toISOString().slice(0, 16) // datetime-local format
+      data: new Date(new Date(t.data).getTime() - new Date(t.data).getTimezoneOffset() * 60000).toISOString().slice(0, 16), // datetime-local format
+      valorExtra: t.valorExtra ?? '',
+      descricaoExtra: t.descricaoExtra || '',
+      desconto: t.desconto ?? '',
+      tipoDesconto: t.tipoDesconto || 'FIXO',
+      descricaoDesconto: t.descricaoDesconto || ''
     });
     setEditModalOpen(true);
   };
@@ -358,7 +385,12 @@ const Transacoes: React.FC = () => {
         descricao: editData.descricao,
         valorTotal: Number(editData.valorTotal),
         formaPagamentoId: Number(editData.formaPagamentoId),
-        data: new Date(editData.data).toISOString()
+        data: new Date(editData.data).toISOString(),
+        valorExtra: editData.valorExtra !== '' ? Number(editData.valorExtra) : undefined,
+        descricaoExtra: editData.descricaoExtra?.trim() || undefined,
+        desconto: editData.desconto !== '' ? Number(editData.desconto) : undefined,
+        tipoDesconto: editData.desconto !== '' ? editData.tipoDesconto : undefined,
+        descricaoDesconto: editData.desconto !== '' ? (editData.descricaoDesconto?.trim() || undefined) : undefined
       });
       setEditModalOpen(false);
       loadHistory();
@@ -583,7 +615,6 @@ const Transacoes: React.FC = () => {
                         value={item.name}
                         onChange={e => handleItemSelect(item.uuid, e.target.value)}
                         className="w-full bg-transparent appearance-none text-[var(--color-text)] border-b border-[var(--color-primary)]/30 focus:outline-none focus:border-[var(--color-primary)] px-2 py-1"
-                        required
                       >
                         <option value="" disabled className="bg-[var(--color-surface)]">Selecione...</option>
                         {catalog.map(c => <option key={c.id} value={c.name} className="bg-[var(--color-surface)]">{c.name}</option>)}
@@ -627,8 +658,76 @@ const Transacoes: React.FC = () => {
             </div>
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-[var(--color-primary)]/20 pt-6">
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase tracking-wider">
+                Valor Extra (R$) <span className="text-[var(--color-text)]/40 text-[10px] ml-1">(Opcional, sem precisar de item do catálogo)</span>
+              </label>
+              <input
+                type="number" step="0.01" min="0"
+                value={valorExtra}
+                onChange={e => setValorExtra(e.target.value === '' ? '' : Number(e.target.value))}
+                className="w-full px-4 py-3 bg-[var(--color-background)] text-[var(--color-text)] rounded-lg border border-[var(--color-primary)]/20 focus:border-[var(--color-primary)] outline-none"
+                placeholder="0.00"
+              />
+              {Number(valorExtra) > 0 && (
+                <input
+                  type="text"
+                  value={descricaoExtra}
+                  onChange={e => setDescricaoExtra(e.target.value)}
+                  className="w-full px-4 py-2 bg-[var(--color-background)] text-[var(--color-text)] rounded-lg border border-[var(--color-primary)]/20 focus:border-[var(--color-primary)] outline-none text-sm"
+                  placeholder="Descrição do valor extra (ex: taxa, gorjeta)"
+                />
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase tracking-wider">
+                Desconto <span className="text-[var(--color-text)]/40 text-[10px] ml-1">(Opcional)</span>
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="number" step="0.01" min="0"
+                  value={desconto}
+                  onChange={e => setDesconto(e.target.value === '' ? '' : Number(e.target.value))}
+                  className="flex-1 px-4 py-3 bg-[var(--color-background)] text-[var(--color-text)] rounded-lg border border-[var(--color-primary)]/20 focus:border-[var(--color-primary)] outline-none"
+                  placeholder="0.00"
+                />
+                <select
+                  value={tipoDesconto}
+                  onChange={e => setTipoDesconto(e.target.value as 'PERCENTUAL' | 'FIXO')}
+                  className="px-3 py-3 bg-[var(--color-background)] text-[var(--color-text)] rounded-lg border border-[var(--color-primary)]/20 focus:border-[var(--color-primary)] outline-none"
+                >
+                  <option value="FIXO">R$</option>
+                  <option value="PERCENTUAL">%</option>
+                </select>
+              </div>
+              {Number(desconto) > 0 && (
+                <input
+                  type="text"
+                  value={descricaoDesconto}
+                  onChange={e => setDescricaoDesconto(e.target.value)}
+                  className="w-full px-4 py-2 bg-[var(--color-background)] text-[var(--color-text)] rounded-lg border border-[var(--color-primary)]/20 focus:border-[var(--color-primary)] outline-none text-sm"
+                  placeholder="Motivo do desconto (ex: cliente fidelidade, promoção)"
+                />
+              )}
+            </div>
+          </div>
+
           <div className="border-t border-[var(--color-primary)]/20 pt-6 flex flex-col justify-end items-end gap-6">
-            <div className="bg-[var(--color-background)] border border-[var(--color-primary)]/20 rounded-xl p-6 w-full md:w-80">
+            <div className="bg-[var(--color-background)] border border-[var(--color-primary)]/20 rounded-xl p-6 w-full md:w-80 space-y-1">
+              {(Number(valorExtra) > 0 || Number(desconto) > 0) && (
+                <div className="flex items-center justify-between text-[var(--color-text)]/60 text-xs uppercase tracking-wider">
+                  <span>Subtotal</span>
+                  <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(subtotalComExtra)}</span>
+                </div>
+              )}
+              {Number(desconto) > 0 && (
+                <div className="flex items-center justify-between text-red-400/80 text-xs uppercase tracking-wider">
+                  <span>Desconto</span>
+                  <span>- {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorDescontoCalculado)}</span>
+                </div>
+              )}
               <div className="flex items-center justify-between text-[var(--color-primary)]">
                 <span className="font-bold uppercase tracking-wider text-sm">Total a Pagar</span>
                 <span className="text-3xl font-black">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalAPagar)}</span>
@@ -746,6 +845,23 @@ const Transacoes: React.FC = () => {
               <div>
                 <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase">Descrição</label>
                 <input type="text" value={editData.descricao} onChange={e => setEditData({...editData, descricao: e.target.value})} className="w-full mt-1 p-3 bg-[var(--color-background)] text-white rounded border border-[var(--color-primary)]/20" />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase">Valor Extra (R$)</label>
+                <input type="number" step="0.01" min="0" value={editData.valorExtra} onChange={e => setEditData({...editData, valorExtra: e.target.value})} className="w-full mt-1 p-3 bg-[var(--color-background)] text-white rounded border border-[var(--color-primary)]/20" placeholder="0.00" />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-[var(--color-text)]/80 uppercase">Desconto</label>
+                <div className="flex gap-2 mt-1">
+                  <input type="number" step="0.01" min="0" value={editData.desconto} onChange={e => setEditData({...editData, desconto: e.target.value})} className="flex-1 p-3 bg-[var(--color-background)] text-white rounded border border-[var(--color-primary)]/20" placeholder="0.00" />
+                  <select value={editData.tipoDesconto} onChange={e => setEditData({...editData, tipoDesconto: e.target.value})} className="p-3 bg-[var(--color-background)] text-white rounded border border-[var(--color-primary)]/20">
+                    <option value="FIXO">R$</option>
+                    <option value="PERCENTUAL">%</option>
+                  </select>
+                </div>
+                <input type="text" value={editData.descricaoDesconto} onChange={e => setEditData({...editData, descricaoDesconto: e.target.value})} className="w-full mt-2 p-3 bg-[var(--color-background)] text-white rounded border border-[var(--color-primary)]/20 text-sm" placeholder="Motivo do desconto (ex: cliente fidelidade, promoção)" />
               </div>
             </div>
 

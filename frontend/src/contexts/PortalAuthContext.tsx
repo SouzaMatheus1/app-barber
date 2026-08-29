@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
+import { readPersistedJSON } from '../utils/storage';
 
 interface Cliente {
   id: number
@@ -22,10 +23,10 @@ export function PortalAuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const savedToken = localStorage.getItem('portal_token')
-    const savedCliente = localStorage.getItem('portal_cliente')
+    const savedCliente = readPersistedJSON<Cliente | null>('portal_cliente', null)
     if (savedToken && savedCliente) {
       setToken(savedToken)
-      setCliente(JSON.parse(savedCliente))
+      setCliente(savedCliente)
     }
   }, [])
 

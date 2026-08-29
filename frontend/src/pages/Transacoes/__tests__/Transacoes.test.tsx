@@ -99,9 +99,9 @@ describe('Página de Transações', () => {
     const btnAdd = screen.getByRole('button', { name: /Adicionar Item/i });
     await user.click(btnAdd);
 
-    // Agora devem haver 4 selects (Profissional, Pgto, Item 1, Item 2)
+    // Agora devem haver 5 selects (Profissional, Pgto, Item 1, Item 2, Tipo de Desconto)
     const newSelects = screen.getAllByRole('combobox');
-    expect(newSelects.length).toBe(4);
+    expect(newSelects.length).toBe(5);
     
     const selectSegundoItem = newSelects[3];
 

@@ -28,7 +28,8 @@ const TENANT_MODELS = [
   'CreditoAssinatura',
   'Agendamento',
   'Ativo',
-  'TemaEmpresa'
+  'TemaEmpresa',
+  'CustoRecorrente'
 ];
 
 export async function tenantQueryExtension({ args, query, model, operation }: any) {

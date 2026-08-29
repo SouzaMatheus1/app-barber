@@ -57,9 +57,10 @@ api.interceptors.response.use(
         }
         
         window.location.href = isPortalSubdomain ? `/${slug}/login` : `/portal/${slug}/login`;
-      } else {
+      } else if (window.location.pathname !== '/login') {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        alert('Sua sessão expirou. Faça login novamente.');
         window.location.href = '/login';
       }
     }

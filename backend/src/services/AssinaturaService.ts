@@ -1,8 +1,10 @@
 import { prisma } from '../database/prisma';
 import { statusAssinatura } from '@prisma/client';
 import { tenantStorage } from '../database/tenantContext';
+import { TransacaoService } from './TransacaoService';
 
 export class AssinaturaService {
+    private transacaoService = new TransacaoService();
     // Planos
     async createPlano(data: { nome: string, valorMensal: number, frequencia?: 'SEMANAL' | 'QUINZENAL' | 'MENSAL', itens: { itemId: number, quantidade: number }[] }) {
         return prisma.plano.create({
@@ -109,20 +111,15 @@ export class AssinaturaService {
             include: { creditos: true }
         });
 
-        // Registra o pagamento no caixa (best-effort: não reverte a assinatura se falhar)
-        try {
-            await prisma.transacao.create({
-                data: {
-                    valorTotal: plano.valorMensal,
-                    descricao: `Pagamento/Adesão Plano: ${plano.nome}`,
-                    clienteId,
-                    profissionalId: profissionalIdParaTransacao,
-                    tipoTransacaoId: 1 // 1 equivale a ENTRADA
-                }
-            });
-        } catch (err) {
-            console.warn('Aviso: Assinatura criada mas falhou ao registrar no caixa:', err);
-        }
+        // Registra o pagamento no caixa reaproveitando TransacaoService.create,
+        // que também sincroniza o FechamentoCaixa (usado pelo dashboard financeiro).
+        await this.transacaoService.create({
+            tipoTransacaoId: 1, // ENTRADA
+            descricao: `Pagamento/Adesão Plano: ${plano.nome}`,
+            clienteId,
+            profissionalId: profissionalIdParaTransacao,
+            valorTotal: Number(plano.valorMensal)
+        });
 
         return novaAssinatura;
     }
@@ -164,20 +161,15 @@ export class AssinaturaService {
             include: { creditos: true }
         });
 
-        // Registra o pagamento da renovação
-        try {
-            await prisma.transacao.create({
-                data: {
-                    valorTotal: assinatura.plano.valorMensal,
-                    descricao: `Renovação de Assinatura: ${assinatura.plano.nome}`,
-                    clienteId: assinatura.clienteId,
-                    profissionalId: profissionalIdParaTransacao,
-                    tipoTransacaoId: 1 // ENTRADA
-                }
-            });
-        } catch (err) {
-            console.warn('Aviso: Assinatura renovada mas falhou ao registrar no caixa:', err);
-        }
+        // Registra o pagamento da renovação reaproveitando TransacaoService.create,
+        // que também sincroniza o FechamentoCaixa (usado pelo dashboard financeiro).
+        await this.transacaoService.create({
+            tipoTransacaoId: 1, // ENTRADA
+            descricao: `Renovação de Assinatura: ${assinatura.plano.nome}`,
+            clienteId: assinatura.clienteId,
+            profissionalId: profissionalIdParaTransacao,
+            valorTotal: Number(assinatura.plano.valorMensal)
+        });
 
         return assinaturaAtualizada;
     }

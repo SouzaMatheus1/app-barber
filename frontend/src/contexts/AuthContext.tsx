@@ -1,6 +1,7 @@
 // compartilhar dados, como estado, tema ou usuário autenticado sem usar props manualmente
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
+import { readPersistedJSON } from '../utils/storage';
 
 interface User {
   id: number
@@ -27,10 +28,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const savedToken = localStorage.getItem('token')
-    const savedUser = localStorage.getItem('user')
+    const savedUser = readPersistedJSON<User | null>('user', null)
     if (savedToken && savedUser) {
       setToken(savedToken)
-      setUser(JSON.parse(savedUser))
+      setUser(savedUser)
     }
   }, [])
 

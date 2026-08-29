@@ -23,20 +23,21 @@ model Empresa {
   tipoEmpresaId Int      @default(1)
   criadoEm      DateTime @default(now())
 
-  tipo          TipoEmpresa    @relation(fields: [tipoEmpresaId], references: [id])
-  profissionais Profissional[]
-  clientes      Cliente[]
-  itensCatalogo ItemCatalogo[]
-  transacoes    Transacao[]
-  planos          Plano[]
-  assinaturas     Assinatura[]
-  categoriasCusto CategoriaCusto[]
-  fechamentosCaixa FechamentoCaixa[]
-  itensTransacao ItemTransacao[]
+  tipo               TipoEmpresa         @relation(fields: [tipoEmpresaId], references: [id])
+  profissionais      Profissional[]
+  clientes           Cliente[]
+  itensCatalogo      ItemCatalogo[]
+  transacoes         Transacao[]
+  planos             Plano[]
+  assinaturas        Assinatura[]
+  categoriasCusto    CategoriaCusto[]
+  custosRecorrentes  CustoRecorrente[]
+  fechamentosCaixa   FechamentoCaixa[]
+  itensTransacao     ItemTransacao[]
   creditosAssinatura CreditoAssinatura[]
-  agendamentos    Agendamento[]
-  ativos          Ativo[]
-  temaEmpresa     TemaEmpresa?
+  agendamentos       Agendamento[]
+  ativos             Ativo[]
+  temaEmpresa        TemaEmpresa?
 
   @@index([tipoEmpresaId])
   @@map("Empresa")
@@ -52,9 +53,9 @@ model Profissional {
   ativo     Boolean  @default(true)
   perfilId  Int      @default(1)
 
-  empresa    Empresa     @relation(fields: [empresaId], references: [id])
-  perfil     Perfil      @relation(fields: [perfilId], references: [id])
-  transacoes Transacao[]
+  empresa      Empresa       @relation(fields: [empresaId], references: [id])
+  perfil       Perfil        @relation(fields: [perfilId], references: [id])
+  transacoes   Transacao[]
   agendamentos Agendamento[]
 
   @@index([perfilId])
@@ -79,11 +80,11 @@ model Cliente {
   criadoEm  DateTime @default(now())
   ativo     Boolean  @default(true)
 
-  empresa     Empresa      @relation(fields: [empresaId], references: [id])
-  assinaturas Assinatura[]
-  transacoes  Transacao[]
+  empresa      Empresa       @relation(fields: [empresaId], references: [id])
+  assinaturas  Assinatura[]
+  transacoes   Transacao[]
   agendamentos Agendamento[]
-  ativos      Ativo[]
+  ativos       Ativo[]
 
   @@index([empresaId])
   @@map("Cliente")
@@ -99,8 +100,8 @@ model ItemCatalogo {
   ativo      Boolean  @default(true)
   tipoItemId Int
 
-  empresa            Empresa             @relation(fields: [empresaId], references: [id])
-  tipo               TipoItem            @relation(fields: [tipoItemId], references: [id])
+  empresa            Empresa              @relation(fields: [empresaId], references: [id])
+  tipo               TipoItem             @relation(fields: [tipoItemId], references: [id])
   creditosAssinatura CreditoAssinatura[]
   itensNoPlano       ItemPlano[]
   itensTransacao     ItemTransacao[]
@@ -128,17 +129,22 @@ model MetodoPagamento {
 }
 
 model Transacao {
-  id               Int      @id @default(autoincrement())
-  empresaId        Int      @default(1)
-  descricao        String?
-  valorTotal       Decimal  @db.Decimal(10, 2)
-  data             DateTime @default(now())
-  profissionalId   Int?
-  clienteId        Int?
-  tipoTransacaoId  Int
-  formaPagamentoId Int?
-  categoriaCustoId Int?
-  ativoId          Int?
+  id                Int           @id @default(autoincrement())
+  empresaId         Int           @default(1)
+  descricao         String?
+  valorTotal        Decimal       @db.Decimal(10, 2)
+  data              DateTime      @default(now())
+  profissionalId    Int?
+  clienteId         Int?
+  tipoTransacaoId   Int
+  formaPagamentoId  Int?
+  categoriaCustoId  Int?
+  ativoId           Int?
+  valorExtra        Decimal?      @db.Decimal(10, 2)
+  descricaoExtra    String?
+  desconto          Decimal?      @db.Decimal(10, 2)
+  tipoDesconto      DescontoTipo?
+  descricaoDesconto String?
 
   empresa         Empresa          @relation(fields: [empresaId], references: [id])
   itens           ItemTransacao[]
@@ -161,14 +167,35 @@ model Transacao {
 }
 
 model CategoriaCusto {
-  id         Int         @id @default(autoincrement())
-  empresaId  Int         @default(1)
-  descricao  String
-  transacoes Transacao[]
-  empresa    Empresa     @relation(fields: [empresaId], references: [id])
+  id                Int               @id @default(autoincrement())
+  empresaId         Int               @default(1)
+  descricao         String
+  transacoes        Transacao[]
+  custosRecorrentes CustoRecorrente[]
+  empresa           Empresa           @relation(fields: [empresaId], references: [id])
 
   @@index([empresaId])
   @@map("CategoriaCusto")
+}
+
+model CustoRecorrente {
+  id                    Int       @id @default(autoincrement())
+  empresaId             Int       @default(1)
+  descricao             String
+  valor                 Decimal   @db.Decimal(10, 2)
+  diaVencimento         Int
+  categoriaCustoId      Int?
+  ativo                 Boolean   @default(true)
+  dataUltimoPagamento   DateTime?
+  dataProximoVencimento DateTime?
+  criadoEm              DateTime  @default(now())
+
+  empresa        Empresa         @relation(fields: [empresaId], references: [id])
+  categoriaCusto CategoriaCusto? @relation(fields: [categoriaCustoId], references: [id])
+
+  @@index([empresaId])
+  @@index([categoriaCustoId])
+  @@map("CustoRecorrente")
 }
 
 model TipoTransacao {
@@ -199,11 +226,11 @@ model ItemTransacao {
 }
 
 model Plano {
-  id          Int            @id @default(autoincrement())
-  empresaId   Int            @default(1)
+  id          Int             @id @default(autoincrement())
+  empresaId   Int             @default(1)
   nome        String
-  valorMensal Decimal        @db.Decimal(10, 2)
-  ativo       Boolean        @default(true)
+  valorMensal Decimal         @db.Decimal(10, 2)
+  ativo       Boolean         @default(true)
   frequencia  FrequenciaPlano @default(MENSAL)
 
   empresa     Empresa      @relation(fields: [empresaId], references: [id])
@@ -278,16 +305,21 @@ enum FrequenciaPlano {
   MENSAL
 }
 
+enum DescontoTipo {
+  PERCENTUAL
+  FIXO
+}
+
 model FechamentoCaixa {
   id           Int      @id @default(autoincrement())
   empresaId    Int
   data         DateTime @db.Date
   saldoInicial Decimal  @db.Decimal(10, 2)
-  receitas     Decimal  @db.Decimal(10, 2) @default(0)
-  despesas     Decimal  @db.Decimal(10, 2) @default(0)
+  receitas     Decimal  @default(0) @db.Decimal(10, 2)
+  despesas     Decimal  @default(0) @db.Decimal(10, 2)
   saldoFinal   Decimal  @db.Decimal(10, 2)
 
-  empresa      Empresa  @relation(fields: [empresaId], references: [id])
+  empresa Empresa @relation(fields: [empresaId], references: [id])
 
   @@unique([empresaId, data])
   @@index([empresaId])
@@ -295,22 +327,22 @@ model FechamentoCaixa {
 }
 
 model Agendamento {
-  id              Int               @id @default(autoincrement())
-  empresaId       Int
-  dataHoraInicio  DateTime
-  dataHoraFim     DateTime
-  clienteId       Int?
-  profissionalId  Int
-  status          StatusAgendamento @default(CONFIRMADO)
-  criadoEm        DateTime          @default(now())
-  observacao      String?
-  ativoId         Int?
+  id             Int               @id @default(autoincrement())
+  empresaId      Int
+  dataHoraInicio DateTime
+  dataHoraFim    DateTime
+  clienteId      Int?
+  profissionalId Int
+  status         StatusAgendamento @default(CONFIRMADO)
+  criadoEm       DateTime          @default(now())
+  observacao     String?
+  ativoId        Int?
 
-  empresa         Empresa           @relation(fields: [empresaId], references: [id])
-  cliente         Cliente?          @relation(fields: [clienteId], references: [id])
-  profissional    Profissional      @relation(fields: [profissionalId], references: [id])
-  servicos        ServicoAgendamento[]
-  ativo           Ativo?            @relation(fields: [ativoId], references: [id])
+  empresa      Empresa              @relation(fields: [empresaId], references: [id])
+  cliente      Cliente?             @relation(fields: [clienteId], references: [id])
+  profissional Profissional         @relation(fields: [profissionalId], references: [id])
+  servicos     ServicoAgendamento[]
+  ativo        Ativo?               @relation(fields: [ativoId], references: [id])
 
   @@index([empresaId])
   @@index([clienteId])
@@ -352,21 +384,21 @@ model TipoEmpresaAtivo {
   tipoEmpresaId Int
   tipoAtivoId   Int
 
-  tipoEmpresa   TipoEmpresa @relation(fields: [tipoEmpresaId], references: [id])
-  tipoAtivo     TipoAtivo   @relation(fields: [tipoAtivoId], references: [id])
+  tipoEmpresa TipoEmpresa @relation(fields: [tipoEmpresaId], references: [id])
+  tipoAtivo   TipoAtivo   @relation(fields: [tipoAtivoId], references: [id])
 
   @@id([tipoEmpresaId, tipoAtivoId])
   @@map("TipoEmpresaAtivo")
 }
 
 model Ativo {
-  id           Int           @id @default(autoincrement())
-  empresaId    Int           @default(1)
-  clienteId    Int
-  tipoAtivoId  Int
-  nome         String
-  ativo        Boolean       @default(true)
-  criadoEm     DateTime      @default(now())
+  id          Int      @id @default(autoincrement())
+  empresaId   Int      @default(1)
+  clienteId   Int
+  tipoAtivoId Int
+  nome        String
+  ativo       Boolean  @default(true)
+  criadoEm    DateTime @default(now())
 
   empresa      Empresa       @relation(fields: [empresaId], references: [id])
   cliente      Cliente       @relation(fields: [clienteId], references: [id])
@@ -429,8 +461,8 @@ model EspecieAnimal {
 }
 
 model TemaPadrao {
-  id            Int    @id @default(autoincrement())
-  tipoEmpresaId Int    @unique
+  id            Int     @id @default(autoincrement())
+  tipoEmpresaId Int     @unique
   corPrimaria   String
   corSecundaria String
   corFundo      String
@@ -458,5 +490,3 @@ model TemaEmpresa {
 
   @@map("TemaEmpresa")
 }
-
-

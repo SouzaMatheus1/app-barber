@@ -7,6 +7,7 @@ export class ClienteService {
     async listAll() {
         const clientes = await prisma.cliente.findMany({
             where: { ativo: true },
+            orderBy: { nome: 'asc' },
             select: {
                 id: true,
                 nome: true,
@@ -41,6 +42,7 @@ export class ClienteService {
                     contains: nome
                 }
             },
+            orderBy: { nome: 'asc' },
             take: 10,
             select: {
                 id: true,

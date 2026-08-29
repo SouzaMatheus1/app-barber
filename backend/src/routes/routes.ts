@@ -10,6 +10,7 @@ import { AuthController } from '../controllers/authController';
 import { AssinaturaController } from '../controllers/AssinaturaController';
 import { TemaController } from '../controllers/TemaController';
 import { CategoriaCustoController } from '../controllers/CategoriaCustoController';
+import { CustoRecorrenteController } from '../controllers/CustoRecorrenteController';
 import { FinanceiroController } from '../controllers/FinanceiroController';
 import { RelatorioController } from '../controllers/RelatorioController';
 import { AgendamentoController } from '../controllers/AgendamentoController';
@@ -27,6 +28,7 @@ const caixaController = new CaixaController();
 const authController = new AuthController();
 const assinaturaController = new AssinaturaController();
 const categoriaCustoController = new CategoriaCustoController();
+const custoRecorrenteController = new CustoRecorrenteController();
 const financeiroController = new FinanceiroController();
 const relatorioController = new RelatorioController();
 const agendamentoController = new AgendamentoController();
@@ -72,6 +74,13 @@ routes.get('/categorias-custo', isAuth, categoriaCustoController.listar);
 routes.post('/categorias-custo', isAuth, categoriaCustoController.criar);
 routes.put('/categorias-custo/:id', isAuth, categoriaCustoController.editar);
 routes.delete('/categorias-custo/:id', isAuth, categoriaCustoController.deletar);
+
+// custos recorrentes
+routes.get('/custos-recorrentes', isAuth, custoRecorrenteController.listar);
+routes.post('/custos-recorrentes', isAuth, custoRecorrenteController.criar);
+routes.put('/custos-recorrentes/:id', isAuth, custoRecorrenteController.editar);
+routes.delete('/custos-recorrentes/:id', isAuth, custoRecorrenteController.deletar);
+routes.post('/custos-recorrentes/:id/lancar', isAuth, custoRecorrenteController.lancar);
 
 // plano & assinatura
 routes.get('/planos', isAuth, assinaturaController.listarPlanos);

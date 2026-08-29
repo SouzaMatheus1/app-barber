@@ -27,7 +27,18 @@ jest.mock('../database/prisma', () => {
       },
       transacao: {
         create: jest.fn(),
+        findMany: jest.fn(),
       },
+      profissional: {
+        findFirst: jest.fn(),
+      },
+      itemCatalogo: {
+        findMany: jest.fn(),
+      },
+      fechamentoCaixa: {
+        upsert: jest.fn(),
+      },
+      $transaction: jest.fn(),
     },
   };
 });
@@ -46,6 +57,9 @@ describe('Assinatura API', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // TransacaoService.create roda dentro de prisma.$transaction; nos testes,
+    // basta executar o callback com o próprio mock do prisma como `tx`.
+    (prisma.$transaction as jest.Mock).mockImplementation(async (cb: any) => cb(prisma));
   });
 
   describe('GET /planos', () => {
@@ -201,7 +215,12 @@ describe('Assinatura API', () => {
       (prisma.assinatura.findFirst as jest.Mock).mockResolvedValueOnce(mockAssinaturaAtiva);
       (prisma.assinatura.update as jest.Mock).mockResolvedValueOnce({ id: 10, status: 'INATIVA' });
       (prisma.assinatura.create as jest.Mock).mockResolvedValueOnce(mockNovaAssinatura);
-      (prisma.transacao.create as jest.Mock).mockResolvedValueOnce({});
+      (prisma.profissional.findFirst as jest.Mock).mockResolvedValueOnce({ id: 2, nome: 'Profissional' });
+      // Dentro de TransacaoService.create(): busca de assinatura ativa do cliente (tx.assinatura.findFirst)
+      (prisma.assinatura.findFirst as jest.Mock).mockResolvedValueOnce(null);
+      (prisma.transacao.create as jest.Mock).mockResolvedValueOnce({ id: 100, data: new Date() });
+      (prisma.transacao.findMany as jest.Mock).mockResolvedValueOnce([]);
+      (prisma.fechamentoCaixa.upsert as jest.Mock).mockResolvedValueOnce({});
 
       const res = await request(app)
         .post('/assinaturas')
@@ -253,7 +272,12 @@ describe('Assinatura API', () => {
 
       (prisma.assinatura.findUnique as jest.Mock).mockResolvedValueOnce(mockAssinatura);
       (prisma.assinatura.update as jest.Mock).mockResolvedValueOnce({ id: 1, status: 'ATIVA' });
-      (prisma.transacao.create as jest.Mock).mockResolvedValueOnce({});
+      (prisma.profissional.findFirst as jest.Mock).mockResolvedValueOnce({ id: 2, nome: 'Profissional' });
+      // Dentro de TransacaoService.create(): busca de assinatura ativa do cliente (tx.assinatura.findFirst)
+      (prisma.assinatura.findFirst as jest.Mock).mockResolvedValueOnce(null);
+      (prisma.transacao.create as jest.Mock).mockResolvedValueOnce({ id: 101, data: new Date() });
+      (prisma.transacao.findMany as jest.Mock).mockResolvedValueOnce([]);
+      (prisma.fechamentoCaixa.upsert as jest.Mock).mockResolvedValueOnce({});
 
       const res = await request(app)
         .patch('/assinaturas/1/renovar')

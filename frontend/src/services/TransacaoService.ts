@@ -23,6 +23,11 @@ export const transacaoService = {
     valorTotal?: number;
     categoriaCustoId?: number | null;
     ativoId?: number | null;
+    valorExtra?: number;
+    descricaoExtra?: string;
+    desconto?: number;
+    tipoDesconto?: 'PERCENTUAL' | 'FIXO';
+    descricaoDesconto?: string;
     itens?: { itemId: number; quantidade: number; usouCreditoAssinatura: boolean }[];
   }) => {
     const response = await api.post('/transacoes', data);

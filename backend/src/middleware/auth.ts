@@ -43,3 +43,18 @@ export function isAdmin(req: Request, res: Response, next: NextFunction) {
 
     return next();
 }
+
+// Distingue o admin da plataforma (você, dono do SaaS) do admin de um tenant (dono da barbearia X).
+// `isAdmin` só identifica o segundo. Aqui comparamos o empresaId do token com o tenant da própria
+// plataforma (PLATFORM_EMPRESA_ID), já que hoje não existe um papel de plataforma no modelo de dados.
+// TODO: substituir por um mecanismo de papel de plataforma real caso surjam múltiplos operadores.
+export function isPlatformAdmin(req: Request, res: Response, next: NextFunction) {
+    const user = res.locals.user as Payload;
+    const platformEmpresaId = Number(process.env.PLATFORM_EMPRESA_ID);
+
+    if (!platformEmpresaId || !user || user.empresaId !== platformEmpresaId) {
+        return res.status(403).json({ error: 'Acesso negado. Apenas a administração da plataforma pode acessar esta rota.' });
+    }
+
+    return next();
+}

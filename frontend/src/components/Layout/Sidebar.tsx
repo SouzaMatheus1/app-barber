@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, Users, BookOpen, DollarSign, LogOut, X, Crown, UserCog, TrendingDown, Calendar } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { getIconePorSegmento } from '../../utils/labelsPorSegmento';
+import ChangelogSino from './ChangelogSino';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -47,12 +48,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
         ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0 md:static'}
       `}>
         <div className="flex items-center justify-between p-6 border-b border-[var(--color-primary)]/30">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl font-serif font-bold text-[var(--color-primary)] tracking-wider uppercase">{ user?.nomeFantasia || 'LambdaBarber' }</span>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-2xl font-serif font-bold text-[var(--color-primary)] tracking-wider uppercase truncate">{ user?.nomeFantasia || 'LambdaBarber' }</span>
           </div>
-          <button className="md:hidden text-[var(--color-text)]" onClick={() => setIsOpen(false)}>
-            <X size={24} />
-          </button>
+          <div className="flex items-center gap-3">
+            <ChangelogSino />
+            <button className="md:hidden text-[var(--color-text)]" onClick={() => setIsOpen(false)}>
+              <X size={24} />
+            </button>
+          </div>
         </div>
 
         <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">

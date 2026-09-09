@@ -5,7 +5,7 @@ import { ClienteController } from '../controllers/ClienteController'
 import { TransacaoController } from '../controllers/TransacaoController';
 import { ComissaoController } from '../controllers/ComissaoController';
 import { CaixaController } from '../controllers/CaixaController';
-import { isAuth, isAdmin } from '../middleware/auth';
+import { isAuth, isAdmin, isPlatformAdmin } from '../middleware/auth';
 import { AuthController } from '../controllers/authController';
 import { AssinaturaController } from '../controllers/AssinaturaController';
 import { TemaController } from '../controllers/TemaController';
@@ -16,6 +16,7 @@ import { RelatorioController } from '../controllers/RelatorioController';
 import { AgendamentoController } from '../controllers/AgendamentoController';
 import { PortalAuthController } from '../controllers/PortalAuthController';
 import { AtivoController } from '../controllers/AtivoController';
+import { ChangelogController } from '../controllers/ChangelogController';
 
 
 const routes = Router();
@@ -34,6 +35,7 @@ const relatorioController = new RelatorioController();
 const agendamentoController = new AgendamentoController();
 const portalAuthController = new PortalAuthController();
 const ativoController = new AtivoController();
+const changelogController = new ChangelogController();
 
 
 // profissional
@@ -125,5 +127,12 @@ routes.get('/portal/:slug/empresa', portalAuthController.getEmpresa);
 routes.post('/portal/:slug/auth/check-phone', portalAuthController.checkPhone);
 routes.post('/portal/:slug/auth/login', portalAuthController.login);
 routes.post('/portal/:slug/auth/register', portalAuthController.register);
+
+// Changelog para cliente final (dono do tenant)
+// Criação é restrita à administração da plataforma, não ao admin comum de um tenant.
+routes.post('/admin/changelog', isAuth, isPlatformAdmin, changelogController.criar);
+routes.get('/changelog', isAuth, changelogController.listar);
+routes.get('/changelog/nao-lidas', isAuth, changelogController.contarNaoLidas);
+routes.post('/changelog/marcar-visualizado', isAuth, changelogController.marcarVisualizado);
 
 export { routes };

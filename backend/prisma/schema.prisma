@@ -12,16 +12,18 @@ model TipoEmpresa {
   empresas          Empresa[]
   tipoEmpresaAtivos TipoEmpresaAtivo[]
   temaPadrao        TemaPadrao?
+  changelogEntries  ChangelogEntry[]
 
   @@map("TipoEmpresa")
 }
 
 model Empresa {
-  id            Int      @id @default(autoincrement())
-  nomeFantasia  String
-  slug          String   @unique
-  tipoEmpresaId Int      @default(1)
-  criadoEm      DateTime @default(now())
+  id                     Int       @id @default(autoincrement())
+  nomeFantasia           String
+  slug                   String    @unique
+  tipoEmpresaId          Int       @default(1)
+  criadoEm               DateTime  @default(now())
+  changelogVisualizadoEm DateTime?
 
   tipo               TipoEmpresa         @relation(fields: [tipoEmpresaId], references: [id])
   profissionais      Profissional[]
@@ -41,6 +43,20 @@ model Empresa {
 
   @@index([tipoEmpresaId])
   @@map("Empresa")
+}
+
+model ChangelogEntry {
+  id            Int      @id @default(autoincrement())
+  titulo        String
+  descricao     String   @db.Text
+  publicadoEm   DateTime @default(now())
+  tipoEmpresaId Int?
+
+  tipoEmpresa TipoEmpresa? @relation(fields: [tipoEmpresaId], references: [id])
+
+  @@index([publicadoEm])
+  @@index([tipoEmpresaId])
+  @@map("ChangelogEntry")
 }
 
 model Profissional {

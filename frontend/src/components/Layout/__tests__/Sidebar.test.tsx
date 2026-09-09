@@ -8,6 +8,14 @@ vi.mock('../../../contexts/AuthContext', () => ({
   useAuth: () => mockUseAuth(),
 }));
 
+vi.mock('../../../services/ChangelogService', () => ({
+  changelogService: {
+    contarNaoLidas: vi.fn().mockResolvedValue({ total: 0 }),
+    listar: vi.fn().mockResolvedValue([]),
+    marcarVisualizado: vi.fn().mockResolvedValue({}),
+  },
+}));
+
 describe('Componente Sidebar', () => {
   const setIsOpen = vi.fn();
 

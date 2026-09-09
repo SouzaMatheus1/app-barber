@@ -8,6 +8,14 @@ vi.mock('../../../contexts/AuthContext', () => ({
   useAuth: () => mockUseAuth(),
 }));
 
+vi.mock('../../../services/ChangelogService', () => ({
+  changelogService: {
+    contarNaoLidas: vi.fn().mockResolvedValue({ total: 0 }),
+    listar: vi.fn().mockResolvedValue([]),
+    marcarVisualizado: vi.fn().mockResolvedValue({}),
+  },
+}));
+
 describe('Componente Layout', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -53,8 +61,7 @@ describe('Componente Layout', () => {
     expect(aside?.className).toContain('-translate-x-full');
 
     // Botão de menu no header mobile
-    const buttons = screen.getAllByRole('button');
-    const toggleBtn = buttons[0]; // O primeiro botão é o do header mobile
+    const toggleBtn = screen.getByRole('button', { name: 'Abrir menu' });
     fireEvent.click(toggleBtn);
 
     // O aside deve ter a classe 'translate-x-0' correspondente a isOpen = true
